@@ -1,0 +1,353 @@
+<?php
+/**
+ * Operations admin screens.
+ *
+ * @package StudioBookingManager
+ */
+
+namespace StudioBookingManager\Operations;
+
+use StudioBookingManager\Access\AccessService;
+use StudioBookingManager\Admin\AbstractAdminPage;
+use StudioBookingManager\Admin\PageHeader;
+use StudioBookingManager\Locations\LocationService;
+use StudioBookingManager\People\PersonService;
+use StudioBookingManager\UI\Badge;
+use StudioBookingManager\Visits\VisitService;
+
+\defined( 'ABSPATH' ) || exit;
+
+/**
+ * Daily operations screen for check-in and check-out.
+ */
+final class OperationsAdmin extends AbstractAdminPage {
+	/**
+	 * Capability required to use operations.
+	 *
+	 * @var string
+	 */
+	protected string $capability = 'sbm_check_in';
+
+	/**
+	 * Visit service.
+	 *
+	 * @var VisitService
+	 */
+	private VisitService $visits;
+
+	/**
+	 * Person service.
+	 *
+	 * @var PersonService
+	 */
+	private PersonService $people;
+
+	/**
+	 * Access service.
+	 *
+	 * @var AccessService
+	 */
+	private AccessService $access;
+
+	/**
+	 * Location service.
+	 *
+	 * @var LocationService
+	 */
+	private LocationService $locations;
+
+	/**
+	 * Constructor.
+	 */
+	public function __construct() {
+		$this->visits    = new VisitService();
+		$this->people    = new PersonService();
+		$this->access    = new AccessService();
+		$this->locations = new LocationService();
+	}
+
+	/**
+	 * Register hooks.
+	 */
+	public function register(): void {
+		add_action( 'admin_post_sbm_check_in', array( $this, 'handle_check_in' ) );
+		add_action( 'admin_post_sbm_check_out', array( $this, 'handle_check_out' ) );
+	}
+
+	/**
+	 * Render operations screen.
+	 */
+	public function render(): void {
+		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'check_in'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		?>
+		<div class="wrap sbm-admin-page">
+			<?php PageHeader::render( __( 'Operations', 'studio-booking-manager' ) ); ?>
+			<?php $this->render_notice(); ?>
+			<h2 class="nav-tab-wrapper">
+				<a class="nav-tab <?php echo 'check_in' === $tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( $this->tab_url( 'check_in' ) ); ?>"><?php echo esc_html__( 'Check In', 'studio-booking-manager' ); ?></a>
+				<a class="nav-tab <?php echo 'current' === $tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( $this->tab_url( 'current' ) ); ?>"><?php echo esc_html__( 'Current Visits', 'studio-booking-manager' ); ?></a>
+			</h2>
+			<?php
+			if ( 'current' === $tab ) {
+				$this->render_current_visits();
+			} else {
+				$this->render_check_in();
+			}
+			?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Handle check-in request.
+	 */
+	public function handle_check_in(): void {
+		$this->verify_admin_request( 'sbm_check_in', __( 'You do not have permission to check visitors in.', 'studio-booking-manager' ) );
+
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce and capability are verified above.
+		$person_id   = isset( $_POST['person_id'] ) ? absint( wp_unslash( $_POST['person_id'] ) ) : 0;
+		$access_id   = isset( $_POST['access_id'] ) ? absint( wp_unslash( $_POST['access_id'] ) ) : 0;
+		$location_id = isset( $_POST['location_id'] ) ? absint( wp_unslash( $_POST['location_id'] ) ) : 0;
+		$guest_count = isset( $_POST['guest_count'] ) ? absint( wp_unslash( $_POST['guest_count'] ) ) : 0;
+		$guest_names    = isset( $_POST['guest_names'] ) ? sanitize_textarea_field( wp_unslash( $_POST['guest_names'] ) ) : '';
+		$checkin_method = isset( $_POST['checkin_method'] ) ? sanitize_key( wp_unslash( $_POST['checkin_method'] ) ) : 'reception';
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		$visit_id = $this->visits->check_in(
+			array(
+				'person_id'      => $person_id,
+				'access_id'      => $access_id,
+				'location_id'    => $location_id,
+				'guest_count'    => $guest_count,
+				'guest_names'    => $guest_names,
+				'checkin_method' => $checkin_method,
+			)
+		);
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'    => 'sbm-operations',
+					'tab'     => $visit_id > 0 ? 'current' : 'check_in',
+					'message' => $visit_id > 0 ? 'checked_in' : 'checkin_error',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * Handle check-out request.
+	 */
+	public function handle_check_out(): void {
+		$this->verify_capability_request( 'sbm_check_out', 'sbm_check_out', __( 'You do not have permission to check visitors out.', 'studio-booking-manager' ) );
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability are verified above.
+		$visit_id = isset( $_POST['visit_id'] ) ? absint( wp_unslash( $_POST['visit_id'] ) ) : 0;
+		$checked_out = $this->visits->check_out( $visit_id );
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'    => 'sbm-operations',
+					'tab'     => 'current',
+					'message' => $checked_out ? 'checked_out' : 'checkout_error',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * Render check-in workflow.
+	 */
+	private function render_check_in(): void {
+		$search    = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$people    = '' !== $search ? $this->people->all( $search ) : array();
+		$locations = $this->locations->all();
+		?>
+		<div class="sbm-card sbm-card-wide">
+			<h2><?php echo esc_html__( 'Find a person', 'studio-booking-manager' ); ?></h2>
+			<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
+				<input type="hidden" name="page" value="sbm-operations">
+				<input type="hidden" name="tab" value="check_in">
+				<p>
+					<label class="screen-reader-text" for="sbm-operations-search"><?php echo esc_html__( 'Search people', 'studio-booking-manager' ); ?></label>
+					<input class="regular-text" type="search" id="sbm-operations-search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="<?php echo esc_attr__( 'Search by name, email, or phone', 'studio-booking-manager' ); ?>">
+					<?php submit_button( __( 'Search', 'studio-booking-manager' ), 'secondary', '', false ); ?>
+				</p>
+			</form>
+		</div>
+		<?php if ( '' === $search ) : ?>
+			<p><?php echo esc_html__( 'Search for a person to begin check-in.', 'studio-booking-manager' ); ?></p>
+			<?php return; ?>
+		<?php endif; ?>
+		<?php if ( empty( $people ) ) : ?>
+			<div class="sbm-card"><p><?php echo esc_html__( 'No matching people found.', 'studio-booking-manager' ); ?></p></div>
+			<?php return; ?>
+		<?php endif; ?>
+		<div class="sbm-grid">
+			<?php foreach ( $people as $person ) : ?>
+				<?php $this->render_person_check_in_card( $person, $locations ); ?>
+			<?php endforeach; ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render a person card for check-in.
+	 *
+	 * @param object             $person Person row.
+	 * @param array<int, object> $locations Locations.
+	 */
+	private function render_person_check_in_card( object $person, array $locations ): void {
+		$access_records = $this->active_access_for_person( (int) $person->id );
+		?>
+		<div class="sbm-card">
+			<h2><?php echo esc_html( (string) $person->display_name ); ?></h2>
+			<p><?php echo esc_html( (string) $person->email ); ?></p>
+			<?php if ( empty( $access_records ) ) : ?>
+				<p><?php echo esc_html__( 'No active access available.', 'studio-booking-manager' ); ?></p>
+			<?php else : ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<?php wp_nonce_field( 'sbm_check_in' ); ?>
+					<input type="hidden" name="action" value="sbm_check_in">
+					<input type="hidden" name="person_id" value="<?php echo esc_attr( (string) absint( $person->id ) ); ?>">
+					<p>
+						<label for="sbm-access-<?php echo esc_attr( (string) absint( $person->id ) ); ?>"><?php echo esc_html__( 'Access', 'studio-booking-manager' ); ?></label><br>
+						<select id="sbm-access-<?php echo esc_attr( (string) absint( $person->id ) ); ?>" name="access_id" required>
+							<?php foreach ( $access_records as $access ) : ?>
+								<option value="<?php echo esc_attr( (string) absint( $access->id ) ); ?>"><?php echo esc_html( $this->access_label( $access ) ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</p>
+					<p>
+						<label for="sbm-location-<?php echo esc_attr( (string) absint( $person->id ) ); ?>"><?php echo esc_html__( 'Location', 'studio-booking-manager' ); ?></label><br>
+						<select id="sbm-location-<?php echo esc_attr( (string) absint( $person->id ) ); ?>" name="location_id" required>
+							<?php foreach ( $locations as $location ) : ?>
+								<option value="<?php echo esc_attr( (string) absint( $location->id ) ); ?>"><?php echo esc_html( (string) $location->name ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</p>
+					<p>
+						<label for="sbm-guests-<?php echo esc_attr( (string) absint( $person->id ) ); ?>"><?php echo esc_html__( 'Guests', 'studio-booking-manager' ); ?></label><br>
+						<input class="small-text" type="number" min="0" id="sbm-guests-<?php echo esc_attr( (string) absint( $person->id ) ); ?>" name="guest_count" value="0">
+					</p>
+					<p>
+						<label for="sbm-guest-names-<?php echo esc_attr( (string) absint( $person->id ) ); ?>"><?php echo esc_html__( 'Guest names', 'studio-booking-manager' ); ?></label><br>
+						<textarea class="large-text" rows="2" id="sbm-guest-names-<?php echo esc_attr( (string) absint( $person->id ) ); ?>" name="guest_names"></textarea>
+					</p>
+					<?php submit_button( __( 'Check In', 'studio-booking-manager' ), 'primary', '', false ); ?>
+				</form>
+			<?php endif; ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render current visits.
+	 */
+	private function render_current_visits(): void {
+		$records = $this->visits->current();
+		?>
+		<div class="sbm-card sbm-card-wide">
+			<h2><?php echo esc_html__( 'Current Visits', 'studio-booking-manager' ); ?></h2>
+			<p><?php echo esc_html( sprintf( /* translators: %d: current occupancy count. */ __( 'Current occupancy: %d', 'studio-booking-manager' ), count( $records ) ) ); ?></p>
+			<table class="widefat striped sbm-table">
+				<thead><tr><th><?php echo esc_html__( 'Person', 'studio-booking-manager' ); ?></th><th><?php echo esc_html__( 'Location', 'studio-booking-manager' ); ?></th><th><?php echo esc_html__( 'Checked In', 'studio-booking-manager' ); ?></th><th><?php echo esc_html__( 'Guests', 'studio-booking-manager' ); ?></th><th><?php echo esc_html__( 'Actions', 'studio-booking-manager' ); ?></th></tr></thead>
+				<tbody>
+					<?php if ( empty( $records ) ) : ?>
+						<tr><td colspan="5"><?php echo esc_html__( 'No one is currently checked in.', 'studio-booking-manager' ); ?></td></tr>
+					<?php endif; ?>
+					<?php foreach ( $records as $record ) : ?>
+						<tr>
+							<td><strong><?php echo esc_html( (string) $record->person_name ); ?></strong></td>
+							<td><?php echo esc_html( (string) $record->location_name ); ?></td>
+							<td><?php echo esc_html( (string) $record->checked_in_at ); ?></td>
+							<td><?php echo esc_html( (string) absint( $record->guest_count ) ); ?></td>
+							<td><?php $this->render_check_out_form( (int) $record->id ); ?></td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render checkout form.
+	 *
+	 * @param int $visit_id Visit ID.
+	 */
+	private function render_check_out_form( int $visit_id ): void {
+		?>
+		<form class="sbm-inline-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<?php wp_nonce_field( 'sbm_check_out' ); ?>
+			<input type="hidden" name="action" value="sbm_check_out">
+			<input type="hidden" name="visit_id" value="<?php echo esc_attr( (string) absint( $visit_id ) ); ?>">
+			<button type="submit" class="button button-small"><?php echo esc_html__( 'Check Out', 'studio-booking-manager' ); ?></button>
+		</form>
+		<?php
+	}
+
+	/**
+	 * Get active access for a person.
+	 *
+	 * @param int $person_id Person ID.
+	 * @return array<int, object>
+	 */
+	private function active_access_for_person( int $person_id ): array {
+		$records = array();
+
+		foreach ( $this->access->all() as $access ) {
+			if ( (int) $access->person_id === $person_id && 'active' === (string) $access->status ) {
+				$records[] = $access;
+			}
+		}
+
+		return $records;
+	}
+
+	/**
+	 * Access label.
+	 *
+	 * @param object $access Access row.
+	 * @return string
+	 */
+	private function access_label( object $access ): string {
+		$type = str_replace( '_', ' ', (string) $access->access_type );
+		return ucwords( $type ) . ' #' . (string) absint( $access->id );
+	}
+
+	/**
+	 * Render notices.
+	 */
+	private function render_notice(): void {
+		$this->render_query_notice(
+			array(
+				'checked_in'     => __( 'Person checked in successfully.', 'studio-booking-manager' ),
+				'checked_out'    => __( 'Visit checked out successfully.', 'studio-booking-manager' ),
+				'checkin_error'  => __( 'Check-in could not be completed.', 'studio-booking-manager' ),
+				'checkout_error' => __( 'Check-out could not be completed.', 'studio-booking-manager' ),
+			)
+		);
+	}
+
+	/**
+	 * Build tab URL.
+	 *
+	 * @param string $tab Tab key.
+	 * @return string
+	 */
+	private function tab_url( string $tab ): string {
+		return add_query_arg(
+			array(
+				'page' => 'sbm-operations',
+				'tab'  => $tab,
+			),
+			admin_url( 'admin.php' )
+		);
+	}
+}

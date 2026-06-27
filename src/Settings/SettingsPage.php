@@ -1,0 +1,185 @@
+<?php
+/**
+ * Settings page.
+ *
+ * @package StudioBookingManager
+ */
+
+namespace StudioBookingManager\Settings;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Registers and renders settings.
+ */
+final class SettingsPage {
+	/**
+	 * Register hooks.
+	 */
+	public function register(): void {
+		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		add_filter( 'plugin_action_links_' . SBM_PLUGIN_BASENAME, array( $this, 'add_plugin_action_links' ) );
+		add_filter( 'option_page_capability_sbm_settings_group', array( $this, 'settings_capability' ) );
+	}
+
+
+	/**
+	 * Get settings capability.
+	 *
+	 * @return string
+	 */
+	public function settings_capability(): string {
+		return 'sbm_manage_settings';
+	}
+
+	/**
+	 * Register settings.
+	 */
+	public function register_settings(): void {
+		register_setting(
+			'sbm_settings_group',
+			'sbm_settings',
+			array(
+				'type'              => 'array',
+				'sanitize_callback' => array( $this, 'sanitize_settings' ),
+				'default'           => array(),
+			)
+		);
+	}
+
+	/**
+	 * Add plugin row action links.
+	 *
+	 * @param array<string, string> $links Existing plugin action links.
+	 * @return array<string, string>
+	 */
+	public function add_plugin_action_links( array $links ): array {
+		$settings_link = sprintf(
+			'<a href="%1$s">%2$s</a>',
+			esc_url( admin_url( 'admin.php?page=sbm-settings' ) ),
+			esc_html__( 'Settings', 'studio-booking-manager' )
+		);
+
+		array_unshift( $links, $settings_link );
+
+		return $links;
+	}
+
+	/**
+	 * Enqueue admin assets.
+	 *
+	 * @param string $hook Current admin hook.
+	 */
+	public function enqueue_assets( string $hook ): void {
+		if ( false === strpos( $hook, 'sbm-' ) && false === strpos( $hook, 'studio-booking' ) ) {
+			return;
+		}
+
+		wp_enqueue_style(
+			'sbm-admin',
+			SBM_PLUGIN_URL . 'assets/css/admin.css',
+			array(),
+			SBM_VERSION
+		);
+	}
+
+	/**
+	 * Sanitize settings.
+	 *
+	 * @param array<mixed> $settings Raw settings.
+	 * @return array<string, mixed>
+	 */
+	public function sanitize_settings( array $settings ): array {
+		$clean = array();
+
+		if ( isset( $settings['business_name'] ) ) {
+			$clean['business_name'] = sanitize_text_field( $settings['business_name'] );
+		}
+
+		if ( isset( $settings['default_timezone'] ) ) {
+			$clean['default_timezone'] = sanitize_text_field( $settings['default_timezone'] );
+		}
+
+		return $clean;
+	}
+
+	/**
+	 * Render settings page.
+	 */
+	public function render(): void {
+		if ( ! current_user_can( 'sbm_manage_settings' ) ) {
+			wp_die( esc_html__( 'You do not have permission to manage Studio Booking Manager settings.', 'studio-booking-manager' ) );
+		}
+
+		$options = get_option( 'sbm_settings', array() );
+		if ( ! is_array( $options ) ) {
+			$options = array();
+		}
+
+		$business_name   = isset( $options['business_name'] ) ? (string) $options['business_name'] : get_bloginfo( 'name' );
+		$default_timezone = isset( $options['default_timezone'] ) ? (string) $options['default_timezone'] : wp_timezone_string();
+		?>
+		<div class="wrap sbm-admin-page">
+			<h1><?php echo esc_html__( 'Studio Booking Manager Settings', 'studio-booking-manager' ); ?></h1>
+
+			<nav class="nav-tab-wrapper sbm-settings-tabs" aria-label="<?php echo esc_attr__( 'Settings sections', 'studio-booking-manager' ); ?>">
+				<a class="nav-tab nav-tab-active" href="#general"><?php echo esc_html__( 'General', 'studio-booking-manager' ); ?></a>
+				<a class="nav-tab" href="#google-calendar"><?php echo esc_html__( 'Google Calendar', 'studio-booking-manager' ); ?></a>
+				<a class="nav-tab" href="#qr-codes"><?php echo esc_html__( 'QR Codes', 'studio-booking-manager' ); ?></a>
+				<a class="nav-tab" href="#notifications"><?php echo esc_html__( 'Notifications', 'studio-booking-manager' ); ?></a>
+				<a class="nav-tab" href="#advanced"><?php echo esc_html__( 'Advanced', 'studio-booking-manager' ); ?></a>
+			</nav>
+
+			<form method="post" action="options.php" class="sbm-settings-form">
+				<?php settings_fields( 'sbm_settings_group' ); ?>
+
+				<section id="general" class="sbm-card">
+					<h2><?php echo esc_html__( 'General', 'studio-booking-manager' ); ?></h2>
+					<table class="form-table" role="presentation">
+						<tr>
+							<th scope="row">
+								<label for="sbm-business-name"><?php echo esc_html__( 'Business name', 'studio-booking-manager' ); ?></label>
+							</th>
+							<td>
+								<input id="sbm-business-name" type="text" class="regular-text" name="sbm_settings[business_name]" value="<?php echo esc_attr( $business_name ); ?>" />
+							</td>
+						</tr>
+						<tr>
+							<th scope="row">
+								<label for="sbm-default-timezone"><?php echo esc_html__( 'Default timezone', 'studio-booking-manager' ); ?></label>
+							</th>
+							<td>
+								<input id="sbm-default-timezone" type="text" class="regular-text" name="sbm_settings[default_timezone]" value="<?php echo esc_attr( $default_timezone ); ?>" />
+								<p class="description"><?php echo esc_html__( 'Used as the fallback timezone for new locations.', 'studio-booking-manager' ); ?></p>
+							</td>
+						</tr>
+					</table>
+				</section>
+
+				<section id="google-calendar" class="sbm-card">
+					<h2><?php echo esc_html__( 'Google Calendar', 'studio-booking-manager' ); ?></h2>
+					<p><?php echo esc_html__( 'Google Calendar will be added as an optional integration in a future release.', 'studio-booking-manager' ); ?></p>
+				</section>
+
+				<section id="qr-codes" class="sbm-card">
+					<h2><?php echo esc_html__( 'QR Codes', 'studio-booking-manager' ); ?></h2>
+					<p><?php echo esc_html__( 'QR identity settings will be added when the People and Visits modules are active.', 'studio-booking-manager' ); ?></p>
+				</section>
+
+				<section id="notifications" class="sbm-card">
+					<h2><?php echo esc_html__( 'Notifications', 'studio-booking-manager' ); ?></h2>
+					<p><?php echo esc_html__( 'Notification templates and reminders will be added in a future release.', 'studio-booking-manager' ); ?></p>
+				</section>
+
+				<section id="advanced" class="sbm-card">
+					<h2><?php echo esc_html__( 'Advanced', 'studio-booking-manager' ); ?></h2>
+					<p><?php echo esc_html__( 'Logging, imports, exports, and developer tools will live here.', 'studio-booking-manager' ); ?></p>
+				</section>
+
+				<?php submit_button(); ?>
+			</form>
+		</div>
+		<?php
+	}
+}

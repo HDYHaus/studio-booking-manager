@@ -1,0 +1,46 @@
+.sbm-admin-page .sbm-card {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	margin-top: 16px;
+	max-width: 760px;
+	padding: 20px;
+}
+
+#studio_booking_manager_product_data .form-field label,
+#studio_booking_manager_product_data .form-field .woocommerce-help-tip {
+	vertical-align: middle;
+}
+
+.sbm-card-wide {
+	max-width: 1200px;
+}
+
+.sbm-table td,
+.sbm-table th {
+	vertical-align: middle;
+}
+
+.sbm-inline-form {
+	display: inline-block;
+	margin: 0 4px 0 0;
+}
+
+.sbm-form-card {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	margin-top: 16px;
+	max-width: 980px;
+	padding: 12px 20px 20px;
+}
+
+.sbm-search-form {
+	min-height: 34px;
+}
+
+.sbm-search-form .search-box {
+	float: none;
+	margin: 0 0 12px;
+	text-align: right;
+}

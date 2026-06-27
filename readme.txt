@@ -14,16 +14,9 @@ Open source booking and operations management for studios, coworking spaces, cre
 
 Studio Booking Manager helps shared spaces manage people, access, visits, locations, memberships, and operations from WordPress.
 
-This release adds the optional WooCommerce commerce adapter for creating access records from paid products.
+This release adds plugin-specific roles, capabilities, a system health screen, and the initial security policy foundation.
 
 == Changelog ==
-
-= 0.9.1 =
-
-- Added optional WooCommerce commerce adapter.
-- Added product and variation access mapping fields.
-- Added automatic person and access creation after paid WooCommerce orders.
-- Added Commerce status screen.
 
 = 0.8.5 =
 
@@ -39,10 +32,6 @@ This release adds the optional WooCommerce commerce adapter for creating access 
 - Added QR identity lookup by permanent person token.
 - Added QR check-in links from People records.
 - Connected QR lookup to the existing Operations check-in workflow.
-
-= 0.7.1 =
-
-- Fixed guest names sanitization in the Operations check-in workflow.
 
 = 0.7.0 =
 * Added the Operations screen.
