@@ -11,6 +11,7 @@ use StudioBookingManager\Access\AccessAdmin;
 use StudioBookingManager\Commerce\WooCommerce\CommerceAdmin;
 use StudioBookingManager\Locations\LocationAdmin;
 use StudioBookingManager\Operations\OperationsAdmin;
+use StudioBookingManager\PassTypes\PassTypeAdmin;
 use StudioBookingManager\QR\QRAdmin;
 use StudioBookingManager\UI\Stat;
 use StudioBookingManager\People\PersonAdmin;
@@ -82,6 +83,15 @@ final class AdminMenu {
 			'sbm_manage_access',
 			'sbm-access',
 			array( new AccessAdmin(), 'render' )
+		);
+
+		add_submenu_page(
+			'sbm-dashboard',
+			__( 'Passes', 'studio-booking-manager' ),
+			__( 'Passes', 'studio-booking-manager' ),
+			'sbm_manage_passes',
+			'sbm-passes',
+			array( new PassTypeAdmin(), 'render' )
 		);
 
 		add_submenu_page(

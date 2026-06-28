@@ -7,6 +7,8 @@
 
 namespace StudioBookingManager\Database;
 
+use StudioBookingManager\PassTypes\PassTypeInstaller;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -18,6 +20,7 @@ final class Installer {
 	 */
 	public function install(): void {
 		$this->create_tables();
+		( new PassTypeInstaller() )->install();
 		$this->create_default_options();
 		$this->maybe_create_default_location();
 		update_option( 'sbm_db_version', SBM_DB_VERSION );
