@@ -137,6 +137,8 @@ Pass Type
 Access Record
 ```
 
+See [WooCommerce Pass Integration](woocommerce-pass-integration.md) for the product metadata and order issuance flow.
+
 ## Access Creation
 
 When a Pass Type is issued to a person, Studio Booking Manager copies the rules from the Pass Type into the Access record.

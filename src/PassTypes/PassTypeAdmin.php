@@ -10,6 +10,7 @@ namespace StudioBookingManager\PassTypes;
 use StudioBookingManager\Admin\AbstractAdminPage;
 use StudioBookingManager\Admin\PageHeader;
 use StudioBookingManager\Admin\AdminNotices;
+use StudioBookingManager\IssuePass\IssuePassService;
 use StudioBookingManager\People\PersonService;
 use StudioBookingManager\Locations\LocationService;
 
@@ -34,10 +35,18 @@ final class PassTypeAdmin extends AbstractAdminPage {
 	private PassTypeService $service;
 
 	/**
+	 * Issue pass service.
+	 *
+	 * @var IssuePassService
+	 */
+	private IssuePassService $issue_service;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 		$this->service = new PassTypeService();
+		$this->issue_service = new IssuePassService();
 	}
 
 	/**
@@ -46,6 +55,7 @@ final class PassTypeAdmin extends AbstractAdminPage {
 	public function register(): void {
 		add_action( 'admin_post_sbm_save_pass', array( $this, 'handle_save' ) );
 		add_action( 'admin_post_sbm_archive_pass', array( $this, 'handle_archive' ) );
+		add_action( 'admin_post_sbm_issue_pass', array( $this, 'handle_issue' ) );
 	}
 
 	/**
@@ -57,6 +67,11 @@ final class PassTypeAdmin extends AbstractAdminPage {
 
 		if ( 'new' === $action || 'edit' === $action ) {
 			$this->render_form( $id );
+			return;
+		}
+
+		if ( 'issue' === $action && $id > 0 ) {
+			$this->render_issue_form( $id );
 			return;
 		}
 
@@ -113,6 +128,39 @@ final class PassTypeAdmin extends AbstractAdminPage {
 				array(
 					'page' => 'sbm-passes',
 					'message' => 'archived',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * Handle issue pass request.
+	 */
+	public function handle_issue(): void {
+		$this->verify_admin_request( 'sbm_issue_pass', __( 'You do not have permission to issue passes.', 'studio-booking-manager' ) );
+
+		// phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce and capability verified above.
+		$pass_id = isset( $_POST['pass_id'] ) ? absint( wp_unslash( $_POST['pass_id'] ) ) : 0;
+		$person_id = isset( $_POST['person_id'] ) ? absint( wp_unslash( $_POST['person_id'] ) ) : 0;
+		$location_id = isset( $_POST['location_id'] ) ? absint( wp_unslash( $_POST['location_id'] ) ) : 0;
+		// phpcs:enable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		$result = $this->issue_service->issue( $pass_id, $person_id, $location_id );
+		$message = 'issued';
+
+		if ( ! $result['success'] ) {
+			$message = 'issue_error';
+		} elseif ( ! empty( $result['warning'] ) ) {
+			$message = 'issued_duplicate';
+		}
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page' => 'sbm-passes',
+					'message' => $message,
 				),
 				admin_url( 'admin.php' )
 			)
@@ -193,6 +241,89 @@ final class PassTypeAdmin extends AbstractAdminPage {
 			<input type="hidden" name="pass_id" value="<?php echo esc_attr( (string) absint( $record->id ) ); ?>">
 			<button type="submit" class="button button-small"><?php echo esc_html__( 'Issue Pass', 'studio-booking-manager' ); ?></button>
 		</form>
+		<?php
+	}
+
+	/**
+	 * Render issue pass form.
+	 */
+	private function render_issue_form( int $id ): void {
+		$pass = $this->service->find( $id );
+
+		if ( null === $pass ) {
+			AdminNotices::render( 'error', __( 'Pass not found.', 'studio-booking-manager' ) );
+			$this->render_list();
+			return;
+		}
+
+		$people = ( new PersonService() )->all();
+		$locations = ( new LocationService() )->all();
+		$back_url = add_query_arg(
+			array(
+				'page' => 'sbm-passes',
+			),
+			admin_url( 'admin.php' )
+		);
+		?>
+		<div class="wrap sbm-admin-page">
+			<?php PageHeader::render( __( 'Issue Pass', 'studio-booking-manager' ), $back_url, __( 'Back to pass list', 'studio-booking-manager' ) ); ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="sbm-form-card">
+				<?php wp_nonce_field( 'sbm_issue_pass' ); ?>
+				<input type="hidden" name="action" value="sbm_issue_pass">
+				<input type="hidden" name="pass_id" value="<?php echo esc_attr( (string) $id ); ?>">
+				<div class="sbm-card sbm-card-wide">
+					<h2><?php echo esc_html( $pass->name ); ?></h2>
+					<p><?php echo esc_html( $pass->description ); ?></p>
+					<table class="form-table" role="presentation">
+						<tbody>
+							<tr>
+								<th scope="row"><?php echo esc_html__( 'Behaviour', 'studio-booking-manager' ); ?></th>
+								<td><?php echo esc_html( $this->service->behaviours()[ $pass->behaviour ] ?? $pass->behaviour ); ?></td>
+							</tr>
+							<tr>
+								<th scope="row"><?php echo esc_html__( 'Number of Visits', 'studio-booking-manager' ); ?></th>
+								<td><?php echo esc_html( $pass->number_of_visits ? (string) absint( $pass->number_of_visits ) : __( 'Unlimited', 'studio-booking-manager' ) ); ?></td>
+							</tr>
+							<tr>
+								<th scope="row"><?php echo esc_html__( 'Maximum Visits Per Week', 'studio-booking-manager' ); ?></th>
+								<td><?php echo esc_html( $pass->maximum_visits_per_week ? (string) absint( $pass->maximum_visits_per_week ) : __( 'None', 'studio-booking-manager' ) ); ?></td>
+							</tr>
+							<tr>
+								<th scope="row"><?php echo esc_html__( 'Guest Allowance', 'studio-booking-manager' ); ?></th>
+								<td><?php echo esc_html( (string) absint( $pass->guest_allowance ) ); ?></td>
+							</tr>
+							<tr>
+								<th scope="row"><?php echo esc_html__( 'Valid For', 'studio-booking-manager' ); ?></th>
+								<td><?php echo esc_html( $pass->valid_for ? sprintf( /* translators: %d: number of days. */ __( '%d days', 'studio-booking-manager' ), absint( $pass->valid_for ) ) : __( 'No expiry', 'studio-booking-manager' ) ); ?></td>
+							</tr>
+							<tr>
+								<th scope="row"><?php echo esc_html__( 'Person', 'studio-booking-manager' ); ?></th>
+								<td>
+									<select name="person_id" id="sbm-issue-pass-person" required>
+										<option value=""><?php echo esc_html__( 'Select a person', 'studio-booking-manager' ); ?></option>
+										<?php foreach ( $people as $person ) : ?>
+											<option value="<?php echo esc_attr( (string) absint( $person->id ) ); ?>"><?php echo esc_html( $person->display_name ); ?></option>
+										<?php endforeach; ?>
+									</select>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row"><?php echo esc_html__( 'Location', 'studio-booking-manager' ); ?></th>
+								<td>
+									<select name="location_id" id="sbm-issue-pass-location" required>
+										<option value=""><?php echo esc_html__( 'Select a location', 'studio-booking-manager' ); ?></option>
+										<?php foreach ( $locations as $location ) : ?>
+											<option value="<?php echo esc_attr( (string) absint( $location->id ) ); ?>"><?php echo esc_html( $location->name ); ?></option>
+										<?php endforeach; ?>
+									</select>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<?php submit_button( __( 'Issue Pass', 'studio-booking-manager' ) ); ?>
+				</div>
+			</form>
+		</div>
 		<?php
 	}
 
@@ -285,6 +416,9 @@ final class PassTypeAdmin extends AbstractAdminPage {
 			array(
 				'saved' => __( 'Pass saved successfully.', 'studio-booking-manager' ),
 				'archived' => __( 'Pass archived successfully.', 'studio-booking-manager' ),
+				'issued' => __( 'Pass issued successfully.', 'studio-booking-manager' ),
+				'issued_duplicate' => __( 'Pass issued successfully. A similar active access record already exists for this person.', 'studio-booking-manager' ),
+				'issue_error' => __( 'Pass could not be issued.', 'studio-booking-manager' ),
 				'error' => __( 'Pass could not be saved.', 'studio-booking-manager' ),
 			)
 		);

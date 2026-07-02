@@ -88,6 +88,43 @@ final class AccessRepository {
 	}
 
 	/**
+	 * Find an existing active access record with matching issue criteria.
+	 *
+	 * @param int $person_id Person ID.
+	 * @param int $location_id Location ID.
+	 * @param string $access_type Access type.
+	 * @param int|null $total_credits Total credits.
+	 * @param int|null $weekly_limit Weekly limit.
+	 * @param int $guest_limit Guest limit.
+	 * @param string|null $expires_at Expiry timestamp.
+	 * @return object|null
+	 */
+	public function find_duplicate_active( int $person_id, int $location_id, string $access_type, ?int $total_credits, ?int $weekly_limit, int $guest_limit, ?string $expires_at ): ?object {
+		$total_credits_value = null === $total_credits ? 0 : $total_credits;
+		$total_credits_null_flag = null === $total_credits ? 1 : 0;
+		$weekly_limit_value = null === $weekly_limit ? 0 : $weekly_limit;
+		$weekly_limit_null_flag = null === $weekly_limit ? 1 : 0;
+		$expires_at_value = null === $expires_at ? '' : $expires_at;
+		$expires_at_null_token = null === $expires_at ? 'NULL' : '';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name comes from the trusted Tables registry.
+		return $this->wpdb->get_row(
+			$this->wpdb->prepare(
+				"SELECT * FROM `{$this->table}`
+				WHERE person_id = %d
+				AND location_id = %d
+				AND access_type = %s
+				AND status = %s
+				ORDER BY created_at DESC LIMIT 1",
+				$person_id,
+				$location_id,
+				$access_type,
+				'active'
+			)
+		);
+	}
+
+	/**
 	 * Create an access record.
 	 *
 	 * @param array<string, mixed> $data Access data.
