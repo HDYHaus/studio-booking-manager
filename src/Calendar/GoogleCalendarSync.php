@@ -56,6 +56,7 @@ final class GoogleCalendarSync {
 			}
 
 			$repository->update_calendar_sync( (int) $booking->id, 'failed', $client->last_error() );
+			$this->notify_failure( $booking, $client->last_error() );
 			return;
 		}
 
@@ -66,6 +67,7 @@ final class GoogleCalendarSync {
 		}
 
 		$repository->update_calendar_sync( (int) $booking->id, 'failed', $client->last_error() );
+		$this->notify_failure( $booking, $client->last_error() );
 	}
 
 	/**
@@ -94,6 +96,18 @@ final class GoogleCalendarSync {
 		}
 
 		$repository->update_calendar_sync( (int) $booking->id, 'failed', $client->last_error() );
+		$this->notify_failure( $booking, $client->last_error() );
+	}
+
+	/**
+	 * Notify listeners about a calendar sync failure.
+	 *
+	 * @param object $booking Booking row.
+	 * @param string $error Error message.
+	 */
+	private function notify_failure( object $booking, string $error ): void {
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- `sbm_` is the documented public API prefix for Studio Booking Manager.
+		do_action( 'sbm_calendar_sync_failed', $booking, $error );
 	}
 
 	/**

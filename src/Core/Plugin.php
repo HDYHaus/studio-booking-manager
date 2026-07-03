@@ -16,6 +16,8 @@ use StudioBookingManager\Admin\AdminMenu;
 use StudioBookingManager\Database\DBManager;
 use StudioBookingManager\Frontend\MemberScheduleShortcode;
 use StudioBookingManager\Locations\LocationAdmin;
+use StudioBookingManager\Notifications\NotificationAdmin;
+use StudioBookingManager\Notifications\NotificationService;
 use StudioBookingManager\Operations\OperationsAdmin;
 use StudioBookingManager\PassTypes\PassTypeAdmin;
 use StudioBookingManager\People\PersonAdmin;
@@ -61,12 +63,14 @@ final class Plugin {
 		( new AccessAdmin() )->register();
 		( new BookingAdmin() )->register();
 		( new GoogleCalendarSync() )->register();
+		( new NotificationService() )->register();
 		( new VisitAdmin() )->register();
 		( new PassTypeAdmin() )->register();
 		( new OperationsAdmin() )->register();
 		( new QRAdmin() )->register();
 		( new AdminMenu() )->register();
 		( new SettingsPage() )->register();
+		( new NotificationAdmin() )->register();
 		( new MemberScheduleShortcode() )->register();
 
 		if ( class_exists( 'WooCommerce' ) ) {
