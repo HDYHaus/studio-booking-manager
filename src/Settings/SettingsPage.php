@@ -116,6 +116,28 @@ final class SettingsPage {
 			}
 		}
 
+		$clean['qr_token_lifetime_days'] = isset( $settings['qr_token_lifetime_days'] ) ? max( 0, min( 3650, absint( $settings['qr_token_lifetime_days'] ) ) ) : 365;
+		$destination = isset( $settings['qr_destination'] ) ? sanitize_key( (string) $settings['qr_destination'] ) : 'admin_checkin';
+		$clean['qr_destination'] = in_array( $destination, array( 'admin_checkin' ), true ) ? $destination : 'admin_checkin';
+		$clean['qr_show_person_name']  = ! empty( $settings['qr_show_person_name'] ) ? 1 : 0;
+		$clean['qr_show_person_email'] = ! empty( $settings['qr_show_person_email'] ) ? 1 : 0;
+
+		if ( isset( $settings['notification_staff_email'] ) ) {
+			$clean['notification_staff_email'] = sanitize_email( (string) $settings['notification_staff_email'] );
+		}
+
+		foreach ( $this->notification_types() as $type => $label ) {
+			$clean[ $type . '_enabled' ] = ! empty( $settings[ $type . '_enabled' ] ) ? 1 : 0;
+
+			if ( isset( $settings[ $type . '_subject' ] ) ) {
+				$clean[ $type . '_subject' ] = sanitize_text_field( (string) $settings[ $type . '_subject' ] );
+			}
+
+			if ( isset( $settings[ $type . '_message' ] ) ) {
+				$clean[ $type . '_message' ] = sanitize_textarea_field( (string) $settings[ $type . '_message' ] );
+			}
+		}
+
 		return $clean;
 	}
 
@@ -177,6 +199,11 @@ final class SettingsPage {
 		$calendar_enabled = ! empty( $options['google_calendar_enabled'] );
 		$calendar_id      = isset( $options['google_calendar_id'] ) ? (string) $options['google_calendar_id'] : '';
 		$has_credentials  = ! empty( $options['google_calendar_service_account_json'] );
+		$qr_lifetime_days = isset( $options['qr_token_lifetime_days'] ) ? absint( $options['qr_token_lifetime_days'] ) : 365;
+		$qr_destination   = isset( $options['qr_destination'] ) ? (string) $options['qr_destination'] : 'admin_checkin';
+		$qr_show_name     = ! isset( $options['qr_show_person_name'] ) || ! empty( $options['qr_show_person_name'] );
+		$qr_show_email    = ! empty( $options['qr_show_person_email'] );
+		$staff_email      = isset( $options['notification_staff_email'] ) ? (string) $options['notification_staff_email'] : get_option( 'admin_email' );
 		?>
 		<div class="wrap sbm-admin-page">
 			<h1><?php echo esc_html__( 'Studio Booking Manager Settings', 'studio-booking-manager' ); ?></h1>
@@ -289,12 +316,83 @@ final class SettingsPage {
 
 				<section id="qr-codes" class="sbm-card">
 					<h2><?php echo esc_html__( 'QR Codes', 'studio-booking-manager' ); ?></h2>
-					<p><?php echo esc_html__( 'QR identity settings will be added when the People and Visits modules are active.', 'studio-booking-manager' ); ?></p>
+					<p><?php echo esc_html__( 'Configure the signed QR links used for person check-in. Regenerating a person QR token immediately revokes older QR codes for that person.', 'studio-booking-manager' ); ?></p>
+					<table class="form-table" role="presentation">
+						<tr>
+							<th scope="row">
+								<label for="sbm-qr-token-lifetime-days"><?php echo esc_html__( 'QR link lifetime', 'studio-booking-manager' ); ?></label>
+							</th>
+							<td>
+								<input id="sbm-qr-token-lifetime-days" type="number" min="0" max="3650" class="small-text" name="sbm_settings[qr_token_lifetime_days]" value="<?php echo esc_attr( (string) $qr_lifetime_days ); ?>" />
+								<?php echo esc_html__( 'days', 'studio-booking-manager' ); ?>
+								<p class="description"><?php echo esc_html__( 'Use 0 for QR links that never expire. Tokens are still revocable by regenerating the person QR token.', 'studio-booking-manager' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row">
+								<label for="sbm-qr-destination"><?php echo esc_html__( 'Check-in destination', 'studio-booking-manager' ); ?></label>
+							</th>
+							<td>
+								<select id="sbm-qr-destination" name="sbm_settings[qr_destination]">
+									<option value="admin_checkin" <?php selected( $qr_destination, 'admin_checkin' ); ?>><?php echo esc_html__( 'Staff QR Check-in screen', 'studio-booking-manager' ); ?></option>
+								</select>
+								<p class="description"><?php echo esc_html__( 'QR codes currently open the staff check-in workflow. Customer-facing destinations can be added with self-service.', 'studio-booking-manager' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><?php echo esc_html__( 'Printed label details', 'studio-booking-manager' ); ?></th>
+							<td>
+								<label>
+									<input type="checkbox" name="sbm_settings[qr_show_person_name]" value="1" <?php checked( $qr_show_name ); ?> />
+									<?php echo esc_html__( 'Show person name', 'studio-booking-manager' ); ?>
+								</label><br>
+								<label>
+									<input type="checkbox" name="sbm_settings[qr_show_person_email]" value="1" <?php checked( $qr_show_email ); ?> />
+									<?php echo esc_html__( 'Show person email', 'studio-booking-manager' ); ?>
+								</label>
+							</td>
+						</tr>
+					</table>
 				</section>
 
 				<section id="notifications" class="sbm-card">
 					<h2><?php echo esc_html__( 'Notifications', 'studio-booking-manager' ); ?></h2>
-					<p><?php echo esc_html__( 'Notification templates and reminders will be added in a future release.', 'studio-booking-manager' ); ?></p>
+					<p><?php echo esc_html__( 'Use WordPress email for booking, pass, and staff alert notifications. Failed sends are logged under Studio Booking > Notifications.', 'studio-booking-manager' ); ?></p>
+					<table class="form-table" role="presentation">
+						<tr>
+							<th scope="row">
+								<label for="sbm-notification-staff-email"><?php echo esc_html__( 'Staff alert email', 'studio-booking-manager' ); ?></label>
+							</th>
+							<td>
+								<input id="sbm-notification-staff-email" type="email" class="regular-text" name="sbm_settings[notification_staff_email]" value="<?php echo esc_attr( $staff_email ); ?>" />
+								<p class="description"><?php echo esc_html__( 'Used for internal alerts such as calendar sync failures.', 'studio-booking-manager' ); ?></p>
+							</td>
+						</tr>
+					</table>
+
+					<?php foreach ( $this->notification_types() as $type => $label ) : ?>
+						<?php
+						$enabled = ! empty( $options[ $type . '_enabled' ] );
+						$subject = isset( $options[ $type . '_subject' ] ) ? (string) $options[ $type . '_subject' ] : $this->default_notification_subjects()[ $type ];
+						$message = isset( $options[ $type . '_message' ] ) ? (string) $options[ $type . '_message' ] : $this->default_notification_messages()[ $type ];
+						?>
+						<div class="sbm-settings-help">
+							<h3><?php echo esc_html( $label ); ?></h3>
+							<label>
+								<input type="checkbox" name="sbm_settings[<?php echo esc_attr( $type ); ?>_enabled]" value="1" <?php checked( $enabled ); ?> />
+								<?php echo esc_html__( 'Enable this notification', 'studio-booking-manager' ); ?>
+							</label>
+							<p>
+								<label for="sbm-<?php echo esc_attr( $type ); ?>-subject"><?php echo esc_html__( 'Subject', 'studio-booking-manager' ); ?></label><br>
+								<input id="sbm-<?php echo esc_attr( $type ); ?>-subject" type="text" class="large-text" name="sbm_settings[<?php echo esc_attr( $type ); ?>_subject]" value="<?php echo esc_attr( $subject ); ?>" />
+							</p>
+							<p>
+								<label for="sbm-<?php echo esc_attr( $type ); ?>-message"><?php echo esc_html__( 'Message', 'studio-booking-manager' ); ?></label><br>
+								<textarea id="sbm-<?php echo esc_attr( $type ); ?>-message" class="large-text" rows="5" name="sbm_settings[<?php echo esc_attr( $type ); ?>_message]"><?php echo esc_textarea( $message ); ?></textarea>
+							</p>
+						</div>
+					<?php endforeach; ?>
+					<p class="description"><?php echo esc_html__( 'Available placeholders: {business_name}, {person_name}, {person_email}, {location_name}, {starts_at}, {ends_at}, {booking_id}, {status}, {pass_name}, {access_id}, {error}.', 'studio-booking-manager' ); ?></p>
 				</section>
 
 				<section id="advanced" class="sbm-card">
@@ -306,5 +404,50 @@ final class SettingsPage {
 			</form>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Notification types.
+	 *
+	 * @return array<string,string>
+	 */
+	private function notification_types(): array {
+		return array(
+			'booking_confirmation' => __( 'Booking confirmation', 'studio-booking-manager' ),
+			'booking_update'       => __( 'Booking update', 'studio-booking-manager' ),
+			'booking_cancellation' => __( 'Booking cancellation', 'studio-booking-manager' ),
+			'pass_issued'          => __( 'Pass issued', 'studio-booking-manager' ),
+			'calendar_sync_failed' => __( 'Calendar sync failed', 'studio-booking-manager' ),
+		);
+	}
+
+	/**
+	 * Default notification subjects.
+	 *
+	 * @return array<string,string>
+	 */
+	private function default_notification_subjects(): array {
+		return array(
+			'booking_confirmation' => __( 'Your booking at {business_name}', 'studio-booking-manager' ),
+			'booking_update'       => __( 'Your booking was updated', 'studio-booking-manager' ),
+			'booking_cancellation' => __( 'Your booking was cancelled', 'studio-booking-manager' ),
+			'pass_issued'          => __( 'Your {pass_name} is ready', 'studio-booking-manager' ),
+			'calendar_sync_failed' => __( 'Calendar sync failed for booking #{booking_id}', 'studio-booking-manager' ),
+		);
+	}
+
+	/**
+	 * Default notification messages.
+	 *
+	 * @return array<string,string>
+	 */
+	private function default_notification_messages(): array {
+		return array(
+			'booking_confirmation' => __( "Hi {person_name},\n\nYour booking at {location_name} is confirmed for {starts_at} to {ends_at}.\n\nThank you,\n{business_name}", 'studio-booking-manager' ),
+			'booking_update'       => __( "Hi {person_name},\n\nYour booking at {location_name} was updated. Current time: {starts_at} to {ends_at}.\n\nThank you,\n{business_name}", 'studio-booking-manager' ),
+			'booking_cancellation' => __( "Hi {person_name},\n\nYour booking at {location_name} for {starts_at} has been cancelled.\n\nThank you,\n{business_name}", 'studio-booking-manager' ),
+			'pass_issued'          => __( "Hi {person_name},\n\nYour {pass_name} for {location_name} is ready.\n\nThank you,\n{business_name}", 'studio-booking-manager' ),
+			'calendar_sync_failed' => __( "Calendar sync failed for booking #{booking_id} at {location_name}.\n\nError: {error}", 'studio-booking-manager' ),
+		);
 	}
 }

@@ -167,3 +167,25 @@
 	border-radius: 8px;
 	padding: 12px;
 }
+
+.sbm-qr-output {
+	text-align: center;
+}
+
+.sbm-qr-code {
+	margin: 0 auto 16px;
+	max-width: 360px;
+}
+
+.sbm-qr-code canvas,
+.sbm-qr-code svg {
+	height: auto;
+	max-width: 100%;
+}
+
+.sbm-qr-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	justify-content: center;
+}
