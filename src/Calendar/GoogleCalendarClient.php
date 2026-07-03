@@ -207,6 +207,10 @@ final class GoogleCalendarClient {
 		$json = isset( $this->settings['google_calendar_service_account_json'] ) ? (string) $this->settings['google_calendar_service_account_json'] : '';
 		$data = json_decode( $json, true );
 
+		if ( '' !== trim( $json ) && ! is_array( $data ) ) {
+			$this->last_error = __( 'Google Calendar service account JSON could not be decoded. Paste the full JSON key file contents.', 'studio-booking-manager' );
+		}
+
 		return is_array( $data ) ? $data : array();
 	}
 
@@ -217,7 +221,7 @@ final class GoogleCalendarClient {
 	 * @param string              $private_key Private key.
 	 */
 	private function jwt( array $claims, string $private_key ): string {
-		if ( ! function_exists( 'openssl_sign' ) ) {
+		if ( ! function_exists( 'openssl_sign' ) || ! function_exists( 'openssl_pkey_get_private' ) ) {
 			$this->last_error = __( 'Google Calendar sync requires the PHP OpenSSL extension.', 'studio-booking-manager' );
 			return '';
 		}
@@ -232,17 +236,54 @@ final class GoogleCalendarClient {
 			$this->base64url( (string) wp_json_encode( $claims ) ),
 		);
 
+		$private_key = $this->normalize_private_key( $private_key );
+		$key         = openssl_pkey_get_private( $private_key );
+
+		if ( false === $key ) {
+			$this->last_error = __( 'Google Calendar private key could not be read. Paste the full service account JSON key file, including the BEGIN PRIVATE KEY block.', 'studio-booking-manager' );
+			return '';
+		}
+
 		$signature = '';
-		$signed    = openssl_sign( implode( '.', $segments ), $signature, $private_key, 'sha256WithRSAEncryption' );
+		$signed    = openssl_sign( implode( '.', $segments ), $signature, $key, 'sha256WithRSAEncryption' );
 
 		if ( ! $signed ) {
-			$this->last_error = __( 'Could not sign Google Calendar authentication request.', 'studio-booking-manager' );
+			$this->last_error = $this->openssl_error();
 			return '';
 		}
 
 		$segments[] = $this->base64url( $signature );
 
 		return implode( '.', $segments );
+	}
+
+	/**
+	 * Normalize a private key from JSON storage.
+	 *
+	 * @param string $private_key Private key value.
+	 */
+	private function normalize_private_key( string $private_key ): string {
+		$private_key = trim( $private_key );
+		$private_key = str_replace( array( "\r\n", "\r", '\\n' ), "\n", $private_key );
+
+		return $private_key . "\n";
+	}
+
+	/**
+	 * Get a safe OpenSSL error message.
+	 */
+	private function openssl_error(): string {
+		$error = function_exists( 'openssl_error_string' ) ? openssl_error_string() : false;
+
+		if ( is_string( $error ) && '' !== $error ) {
+			return sprintf(
+				/* translators: %s: OpenSSL error. */
+				__( 'Could not sign Google Calendar authentication request: %s', 'studio-booking-manager' ),
+				sanitize_text_field( $error )
+			);
+		}
+
+		return __( 'Could not sign Google Calendar authentication request.', 'studio-booking-manager' );
 	}
 
 	/**

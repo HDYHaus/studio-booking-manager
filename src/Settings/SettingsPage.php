@@ -238,6 +238,7 @@ final class SettingsPage {
 							<td>
 								<textarea id="sbm-google-calendar-service-account" class="large-text code" rows="8" name="sbm_settings[google_calendar_service_account_json]" placeholder="<?php echo esc_attr( $has_credentials ? __( 'Service account JSON is already saved. Leave blank to keep it.', 'studio-booking-manager' ) : '' ); ?>"></textarea>
 								<p class="description"><?php echo esc_html__( 'Paste the entire downloaded JSON key file, including client_email and private_key. Do not paste only the private key.', 'studio-booking-manager' ); ?></p>
+								<p class="description"><?php echo esc_html__( 'If signing fails, download a fresh JSON key and paste the untouched file contents. The private_key value should include a BEGIN PRIVATE KEY block.', 'studio-booking-manager' ); ?></p>
 								<?php if ( $has_credentials ) : ?>
 									<p class="description"><?php echo esc_html__( 'Credentials are saved and hidden.', 'studio-booking-manager' ); ?></p>
 								<?php endif; ?>
