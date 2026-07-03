@@ -20,6 +20,7 @@ use StudioBookingManager\Operations\OperationsAdmin;
 use StudioBookingManager\PassTypes\PassTypeAdmin;
 use StudioBookingManager\People\PersonAdmin;
 use StudioBookingManager\QR\QRAdmin;
+use StudioBookingManager\Reports\ReportsAdmin;
 use StudioBookingManager\Roles\RoleInstaller;
 use StudioBookingManager\Settings\SettingsPage;
 use StudioBookingManager\Visits\VisitAdmin;
@@ -65,6 +66,7 @@ final class Plugin {
 		( new PassTypeAdmin() )->register();
 		( new OperationsAdmin() )->register();
 		( new QRAdmin() )->register();
+		( new ReportsAdmin() )->register();
 		( new AdminMenu() )->register();
 		( new SettingsPage() )->register();
 		( new MemberScheduleShortcode() )->register();
