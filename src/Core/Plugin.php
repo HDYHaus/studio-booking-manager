@@ -9,6 +9,7 @@ namespace StudioBookingManager\Core;
 
 use StudioBookingManager\Access\AccessAdmin;
 use StudioBookingManager\Bookings\BookingAdmin;
+use StudioBookingManager\Calendar\GoogleCalendarSync;
 use StudioBookingManager\Commerce\WooCommerce\OrderListener;
 use StudioBookingManager\Admin\AdminAssets;
 use StudioBookingManager\Admin\AdminMenu;
@@ -58,6 +59,7 @@ final class Plugin {
 		( new PersonAdmin() )->register();
 		( new AccessAdmin() )->register();
 		( new BookingAdmin() )->register();
+		( new GoogleCalendarSync() )->register();
 		( new VisitAdmin() )->register();
 		( new PassTypeAdmin() )->register();
 		( new OperationsAdmin() )->register();

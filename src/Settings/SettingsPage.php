@@ -101,6 +101,21 @@ final class SettingsPage {
 			$clean['default_timezone'] = sanitize_text_field( $settings['default_timezone'] );
 		}
 
+		$clean['google_calendar_enabled'] = ! empty( $settings['google_calendar_enabled'] ) ? 1 : 0;
+
+		if ( isset( $settings['google_calendar_id'] ) ) {
+			$clean['google_calendar_id'] = sanitize_text_field( $settings['google_calendar_id'] );
+		}
+
+		if ( isset( $settings['google_calendar_service_account_json'] ) && '' !== trim( (string) $settings['google_calendar_service_account_json'] ) ) {
+			$clean['google_calendar_service_account_json'] = trim( wp_unslash( (string) $settings['google_calendar_service_account_json'] ) );
+		} else {
+			$current = get_option( 'sbm_settings', array() );
+			if ( is_array( $current ) && isset( $current['google_calendar_service_account_json'] ) ) {
+				$clean['google_calendar_service_account_json'] = (string) $current['google_calendar_service_account_json'];
+			}
+		}
+
 		return $clean;
 	}
 
@@ -119,6 +134,9 @@ final class SettingsPage {
 
 		$business_name   = isset( $options['business_name'] ) ? (string) $options['business_name'] : get_bloginfo( 'name' );
 		$default_timezone = isset( $options['default_timezone'] ) ? (string) $options['default_timezone'] : wp_timezone_string();
+		$calendar_enabled = ! empty( $options['google_calendar_enabled'] );
+		$calendar_id      = isset( $options['google_calendar_id'] ) ? (string) $options['google_calendar_id'] : '';
+		$has_credentials  = ! empty( $options['google_calendar_service_account_json'] );
 		?>
 		<div class="wrap sbm-admin-page">
 			<h1><?php echo esc_html__( 'Studio Booking Manager Settings', 'studio-booking-manager' ); ?></h1>
@@ -159,7 +177,38 @@ final class SettingsPage {
 
 				<section id="google-calendar" class="sbm-card">
 					<h2><?php echo esc_html__( 'Google Calendar', 'studio-booking-manager' ); ?></h2>
-					<p><?php echo esc_html__( 'Google Calendar will be added as an optional integration in a future release.', 'studio-booking-manager' ); ?></p>
+					<table class="form-table" role="presentation">
+						<tr>
+							<th scope="row"><?php echo esc_html__( 'Enable sync', 'studio-booking-manager' ); ?></th>
+							<td>
+								<label for="sbm-google-calendar-enabled">
+									<input id="sbm-google-calendar-enabled" type="checkbox" name="sbm_settings[google_calendar_enabled]" value="1" <?php checked( $calendar_enabled ); ?> />
+									<?php echo esc_html__( 'Sync bookings to Google Calendar', 'studio-booking-manager' ); ?>
+								</label>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row">
+								<label for="sbm-google-calendar-id"><?php echo esc_html__( 'Calendar ID', 'studio-booking-manager' ); ?></label>
+							</th>
+							<td>
+								<input id="sbm-google-calendar-id" type="text" class="regular-text" name="sbm_settings[google_calendar_id]" value="<?php echo esc_attr( $calendar_id ); ?>" />
+								<p class="description"><?php echo esc_html__( 'Use the calendar address from Google Calendar settings, such as primary or a shared calendar ID.', 'studio-booking-manager' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row">
+								<label for="sbm-google-calendar-service-account"><?php echo esc_html__( 'Service account JSON', 'studio-booking-manager' ); ?></label>
+							</th>
+							<td>
+								<textarea id="sbm-google-calendar-service-account" class="large-text code" rows="8" name="sbm_settings[google_calendar_service_account_json]" placeholder="<?php echo esc_attr( $has_credentials ? __( 'Service account JSON is already saved. Leave blank to keep it.', 'studio-booking-manager' ) : '' ); ?>"></textarea>
+								<p class="description"><?php echo esc_html__( 'Paste the Google Cloud service account JSON. Share the target calendar with the service account email.', 'studio-booking-manager' ); ?></p>
+								<?php if ( $has_credentials ) : ?>
+									<p class="description"><?php echo esc_html__( 'Credentials are saved and hidden.', 'studio-booking-manager' ); ?></p>
+								<?php endif; ?>
+							</td>
+						</tr>
+					</table>
 				</section>
 
 				<section id="qr-codes" class="sbm-card">

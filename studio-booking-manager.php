@@ -23,7 +23,7 @@ if ( ! defined( 'SBM_VERSION' ) ) {
 }
 
 if ( ! defined( 'SBM_DB_VERSION' ) ) {
-	define( 'SBM_DB_VERSION', '0.7.0' );
+	define( 'SBM_DB_VERSION', '0.8.0' );
 }
 
 if ( ! defined( 'SBM_PLUGIN_FILE' ) ) {

@@ -148,6 +148,9 @@ final class Installer {
 			guest_count int(11) unsigned NOT NULL DEFAULT 0,
 			guest_names longtext NULL,
 			calendar_event_id varchar(190) NULL,
+			calendar_sync_status varchar(20) NOT NULL DEFAULT 'not_synced',
+			calendar_sync_error text NULL,
+			calendar_synced_at datetime NULL,
 			notes longtext NULL,
 			created_at datetime NOT NULL,
 			updated_at datetime NOT NULL,
@@ -158,7 +161,8 @@ final class Installer {
 			KEY status (status),
 			KEY starts_at (starts_at),
 			KEY ends_at (ends_at),
-			KEY calendar_event_id (calendar_event_id)
+			KEY calendar_event_id (calendar_event_id),
+			KEY calendar_sync_status (calendar_sync_status)
 		) $charset_collate;";
 
 		foreach ( $sql as $statement ) {

@@ -174,6 +174,15 @@ final class BookingRepository {
 			return false;
 		}
 
+		$existing = $this->find( $id );
+		if ( $existing instanceof \stdClass ) {
+			foreach ( array( 'calendar_event_id', 'calendar_sync_status', 'calendar_sync_error', 'calendar_synced_at' ) as $key ) {
+				if ( ! array_key_exists( $key, $data ) && isset( $existing->{$key} ) ) {
+					$data[ $key ] = $existing->{$key};
+				}
+			}
+		}
+
 		$data               = $this->prepare_for_storage( $data );
 		$data['updated_at'] = current_time( 'mysql' );
 
@@ -242,6 +251,48 @@ final class BookingRepository {
 	}
 
 	/**
+	 * Update calendar sync fields for a booking.
+	 *
+	 * @param int    $id Booking ID.
+	 * @param string $status Sync status.
+	 * @param string $error Sync error message.
+	 * @param string $event_id Calendar event ID.
+	 * @return bool
+	 */
+	public function update_calendar_sync( int $id, string $status, string $error = '', string $event_id = '' ): bool {
+		if ( $id <= 0 ) {
+			return false;
+		}
+
+		$status = sanitize_key( $status );
+		if ( ! in_array( $status, array( 'not_synced', 'disabled', 'synced', 'failed', 'deleted' ), true ) ) {
+			$status = 'not_synced';
+		}
+
+		$data = array(
+			'calendar_sync_status' => $status,
+			'calendar_sync_error'  => sanitize_textarea_field( $error ),
+			'calendar_synced_at'   => in_array( $status, array( 'synced', 'deleted' ), true ) ? current_time( 'mysql' ) : null,
+			'updated_at'           => current_time( 'mysql' ),
+		);
+
+		$formats = array( '%s', '%s', '%s', '%s' );
+
+		if ( 'deleted' === $status ) {
+			$data['calendar_event_id'] = '';
+			$formats[]                 = '%s';
+		} elseif ( '' !== $event_id ) {
+			$data['calendar_event_id'] = sanitize_text_field( $event_id );
+			$formats[]                 = '%s';
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom operational table update.
+		$updated = $this->wpdb->update( $this->table, $data, array( 'id' => $id ), $formats, array( '%d' ) );
+
+		return false !== $updated;
+	}
+
+	/**
 	 * Determine whether a location has an overlapping booking.
 	 *
 	 * @param int    $location_id Location ID.
@@ -297,6 +348,9 @@ final class BookingRepository {
 			'guest_count'     => isset( $data['guest_count'] ) ? absint( $data['guest_count'] ) : 0,
 			'guest_names'     => isset( $data['guest_names'] ) ? sanitize_textarea_field( (string) $data['guest_names'] ) : '',
 			'calendar_event_id' => isset( $data['calendar_event_id'] ) ? sanitize_text_field( (string) $data['calendar_event_id'] ) : '',
+			'calendar_sync_status' => isset( $data['calendar_sync_status'] ) ? sanitize_key( (string) $data['calendar_sync_status'] ) : 'not_synced',
+			'calendar_sync_error' => isset( $data['calendar_sync_error'] ) ? sanitize_textarea_field( (string) $data['calendar_sync_error'] ) : '',
+			'calendar_synced_at' => isset( $data['calendar_synced_at'] ) ? sanitize_text_field( (string) $data['calendar_synced_at'] ) : null,
 			'notes'           => isset( $data['notes'] ) ? sanitize_textarea_field( (string) $data['notes'] ) : '',
 		);
 	}
