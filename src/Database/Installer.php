@@ -165,6 +165,25 @@ final class Installer {
 			KEY calendar_sync_status (calendar_sync_status)
 		) $charset_collate;";
 
+		$sql[] = "CREATE TABLE " . Tables::get( 'notifications' ) . " (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			notification_type varchar(60) NOT NULL,
+			recipient_email varchar(190) NOT NULL DEFAULT '',
+			recipient_name varchar(190) NOT NULL DEFAULT '',
+			subject text NOT NULL,
+			message longtext NULL,
+			status varchar(20) NOT NULL DEFAULT 'pending',
+			error_message text NULL,
+			context longtext NULL,
+			sent_at datetime NULL,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY notification_type (notification_type),
+			KEY recipient_email (recipient_email),
+			KEY status (status),
+			KEY created_at (created_at)
+		) $charset_collate;";
+
 		foreach ( $sql as $statement ) {
 			dbDelta( $statement );
 		}

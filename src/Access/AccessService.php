@@ -63,6 +63,16 @@ final class AccessService {
 	}
 
 	/**
+	 * Get customer-visible access records for a person.
+	 *
+	 * @param int $person_id Person ID.
+	 * @return array<int, object>
+	 */
+	public function for_person( int $person_id ): array {
+		return $this->repository->for_person( $person_id );
+	}
+
+	/**
 	 * Save an access record.
 	 *
 	 * @param array<string, mixed> $data Access data.

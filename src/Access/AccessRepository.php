@@ -136,6 +136,38 @@ final class AccessRepository {
 	}
 
 	/**
+	 * Get customer-visible access records for a person.
+	 *
+	 * @param int $person_id Person ID.
+	 * @return array<int, object>
+	 */
+	public function for_person( int $person_id ): array {
+		if ( $person_id <= 0 ) {
+			return array();
+		}
+
+		$locations_table = Tables::get( 'locations' );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names come from the trusted Tables registry.
+		$query = $this->wpdb->prepare(
+			"SELECT access.*, locations.name AS location_name
+			FROM `{$this->table}` access
+			LEFT JOIN `{$locations_table}` locations ON locations.id = access.location_id
+			WHERE access.person_id = %d
+			AND access.status <> %s
+			ORDER BY access.status ASC, access.expires_at IS NULL ASC, access.expires_at ASC, access.created_at DESC",
+			$person_id,
+			'archived'
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Custom operational table query with trusted table names and prepared values.
+		$records = $this->wpdb->get_results( $query );
+
+		return is_array( $records ) ? $records : array();
+	}
+
+	/**
 	 * Create an access record.
 	 *
 	 * @param array<string, mixed> $data Access data.
