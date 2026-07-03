@@ -9,6 +9,7 @@ namespace StudioBookingManager\People;
 
 use StudioBookingManager\Admin\AbstractAdminPage;
 use StudioBookingManager\Admin\PageHeader;
+use StudioBookingManager\QR\QRService;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -164,7 +165,7 @@ final class PersonAdmin extends AbstractAdminPage {
 								<td>
 									<strong><?php echo esc_html( $person->display_name ); ?></strong>
 									<div class="row-actions">
-										<span class="edit"><a href="<?php echo esc_url( $this->edit_url( (int) $person->id ) ); ?>"><?php echo esc_html__( 'Edit', 'studio-booking-manager' ); ?></a></span> | <span class="qr"><a href="<?php echo esc_url( $this->qr_checkin_url( (string) $person->qr_token ) ); ?>"><?php echo esc_html__( 'QR Check-in', 'studio-booking-manager' ); ?></a></span>
+										<span class="edit"><a href="<?php echo esc_url( $this->edit_url( (int) $person->id ) ); ?>"><?php echo esc_html__( 'Edit', 'studio-booking-manager' ); ?></a></span> | <span class="qr"><a href="<?php echo esc_url( $this->qr_view_url( (int) $person->id ) ); ?>"><?php echo esc_html__( 'QR Code', 'studio-booking-manager' ); ?></a></span> | <span class="checkin"><a href="<?php echo esc_url( $this->qr_checkin_url( $person ) ); ?>"><?php echo esc_html__( 'QR Check-in', 'studio-booking-manager' ); ?></a></span>
 									</div>
 								</td>
 								<td><?php echo esc_html( (string) $person->email ); ?></td>
@@ -189,7 +190,8 @@ final class PersonAdmin extends AbstractAdminPage {
 	private function render_row_actions( object $person ): void {
 		?>
 		<a class="button button-small" href="<?php echo esc_url( $this->edit_url( (int) $person->id ) ); ?>"><?php echo esc_html__( 'Edit', 'studio-booking-manager' ); ?></a>
-		<a class="button button-small" href="<?php echo esc_url( $this->qr_checkin_url( (string) $person->qr_token ) ); ?>"><?php echo esc_html__( 'QR Check-in', 'studio-booking-manager' ); ?></a>
+		<a class="button button-small" href="<?php echo esc_url( $this->qr_view_url( (int) $person->id ) ); ?>"><?php echo esc_html__( 'QR Code', 'studio-booking-manager' ); ?></a>
+		<a class="button button-small" href="<?php echo esc_url( $this->qr_checkin_url( $person ) ); ?>"><?php echo esc_html__( 'QR Check-in', 'studio-booking-manager' ); ?></a>
 		<form class="sbm-inline-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<?php wp_nonce_field( 'sbm_archive_person' ); ?>
 			<input type="hidden" name="action" value="sbm_archive_person">
@@ -243,7 +245,13 @@ final class PersonAdmin extends AbstractAdminPage {
 						<?php if ( $is_edit ) : ?>
 							<tr>
 								<th scope="row"><?php echo esc_html__( 'QR Identity', 'studio-booking-manager' ); ?></th>
-								<td><code><?php echo esc_html( (string) $person->qr_token ); ?></code><p class="description"><?php echo esc_html__( 'This permanent identity will be used for future QR check-in.', 'studio-booking-manager' ); ?></p></td>
+								<td>
+									<code><?php echo esc_html( (string) $person->qr_token ); ?></code>
+									<p class="description"><?php echo esc_html__( 'Regenerate this token to revoke existing QR codes for this person.', 'studio-booking-manager' ); ?></p>
+									<p>
+										<a class="button" href="<?php echo esc_url( $this->qr_view_url( (int) $person->id ) ); ?>"><?php echo esc_html__( 'View QR Code', 'studio-booking-manager' ); ?></a>
+									</p>
+								</td>
 							</tr>
 						<?php endif; ?>
 						<tr>
@@ -299,16 +307,26 @@ final class PersonAdmin extends AbstractAdminPage {
 
 
 	/**
-	 * Create QR check-in URL for a person token.
+	 * Create QR check-in URL for a person.
 	 *
-	 * @param string $token QR identity token.
+	 * @param object $person Person row.
 	 * @return string
 	 */
-	private function qr_checkin_url( string $token ): string {
+	private function qr_checkin_url( object $person ): string {
+		return ( new QRService() )->person_checkin_url( $person );
+	}
+
+	/**
+	 * Create QR view URL.
+	 *
+	 * @param int $id Person ID.
+	 */
+	private function qr_view_url( int $id ): string {
 		return add_query_arg(
 			array(
-				'page'  => 'sbm-qr-checkin',
-				'token' => rawurlencode( $token ),
+				'page'      => 'sbm-qr-checkin',
+				'action'    => 'person',
+				'person_id' => $id,
 			),
 			admin_url( 'admin.php' )
 		);
