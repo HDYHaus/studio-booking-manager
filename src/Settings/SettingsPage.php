@@ -116,6 +116,12 @@ final class SettingsPage {
 			}
 		}
 
+		$clean['qr_token_lifetime_days'] = isset( $settings['qr_token_lifetime_days'] ) ? max( 0, min( 3650, absint( $settings['qr_token_lifetime_days'] ) ) ) : 365;
+		$destination = isset( $settings['qr_destination'] ) ? sanitize_key( (string) $settings['qr_destination'] ) : 'admin_checkin';
+		$clean['qr_destination'] = in_array( $destination, array( 'admin_checkin' ), true ) ? $destination : 'admin_checkin';
+		$clean['qr_show_person_name']  = ! empty( $settings['qr_show_person_name'] ) ? 1 : 0;
+		$clean['qr_show_person_email'] = ! empty( $settings['qr_show_person_email'] ) ? 1 : 0;
+
 		return $clean;
 	}
 
@@ -177,6 +183,10 @@ final class SettingsPage {
 		$calendar_enabled = ! empty( $options['google_calendar_enabled'] );
 		$calendar_id      = isset( $options['google_calendar_id'] ) ? (string) $options['google_calendar_id'] : '';
 		$has_credentials  = ! empty( $options['google_calendar_service_account_json'] );
+		$qr_lifetime_days = isset( $options['qr_token_lifetime_days'] ) ? absint( $options['qr_token_lifetime_days'] ) : 365;
+		$qr_destination   = isset( $options['qr_destination'] ) ? (string) $options['qr_destination'] : 'admin_checkin';
+		$qr_show_name     = ! isset( $options['qr_show_person_name'] ) || ! empty( $options['qr_show_person_name'] );
+		$qr_show_email    = ! empty( $options['qr_show_person_email'] );
 		?>
 		<div class="wrap sbm-admin-page">
 			<h1><?php echo esc_html__( 'Studio Booking Manager Settings', 'studio-booking-manager' ); ?></h1>
@@ -289,7 +299,43 @@ final class SettingsPage {
 
 				<section id="qr-codes" class="sbm-card">
 					<h2><?php echo esc_html__( 'QR Codes', 'studio-booking-manager' ); ?></h2>
-					<p><?php echo esc_html__( 'QR identity settings will be added when the People and Visits modules are active.', 'studio-booking-manager' ); ?></p>
+					<p><?php echo esc_html__( 'Configure the signed QR links used for person check-in. Regenerating a person QR token immediately revokes older QR codes for that person.', 'studio-booking-manager' ); ?></p>
+					<table class="form-table" role="presentation">
+						<tr>
+							<th scope="row">
+								<label for="sbm-qr-token-lifetime-days"><?php echo esc_html__( 'QR link lifetime', 'studio-booking-manager' ); ?></label>
+							</th>
+							<td>
+								<input id="sbm-qr-token-lifetime-days" type="number" min="0" max="3650" class="small-text" name="sbm_settings[qr_token_lifetime_days]" value="<?php echo esc_attr( (string) $qr_lifetime_days ); ?>" />
+								<?php echo esc_html__( 'days', 'studio-booking-manager' ); ?>
+								<p class="description"><?php echo esc_html__( 'Use 0 for QR links that never expire. Tokens are still revocable by regenerating the person QR token.', 'studio-booking-manager' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row">
+								<label for="sbm-qr-destination"><?php echo esc_html__( 'Check-in destination', 'studio-booking-manager' ); ?></label>
+							</th>
+							<td>
+								<select id="sbm-qr-destination" name="sbm_settings[qr_destination]">
+									<option value="admin_checkin" <?php selected( $qr_destination, 'admin_checkin' ); ?>><?php echo esc_html__( 'Staff QR Check-in screen', 'studio-booking-manager' ); ?></option>
+								</select>
+								<p class="description"><?php echo esc_html__( 'QR codes currently open the staff check-in workflow. Customer-facing destinations can be added with self-service.', 'studio-booking-manager' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><?php echo esc_html__( 'Printed label details', 'studio-booking-manager' ); ?></th>
+							<td>
+								<label>
+									<input type="checkbox" name="sbm_settings[qr_show_person_name]" value="1" <?php checked( $qr_show_name ); ?> />
+									<?php echo esc_html__( 'Show person name', 'studio-booking-manager' ); ?>
+								</label><br>
+								<label>
+									<input type="checkbox" name="sbm_settings[qr_show_person_email]" value="1" <?php checked( $qr_show_email ); ?> />
+									<?php echo esc_html__( 'Show person email', 'studio-booking-manager' ); ?>
+								</label>
+							</td>
+						</tr>
+					</table>
 				</section>
 
 				<section id="notifications" class="sbm-card">
