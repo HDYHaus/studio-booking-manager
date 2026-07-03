@@ -12,6 +12,7 @@ use StudioBookingManager\Access\Validators\AccessValidationResult;
 use StudioBookingManager\Access\Validators\AccessValidator;
 use StudioBookingManager\Admin\AbstractAdminPage;
 use StudioBookingManager\Admin\PageHeader;
+use StudioBookingManager\Bookings\BookingService;
 use StudioBookingManager\Locations\LocationService;
 use StudioBookingManager\People\PersonService;
 use StudioBookingManager\UI\Badge;
@@ -59,6 +60,13 @@ final class OperationsAdmin extends AbstractAdminPage {
 	private LocationService $locations;
 
 	/**
+	 * Booking service.
+	 *
+	 * @var BookingService
+	 */
+	private BookingService $bookings;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -66,6 +74,7 @@ final class OperationsAdmin extends AbstractAdminPage {
 		$this->people    = new PersonService();
 		$this->access    = new AccessService();
 		$this->locations = new LocationService();
+		$this->bookings  = new BookingService();
 	}
 
 	/**
@@ -110,6 +119,7 @@ final class OperationsAdmin extends AbstractAdminPage {
 		$person_id   = isset( $_POST['person_id'] ) ? absint( wp_unslash( $_POST['person_id'] ) ) : 0;
 		$access_id   = isset( $_POST['access_id'] ) ? absint( wp_unslash( $_POST['access_id'] ) ) : 0;
 		$location_id = isset( $_POST['location_id'] ) ? absint( wp_unslash( $_POST['location_id'] ) ) : 0;
+		$booking_id  = isset( $_POST['booking_id'] ) ? absint( wp_unslash( $_POST['booking_id'] ) ) : 0;
 		$guest_count = isset( $_POST['guest_count'] ) ? absint( wp_unslash( $_POST['guest_count'] ) ) : 0;
 		$guest_names    = isset( $_POST['guest_names'] ) ? sanitize_textarea_field( wp_unslash( $_POST['guest_names'] ) ) : '';
 		$checkin_method = isset( $_POST['checkin_method'] ) ? sanitize_key( wp_unslash( $_POST['checkin_method'] ) ) : 'reception';
@@ -119,6 +129,7 @@ final class OperationsAdmin extends AbstractAdminPage {
 			array(
 				'person_id'      => $person_id,
 				'access_id'      => $access_id,
+				'booking_id'     => $booking_id,
 				'location_id'    => $location_id,
 				'guest_count'    => $guest_count,
 				'guest_names'    => $guest_names,
@@ -127,6 +138,10 @@ final class OperationsAdmin extends AbstractAdminPage {
 		);
 
 		$validation = $this->visits->last_check_in_result();
+
+		if ( $visit_id > 0 ) {
+			$this->complete_booking_for_check_in( $booking_id, $person_id, $location_id );
+		}
 
 		wp_safe_redirect(
 			add_query_arg(
@@ -209,6 +224,7 @@ final class OperationsAdmin extends AbstractAdminPage {
 	 */
 	private function render_person_check_in_card( object $person, array $locations ): void {
 		$access_records = $this->active_access_for_person( (int) $person->id );
+		$bookings       = $this->bookings->upcoming_for_person( (int) $person->id );
 		?>
 		<div class="sbm-card">
 			<h2><?php echo esc_html( (string) $person->display_name ); ?></h2>
@@ -220,6 +236,17 @@ final class OperationsAdmin extends AbstractAdminPage {
 					<?php wp_nonce_field( 'sbm_check_in' ); ?>
 					<input type="hidden" name="action" value="sbm_check_in">
 					<input type="hidden" name="person_id" value="<?php echo esc_attr( (string) absint( $person->id ) ); ?>">
+					<?php if ( ! empty( $bookings ) ) : ?>
+						<p>
+							<label for="sbm-booking-<?php echo esc_attr( (string) absint( $person->id ) ); ?>"><?php echo esc_html__( 'Booking', 'studio-booking-manager' ); ?></label><br>
+							<select id="sbm-booking-<?php echo esc_attr( (string) absint( $person->id ) ); ?>" name="booking_id">
+								<option value=""><?php echo esc_html__( 'No booking selected', 'studio-booking-manager' ); ?></option>
+								<?php foreach ( $bookings as $booking ) : ?>
+									<option value="<?php echo esc_attr( (string) absint( $booking->id ) ); ?>"><?php echo esc_html( $this->booking_label( $booking ) ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</p>
+					<?php endif; ?>
 					<p>
 						<label for="sbm-access-<?php echo esc_attr( (string) absint( $person->id ) ); ?>"><?php echo esc_html__( 'Access', 'studio-booking-manager' ); ?></label><br>
 						<select id="sbm-access-<?php echo esc_attr( (string) absint( $person->id ) ); ?>" name="access_id" required>
@@ -336,6 +363,22 @@ final class OperationsAdmin extends AbstractAdminPage {
 	}
 
 	/**
+	 * Booking label.
+	 *
+	 * @param object $booking Booking row.
+	 * @return string
+	 */
+	private function booking_label( object $booking ): string {
+		return sprintf(
+			/* translators: 1: booking ID, 2: start date/time, 3: end date/time. */
+			__( '#%1$d %2$s to %3$s', 'studio-booking-manager' ),
+			absint( $booking->id ),
+			(string) $booking->starts_at,
+			(string) $booking->ends_at
+		);
+	}
+
+	/**
 	 * Render notices.
 	 */
 	private function render_notice(): void {
@@ -369,6 +412,8 @@ final class OperationsAdmin extends AbstractAdminPage {
 			'guest_limit_exceeded'  => __( 'The selected guest count exceeds this access record\'s guest limit.', 'studio-booking-manager' ),
 			'weekly_limit_reached'  => __( 'This access record has reached its weekly visit limit.', 'studio-booking-manager' ),
 			'booking_required'      => __( 'This access record requires a booking before check-in.', 'studio-booking-manager' ),
+			'booking_invalid'       => __( 'The selected booking is not available for check-in.', 'studio-booking-manager' ),
+			'booking_mismatch'      => __( 'The selected booking does not match this access record.', 'studio-booking-manager' ),
 		);
 
 		return $messages[ $reason ] ?? __( 'Check-in could not be completed.', 'studio-booking-manager' );
@@ -388,5 +433,30 @@ final class OperationsAdmin extends AbstractAdminPage {
 			),
 			admin_url( 'admin.php' )
 		);
+	}
+
+	/**
+	 * Complete a selected booking when it belongs to the check-in context.
+	 *
+	 * @param int $booking_id Booking ID.
+	 * @param int $person_id Person ID.
+	 * @param int $location_id Location ID.
+	 */
+	private function complete_booking_for_check_in( int $booking_id, int $person_id, int $location_id ): void {
+		if ( $booking_id <= 0 ) {
+			return;
+		}
+
+		$booking = $this->bookings->find( $booking_id );
+
+		if ( null === $booking || (int) $booking->person_id !== $person_id || (int) $booking->location_id !== $location_id ) {
+			return;
+		}
+
+		if ( ! in_array( (string) $booking->status, array( 'pending', 'confirmed' ), true ) ) {
+			return;
+		}
+
+		$this->bookings->complete( $booking_id );
 	}
 }

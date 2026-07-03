@@ -16,6 +16,7 @@ final class Capabilities {
 	public const VIEW_DASHBOARD   = 'sbm_view_dashboard';
 	public const MANAGE_PEOPLE    = 'sbm_manage_people';
 	public const MANAGE_ACCESS    = 'sbm_manage_access';
+	public const MANAGE_BOOKINGS  = 'sbm_manage_bookings';
 	public const MANAGE_VISITS    = 'sbm_manage_visits';
 	public const MANAGE_LOCATIONS = 'sbm_manage_locations';
 	public const MANAGE_PASSES    = 'sbm_manage_passes';
@@ -34,6 +35,7 @@ final class Capabilities {
 			self::VIEW_DASHBOARD,
 			self::MANAGE_PEOPLE,
 			self::MANAGE_ACCESS,
+			self::MANAGE_BOOKINGS,
 			self::MANAGE_VISITS,
 			self::MANAGE_LOCATIONS,
 			self::MANAGE_PASSES,
@@ -54,6 +56,7 @@ final class Capabilities {
 			self::VIEW_DASHBOARD,
 			self::CHECK_IN,
 			self::CHECK_OUT,
+			self::MANAGE_BOOKINGS,
 			self::MANAGE_VISITS,
 		);
 	}
@@ -68,6 +71,7 @@ final class Capabilities {
 			self::VIEW_DASHBOARD,
 			self::MANAGE_PEOPLE,
 			self::MANAGE_ACCESS,
+			self::MANAGE_BOOKINGS,
 			self::MANAGE_VISITS,
 			self::MANAGE_LOCATIONS,
 			self::MANAGE_PASSES,

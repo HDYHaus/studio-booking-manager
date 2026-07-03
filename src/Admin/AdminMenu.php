@@ -8,6 +8,7 @@
 namespace StudioBookingManager\Admin;
 
 use StudioBookingManager\Access\AccessAdmin;
+use StudioBookingManager\Bookings\BookingAdmin;
 use StudioBookingManager\Commerce\WooCommerce\CommerceAdmin;
 use StudioBookingManager\Database\Tables;
 use StudioBookingManager\Locations\LocationAdmin;
@@ -84,6 +85,15 @@ final class AdminMenu {
 			'sbm_manage_access',
 			'sbm-access',
 			array( new AccessAdmin(), 'render' )
+		);
+
+		add_submenu_page(
+			'sbm-dashboard',
+			__( 'Bookings', 'studio-booking-manager' ),
+			__( 'Bookings', 'studio-booking-manager' ),
+			'sbm_manage_bookings',
+			'sbm-bookings',
+			array( new BookingAdmin(), 'render' )
 		);
 
 		add_submenu_page(
