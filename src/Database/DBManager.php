@@ -38,6 +38,7 @@ final class DBManager {
 		$required = array(
 			Tables::get( 'pass_types' ),
 			Tables::get( 'bookings' ),
+			Tables::get( 'notifications' ),
 		);
 
 		foreach ( $required as $table ) {
