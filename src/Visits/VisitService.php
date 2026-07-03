@@ -8,6 +8,8 @@
 namespace StudioBookingManager\Visits;
 
 use StudioBookingManager\Access\AccessService;
+use StudioBookingManager\Access\Validators\AccessValidationResult;
+use StudioBookingManager\Access\Validators\AccessValidator;
 use StudioBookingManager\Locations\LocationService;
 use StudioBookingManager\People\PersonService;
 
@@ -23,6 +25,13 @@ final class VisitService {
 	 * @var VisitRepository
 	 */
 	private VisitRepository $repository;
+
+	/**
+	 * Last check-in validation result.
+	 *
+	 * @var AccessValidationResult|null
+	 */
+	private ?AccessValidationResult $last_check_in_result = null;
 
 	/**
 	 * Constructor.
@@ -111,7 +120,6 @@ final class VisitService {
 		$person_id   = isset( $data['person_id'] ) ? absint( $data['person_id'] ) : 0;
 		$location_id = isset( $data['location_id'] ) ? absint( $data['location_id'] ) : 0;
 		$access_id   = isset( $data['access_id'] ) ? absint( $data['access_id'] ) : 0;
-		$guest_count = isset( $data['guest_count'] ) ? absint( $data['guest_count'] ) : 0;
 
 		if ( $person_id <= 0 || $location_id <= 0 || $access_id <= 0 ) {
 			return 0;
@@ -124,9 +132,12 @@ final class VisitService {
 		}
 
 		$access_service = new AccessService();
-		$access         = $this->get_valid_access_for_check_in( $access_service, $access_id, $person_id, $location_id, $guest_count );
+		$access         = $access_service->find( $access_id );
+		$validation     = $this->validate_access( $access, $data );
 
-		if ( null === $access ) {
+		$this->last_check_in_result = $validation;
+
+		if ( ! $validation->is_valid() ) {
 			return 0;
 		}
 
@@ -141,14 +152,22 @@ final class VisitService {
 		if ( $visit_id > 0 ) {
 			$visit = $this->find( $visit_id );
 			if ( null !== $visit ) {
+				$this->consume_access_credit( $access_service, $access );
 				// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- `sbm_` is the documented public API prefix for Studio Booking Manager.
 				do_action( 'sbm_visit_checked_in', $visit );
 			}
-
-			$this->consume_access_credit( $access_service, $access );
 		}
 
 		return $visit_id;
+	}
+
+	/**
+	 * Get the last check-in validation result.
+	 *
+	 * @return AccessValidationResult|null
+	 */
+	public function last_check_in_result(): ?AccessValidationResult {
+		return $this->last_check_in_result;
 	}
 
 	/**
@@ -239,72 +258,48 @@ final class VisitService {
 			return false;
 		}
 
-		return 'active' === (string) $access->status
-			&& (int) $access->person_id === $person_id
-			&& (int) $access->location_id === $location_id;
-	}
-
-	/**
-	 * Get an access record when it is valid for check-in.
-	 *
-	 * @param AccessService $access_service Access service.
-	 * @param int           $access_id Access ID.
-	 * @param int           $person_id Person ID.
-	 * @param int           $location_id Location ID.
-	 * @param int           $guest_count Guest count.
-	 * @return object|null
-	 */
-	private function get_valid_access_for_check_in( AccessService $access_service, int $access_id, int $person_id, int $location_id, int $guest_count ): ?object {
-		$access = $access_service->find( $access_id );
-
-		if ( null === $access || 'active' !== (string) $access->status ) {
-			return null;
-		}
-
 		if ( (int) $access->person_id !== $person_id || (int) $access->location_id !== $location_id ) {
-			return null;
+			return false;
 		}
 
-		$now = current_time( 'mysql' );
-
-		if ( ! empty( $access->starts_at ) && $now < (string) $access->starts_at ) {
-			return null;
+		if ( 'checked_in' !== (string) ( $data['status'] ?? '' ) ) {
+			return 'active' === (string) $access->status;
 		}
 
-		if ( ! empty( $access->expires_at ) && $now > (string) $access->expires_at ) {
-			return null;
-		}
-
-		if ( $guest_count > absint( $access->guest_limit ) ) {
-			return null;
-		}
-
-		if ( 'membership' !== (string) $access->access_type && null !== $access->remaining_credits && absint( $access->remaining_credits ) <= 0 ) {
-			return null;
-		}
-
-		if ( null !== $access->weekly_limit && absint( $access->weekly_limit ) > 0 ) {
-			$week_start = wp_date( 'Y-m-d 00:00:00', strtotime( 'monday this week', current_time( 'timestamp' ) ) );
-
-			if ( $this->repository->count_completed_for_access_since( $access_id, $week_start ) >= absint( $access->weekly_limit ) ) {
-				return null;
-			}
-		}
-
-		return $access;
+		return $this->validate_access( $access, $data )->is_valid();
 	}
 
 	/**
-	 * Consume one credit after a successful check-in.
+	 * Validate access for check-in.
+	 *
+	 * @param object|null         $access Access row.
+	 * @param array<string,mixed> $data Check-in data.
+	 * @return AccessValidationResult
+	 */
+	private function validate_access( ?object $access, array $data ): AccessValidationResult {
+		return ( new AccessValidator() )->validate_check_in(
+			$access,
+			array(
+				'person_id'    => isset( $data['person_id'] ) ? absint( $data['person_id'] ) : 0,
+				'location_id'  => isset( $data['location_id'] ) ? absint( $data['location_id'] ) : 0,
+				'guest_count'  => isset( $data['guest_count'] ) ? absint( $data['guest_count'] ) : 0,
+				'booking_id'   => isset( $data['booking_id'] ) ? absint( $data['booking_id'] ) : 0,
+				'checked_in_at' => isset( $data['checked_in_at'] ) ? (string) $data['checked_in_at'] : current_time( 'mysql' ),
+			)
+		);
+	}
+
+	/**
+	 * Consume one finite credit after a successful check-in.
 	 *
 	 * @param AccessService $access_service Access service.
-	 * @param object        $access Access row.
+	 * @param object|null   $access Access row.
 	 */
-	private function consume_access_credit( AccessService $access_service, object $access ): void {
-		if ( 'membership' === (string) $access->access_type || null === $access->remaining_credits ) {
+	private function consume_access_credit( AccessService $access_service, ?object $access ): void {
+		if ( null === $access || 'membership' === (string) $access->access_type || null === $access->remaining_credits ) {
 			return;
 		}
 
-		$access_service->update_remaining_credits( (int) $access->id, absint( $access->remaining_credits ) - 1 );
+		$access_service->update_remaining_credits( (int) $access->id, max( 0, absint( $access->remaining_credits ) - 1 ) );
 	}
 }

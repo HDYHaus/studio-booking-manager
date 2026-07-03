@@ -8,6 +8,8 @@
 namespace StudioBookingManager\Operations;
 
 use StudioBookingManager\Access\AccessService;
+use StudioBookingManager\Access\Validators\AccessValidationResult;
+use StudioBookingManager\Access\Validators\AccessValidator;
 use StudioBookingManager\Admin\AbstractAdminPage;
 use StudioBookingManager\Admin\PageHeader;
 use StudioBookingManager\Locations\LocationService;
@@ -124,12 +126,15 @@ final class OperationsAdmin extends AbstractAdminPage {
 			)
 		);
 
+		$validation = $this->visits->last_check_in_result();
+
 		wp_safe_redirect(
 			add_query_arg(
 				array(
 					'page'    => 'sbm-operations',
 					'tab'     => $visit_id > 0 ? 'current' : 'check_in',
 					'message' => $visit_id > 0 ? 'checked_in' : 'checkin_error',
+					'reason'  => $validation instanceof AccessValidationResult ? $validation->first_error_code() : '',
 				),
 				admin_url( 'admin.php' )
 			)
@@ -302,7 +307,16 @@ final class OperationsAdmin extends AbstractAdminPage {
 		$records = array();
 
 		foreach ( $this->access->all() as $access ) {
-			if ( (int) $access->person_id === $person_id && 'active' === (string) $access->status ) {
+			$validation = ( new AccessValidator() )->validate_check_in(
+				$access,
+				array(
+					'person_id'   => $person_id,
+					'location_id' => (int) $access->location_id,
+					'guest_count' => 0,
+				)
+			);
+
+			if ( $validation->is_valid() ) {
 				$records[] = $access;
 			}
 		}
@@ -325,14 +339,39 @@ final class OperationsAdmin extends AbstractAdminPage {
 	 * Render notices.
 	 */
 	private function render_notice(): void {
-		$this->render_query_notice(
-			array(
-				'checked_in'     => __( 'Person checked in successfully.', 'studio-booking-manager' ),
-				'checked_out'    => __( 'Visit checked out successfully.', 'studio-booking-manager' ),
-				'checkin_error'  => __( 'Check-in could not be completed.', 'studio-booking-manager' ),
-				'checkout_error' => __( 'Check-out could not be completed.', 'studio-booking-manager' ),
-			)
+		$messages = array(
+			'checked_in'     => __( 'Person checked in successfully.', 'studio-booking-manager' ),
+			'checked_out'    => __( 'Visit checked out successfully.', 'studio-booking-manager' ),
+			'checkin_error'  => $this->check_in_error_message(),
+			'checkout_error' => __( 'Check-out could not be completed.', 'studio-booking-manager' ),
 		);
+
+		$this->render_query_notice( $messages );
+	}
+
+	/**
+	 * Get the current check-in error message.
+	 *
+	 * @return string
+	 */
+	private function check_in_error_message(): string {
+		$reason = isset( $_GET['reason'] ) ? sanitize_key( wp_unslash( $_GET['reason'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+		$messages = array(
+			'access_not_found'      => __( 'The selected access record could not be found.', 'studio-booking-manager' ),
+			'missing_context'       => __( 'A person and location are required for check-in.', 'studio-booking-manager' ),
+			'inactive_access'       => __( 'The selected access record is not active.', 'studio-booking-manager' ),
+			'person_mismatch'       => __( 'The selected access record does not belong to this person.', 'studio-booking-manager' ),
+			'location_mismatch'     => __( 'The selected access record is not valid for this location.', 'studio-booking-manager' ),
+			'access_not_started'    => __( 'This access record is not active yet.', 'studio-booking-manager' ),
+			'access_expired'        => __( 'This access record has expired.', 'studio-booking-manager' ),
+			'no_remaining_credits'  => __( 'This access record has no remaining credits.', 'studio-booking-manager' ),
+			'guest_limit_exceeded'  => __( 'The selected guest count exceeds this access record\'s guest limit.', 'studio-booking-manager' ),
+			'weekly_limit_reached'  => __( 'This access record has reached its weekly visit limit.', 'studio-booking-manager' ),
+			'booking_required'      => __( 'This access record requires a booking before check-in.', 'studio-booking-manager' ),
+		);
+
+		return $messages[ $reason ] ?? __( 'Check-in could not be completed.', 'studio-booking-manager' );
 	}
 
 	/**

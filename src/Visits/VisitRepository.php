@@ -255,7 +255,7 @@ final class VisitRepository {
 	 * @return int
 	 */
 	public function count_completed_for_access_since( int $access_id, string $since ): int {
-		if ( $access_id <= 0 || '' === $since ) {
+		if ( $access_id <= 0 || '' === trim( $since ) ) {
 			return 0;
 		}
 
