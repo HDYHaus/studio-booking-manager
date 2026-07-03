@@ -26,18 +26,19 @@ final class OrderListener {
 	public function register(): void {
 		add_action( 'woocommerce_order_status_processing', array( $this, 'maybe_create_access_from_order' ) );
 		add_action( 'woocommerce_order_status_completed', array( $this, 'maybe_create_access_from_order' ) );
-		add_filter( 'woocommerce_cod_process_payment_order_status', array( $this, 'set_offline_payment_order_status' ) );
-		add_filter( 'woocommerce_bacs_process_payment_order_status', array( $this, 'set_offline_payment_order_status' ) );
+		add_filter( 'woocommerce_cod_process_payment_order_status', array( $this, 'set_offline_payment_order_status' ), 10, 2 );
+		add_filter( 'woocommerce_bacs_process_payment_order_status', array( $this, 'set_offline_payment_order_status' ), 10, 2 );
 	}
 
 	/**
 	 * Set offline payment orders to pending until payment is confirmed.
 	 *
-	 * @param string $status Default WooCommerce order status.
+	 * @param string    $status Default WooCommerce order status.
+	 * @param \WC_Order $order WooCommerce order.
 	 * @return string
 	 */
-	public function set_offline_payment_order_status( string $status ): string {
-		return 'pending';
+	public function set_offline_payment_order_status( string $status, $order = null ): string {
+		return $order instanceof \WC_Order && $this->order_has_access_items( $order ) ? 'pending' : $status;
 	}
 
 	/**
@@ -56,6 +57,10 @@ final class OrderListener {
 			return;
 		}
 
+		if ( ! $this->order_has_access_items( $order ) ) {
+			return;
+		}
+
 		$person_id = $this->get_or_create_person( $order );
 
 		if ( $person_id <= 0 ) {
@@ -67,25 +72,47 @@ final class OrderListener {
 				continue;
 			}
 
-			$existing_access_id = absint( wc_get_order_item_meta( $item_id, '_sbm_access_id', true ) );
-			if ( $existing_access_id > 0 ) {
-				continue;
-			}
-
 			$access_data = $this->get_item_access_data( $item, $person_id, $order );
 
 			if ( empty( $access_data ) ) {
 				continue;
 			}
 
-			$access_id = ( new AccessService() )->save( $access_data );
+			$access_ids = $this->get_order_item_access_ids( (int) $item_id );
+			$quantity   = max( 1, absint( $item->get_quantity() ) );
 
-			if ( $access_id > 0 ) {
-				wc_update_order_item_meta( $item_id, '_sbm_access_id', $access_id );
-				// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- `sbm_` is the documented public API prefix for Studio Booking Manager.
-				do_action( 'sbm_access_created_from_order', $access_id, $order );
+			if ( count( $access_ids ) >= $quantity ) {
+				continue;
+			}
+
+			for ( $i = count( $access_ids ); $i < $quantity; ++$i ) {
+				$access_id = ( new AccessService() )->save( $access_data );
+
+				if ( $access_id > 0 ) {
+					$access_ids[] = $access_id;
+					// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- `sbm_` is the documented public API prefix for Studio Booking Manager.
+					do_action( 'sbm_access_created_from_order', $access_id, $order );
+				}
+			}
+
+			$this->update_order_item_access_ids( (int) $item_id, $access_ids );
+		}
+	}
+
+	/**
+	 * Determine whether an order contains Studio Booking access items.
+	 *
+	 * @param \WC_Order $order WooCommerce order.
+	 * @return bool
+	 */
+	private function order_has_access_items( \WC_Order $order ): bool {
+		foreach ( $order->get_items() as $item ) {
+			if ( $item instanceof \WC_Order_Item_Product && $this->get_item_has_access_config( $item ) ) {
+				return true;
 			}
 		}
+
+		return false;
 	}
 
 	/**
@@ -148,6 +175,25 @@ final class OrderListener {
 		}
 
 		return $this->get_legacy_access_data( $config_id, $person_id, $location_id, $order, $item );
+	}
+
+	/**
+	 * Determine whether an order item has Studio Booking access configuration.
+	 *
+	 * @param \WC_Order_Item_Product $item Order item.
+	 * @return bool
+	 */
+	private function get_item_has_access_config( \WC_Order_Item_Product $item ): bool {
+		$config_id = $this->get_item_config_id( $item );
+
+		if ( $config_id <= 0 || 'yes' !== get_post_meta( $config_id, '_sbm_enabled', true ) ) {
+			return false;
+		}
+
+		$pass_type_id = absint( get_post_meta( $config_id, '_sbm_pass_type_id', true ) );
+		$type         = sanitize_key( (string) get_post_meta( $config_id, '_sbm_access_type', true ) );
+
+		return $pass_type_id > 0 || in_array( $type, array( 'single_visit', 'visit_pass', 'membership' ), true );
 	}
 
 	/**
@@ -272,6 +318,48 @@ final class OrderListener {
 			'variation_id' => $item->get_variation_id(),
 			'metadata'     => $metadata,
 		);
+	}
+
+	/**
+	 * Get access IDs previously created for an order item.
+	 *
+	 * @param int $item_id Order item ID.
+	 * @return int[]
+	 */
+	private function get_order_item_access_ids( int $item_id ): array {
+		$ids = wc_get_order_item_meta( $item_id, '_sbm_access_ids', true );
+
+		if ( ! is_array( $ids ) ) {
+			$ids = array();
+		}
+
+		$legacy_id = absint( wc_get_order_item_meta( $item_id, '_sbm_access_id', true ) );
+
+		if ( $legacy_id > 0 ) {
+			$ids[] = $legacy_id;
+		}
+
+		$ids = array_map( 'absint', $ids );
+		$ids = array_filter( $ids );
+
+		return array_values( array_unique( $ids ) );
+	}
+
+	/**
+	 * Store access IDs created for an order item.
+	 *
+	 * @param int   $item_id Order item ID.
+	 * @param int[] $access_ids Access IDs.
+	 */
+	private function update_order_item_access_ids( int $item_id, array $access_ids ): void {
+		$access_ids = array_values( array_unique( array_filter( array_map( 'absint', $access_ids ) ) ) );
+
+		if ( empty( $access_ids ) ) {
+			return;
+		}
+
+		wc_update_order_item_meta( $item_id, '_sbm_access_ids', $access_ids );
+		wc_update_order_item_meta( $item_id, '_sbm_access_id', $access_ids[0] );
 	}
 
 	/**

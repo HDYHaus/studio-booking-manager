@@ -307,21 +307,28 @@ final class ReportsAdmin extends AbstractAdminPage {
 			);
 		}
 
-		$orders = wc_get_orders(
-			array(
-				'limit'        => 100,
-				'orderby'      => 'date',
-				'order'        => 'DESC',
-				'status'       => array( 'completed', 'processing' ),
-				'date_created' => $start . '...' . $end,
-				'return'       => 'objects',
-			)
-		);
-
 		$total = 0.0;
 		$count = 0;
+		$page  = 1;
+		$limit = 100;
 
-		if ( is_array( $orders ) ) {
+		do {
+			$orders = wc_get_orders(
+				array(
+					'limit'        => $limit,
+					'paged'        => $page,
+					'orderby'      => 'date',
+					'order'        => 'DESC',
+					'status'       => array( 'completed', 'processing' ),
+					'date_created' => $start . '...' . $end,
+					'return'       => 'objects',
+				)
+			);
+
+			if ( ! is_array( $orders ) || empty( $orders ) ) {
+				break;
+			}
+
 			foreach ( $orders as $order ) {
 				if ( ! $order instanceof \WC_Order ) {
 					continue;
@@ -330,7 +337,9 @@ final class ReportsAdmin extends AbstractAdminPage {
 				$total += (float) $order->get_total();
 				++$count;
 			}
-		}
+
+			++$page;
+		} while ( count( $orders ) === $limit );
 
 		return array(
 			'revenue'     => wp_strip_all_tags( wc_price( $total ) ),

@@ -90,6 +90,17 @@ final class AccessService {
 	}
 
 	/**
+	 * Update remaining credits for an access record.
+	 *
+	 * @param int $id Access ID.
+	 * @param int $remaining_credits Remaining credits.
+	 * @return bool
+	 */
+	public function update_remaining_credits( int $id, int $remaining_credits ): bool {
+		return $this->repository->update_remaining_credits( $id, $remaining_credits );
+	}
+
+	/**
 	 * Get available access types.
 	 *
 	 * @return array<string,string>

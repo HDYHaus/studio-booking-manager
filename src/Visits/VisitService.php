@@ -110,8 +110,10 @@ final class VisitService {
 	public function check_in( array $data ): int {
 		$person_id   = isset( $data['person_id'] ) ? absint( $data['person_id'] ) : 0;
 		$location_id = isset( $data['location_id'] ) ? absint( $data['location_id'] ) : 0;
+		$access_id   = isset( $data['access_id'] ) ? absint( $data['access_id'] ) : 0;
+		$guest_count = isset( $data['guest_count'] ) ? absint( $data['guest_count'] ) : 0;
 
-		if ( $person_id <= 0 || $location_id <= 0 ) {
+		if ( $person_id <= 0 || $location_id <= 0 || $access_id <= 0 ) {
 			return 0;
 		}
 
@@ -119,6 +121,13 @@ final class VisitService {
 
 		if ( null !== $current ) {
 			return (int) $current->id;
+		}
+
+		$access_service = new AccessService();
+		$access         = $this->get_valid_access_for_check_in( $access_service, $access_id, $person_id, $location_id, $guest_count );
+
+		if ( null === $access ) {
+			return 0;
 		}
 
 		$data['status']         = 'checked_in';
@@ -135,6 +144,8 @@ final class VisitService {
 				// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- `sbm_` is the documented public API prefix for Studio Booking Manager.
 				do_action( 'sbm_visit_checked_in', $visit );
 			}
+
+			$this->consume_access_credit( $access_service, $access );
 		}
 
 		return $visit_id;
@@ -228,6 +239,72 @@ final class VisitService {
 			return false;
 		}
 
-		return 'active' === (string) $access->status;
+		return 'active' === (string) $access->status
+			&& (int) $access->person_id === $person_id
+			&& (int) $access->location_id === $location_id;
+	}
+
+	/**
+	 * Get an access record when it is valid for check-in.
+	 *
+	 * @param AccessService $access_service Access service.
+	 * @param int           $access_id Access ID.
+	 * @param int           $person_id Person ID.
+	 * @param int           $location_id Location ID.
+	 * @param int           $guest_count Guest count.
+	 * @return object|null
+	 */
+	private function get_valid_access_for_check_in( AccessService $access_service, int $access_id, int $person_id, int $location_id, int $guest_count ): ?object {
+		$access = $access_service->find( $access_id );
+
+		if ( null === $access || 'active' !== (string) $access->status ) {
+			return null;
+		}
+
+		if ( (int) $access->person_id !== $person_id || (int) $access->location_id !== $location_id ) {
+			return null;
+		}
+
+		$now = current_time( 'mysql' );
+
+		if ( ! empty( $access->starts_at ) && $now < (string) $access->starts_at ) {
+			return null;
+		}
+
+		if ( ! empty( $access->expires_at ) && $now > (string) $access->expires_at ) {
+			return null;
+		}
+
+		if ( $guest_count > absint( $access->guest_limit ) ) {
+			return null;
+		}
+
+		if ( 'membership' !== (string) $access->access_type && null !== $access->remaining_credits && absint( $access->remaining_credits ) <= 0 ) {
+			return null;
+		}
+
+		if ( null !== $access->weekly_limit && absint( $access->weekly_limit ) > 0 ) {
+			$week_start = wp_date( 'Y-m-d 00:00:00', strtotime( 'monday this week', current_time( 'timestamp' ) ) );
+
+			if ( $this->repository->count_completed_for_access_since( $access_id, $week_start ) >= absint( $access->weekly_limit ) ) {
+				return null;
+			}
+		}
+
+		return $access;
+	}
+
+	/**
+	 * Consume one credit after a successful check-in.
+	 *
+	 * @param AccessService $access_service Access service.
+	 * @param object        $access Access row.
+	 */
+	private function consume_access_credit( AccessService $access_service, object $access ): void {
+		if ( 'membership' === (string) $access->access_type || null === $access->remaining_credits ) {
+			return;
+		}
+
+		$access_service->update_remaining_credits( (int) $access->id, absint( $access->remaining_credits ) - 1 );
 	}
 }
