@@ -47,6 +47,7 @@ final class BookingAdmin extends AbstractAdminPage {
 	public function register(): void {
 		add_action( 'admin_post_sbm_save_booking', array( $this, 'handle_save' ) );
 		add_action( 'admin_post_sbm_archive_booking', array( $this, 'handle_archive' ) );
+		add_action( 'admin_post_sbm_retry_booking_calendar_sync', array( $this, 'handle_retry_calendar_sync' ) );
 	}
 
 	/**
@@ -123,6 +124,33 @@ final class BookingAdmin extends AbstractAdminPage {
 	}
 
 	/**
+	 * Handle calendar sync retry request.
+	 */
+	public function handle_retry_calendar_sync(): void {
+		$this->verify_admin_request( 'sbm_retry_booking_calendar_sync', __( 'You do not have permission to manage bookings.', 'studio-booking-manager' ) );
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability are verified above.
+		$id      = isset( $_POST['booking_id'] ) ? absint( wp_unslash( $_POST['booking_id'] ) ) : 0;
+		$booking = $this->service->find( $id );
+
+		if ( $booking instanceof \stdClass ) {
+			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- `sbm_` is the documented public API prefix for Studio Booking Manager.
+			do_action( 'sbm_booking_calendar_sync_requested', $booking );
+		}
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'    => 'sbm-bookings',
+					'message' => 'calendar_retry',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
 	 * Render booking list.
 	 */
 	private function render_list(): void {
@@ -171,6 +199,7 @@ final class BookingAdmin extends AbstractAdminPage {
 							<th><?php echo esc_html__( 'Location', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'When', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'Access', 'studio-booking-manager' ); ?></th>
+							<th><?php echo esc_html__( 'Calendar', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'Guests', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'Status', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'Actions', 'studio-booking-manager' ); ?></th>
@@ -178,7 +207,7 @@ final class BookingAdmin extends AbstractAdminPage {
 					</thead>
 					<tbody>
 						<?php if ( empty( $records ) ) : ?>
-							<tr><td colspan="7"><?php echo esc_html__( 'No bookings found.', 'studio-booking-manager' ); ?></td></tr>
+							<tr><td colspan="8"><?php echo esc_html__( 'No bookings found.', 'studio-booking-manager' ); ?></td></tr>
 						<?php endif; ?>
 						<?php foreach ( $records as $record ) : ?>
 							<tr>
@@ -186,6 +215,7 @@ final class BookingAdmin extends AbstractAdminPage {
 								<td><?php echo esc_html( $record->location_name ? (string) $record->location_name : __( 'Unknown location', 'studio-booking-manager' ) ); ?></td>
 								<td><?php echo esc_html( $this->date_range_label( $record ) ); ?></td>
 								<td><?php echo esc_html( $record->access_type ? (string) $record->access_type : __( 'None', 'studio-booking-manager' ) ); ?></td>
+								<td><?php $this->render_calendar_status( $record ); ?></td>
 								<td><?php echo esc_html( (string) absint( $record->guest_count ) ); ?></td>
 								<td><?php echo wp_kses_post( Badge::render( $this->status_label( (string) $record->status ), (string) $record->status ) ); ?></td>
 								<td><?php $this->render_row_actions( $record ); ?></td>
@@ -206,6 +236,14 @@ final class BookingAdmin extends AbstractAdminPage {
 	private function render_row_actions( object $record ): void {
 		?>
 		<a class="button button-small" href="<?php echo esc_url( $this->edit_url( (int) $record->id ) ); ?>"><?php echo esc_html__( 'Edit', 'studio-booking-manager' ); ?></a>
+		<?php if ( isset( $record->calendar_sync_status ) && 'failed' === (string) $record->calendar_sync_status ) : ?>
+			<form class="sbm-inline-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<?php wp_nonce_field( 'sbm_retry_booking_calendar_sync' ); ?>
+				<input type="hidden" name="action" value="sbm_retry_booking_calendar_sync">
+				<input type="hidden" name="booking_id" value="<?php echo esc_attr( (string) absint( $record->id ) ); ?>">
+				<button type="submit" class="button button-small"><?php echo esc_html__( 'Retry Calendar', 'studio-booking-manager' ); ?></button>
+			</form>
+		<?php endif; ?>
 		<form class="sbm-inline-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<?php wp_nonce_field( 'sbm_archive_booking' ); ?>
 			<input type="hidden" name="action" value="sbm_archive_booking">
@@ -293,6 +331,7 @@ final class BookingAdmin extends AbstractAdminPage {
 			array(
 				'saved'          => __( 'Booking saved successfully.', 'studio-booking-manager' ),
 				'archived'       => __( 'Booking archived successfully.', 'studio-booking-manager' ),
+				'calendar_retry' => __( 'Calendar sync retry requested.', 'studio-booking-manager' ),
 				'error'          => __( 'Booking could not be saved.', 'studio-booking-manager' ),
 				'error_missing'  => __( 'Booking requires a person, location, start, and end time.', 'studio-booking-manager' ),
 				'error_time'     => __( 'Booking end time must be after the start time.', 'studio-booking-manager' ),
@@ -300,6 +339,28 @@ final class BookingAdmin extends AbstractAdminPage {
 				'error_conflict' => __( 'This location already has a booking during that time.', 'studio-booking-manager' ),
 			)
 		);
+	}
+
+	/**
+	 * Render calendar sync status.
+	 *
+	 * @param object $record Booking row.
+	 */
+	private function render_calendar_status( object $record ): void {
+		$status = isset( $record->calendar_sync_status ) ? (string) $record->calendar_sync_status : 'not_synced';
+		$labels = array(
+			'not_synced' => __( 'Not synced', 'studio-booking-manager' ),
+			'disabled'   => __( 'Disabled', 'studio-booking-manager' ),
+			'synced'     => __( 'Synced', 'studio-booking-manager' ),
+			'failed'     => __( 'Failed', 'studio-booking-manager' ),
+			'deleted'    => __( 'Deleted', 'studio-booking-manager' ),
+		);
+
+		echo wp_kses_post( Badge::render( $labels[ $status ] ?? ucfirst( $status ), $status ) );
+
+		if ( 'failed' === $status && ! empty( $record->calendar_sync_error ) ) {
+			echo '<p class="description">' . esc_html( (string) $record->calendar_sync_error ) . '</p>';
+		}
 	}
 
 	/**
