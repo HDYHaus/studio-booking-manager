@@ -76,15 +76,6 @@ final class QRService {
 	}
 
 	/**
-	 * Render QR SVG.
-	 *
-	 * @param string $value QR value.
-	 */
-	public function svg( string $value ): string {
-		return QRCode::svg( $value );
-	}
-
-	/**
 	 * Build a person label for QR output.
 	 *
 	 * @param object $person Person row.

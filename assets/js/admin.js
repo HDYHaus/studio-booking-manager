@@ -52,34 +52,6 @@
 		} );
 	}
 
-	function qrCanvas() {
-		return document.querySelector( '.sbm-qr-code canvas' );
-	}
-
-	function downloadQr( event ) {
-		var canvas = qrCanvas();
-
-		if ( ! canvas ) {
-			event.preventDefault();
-			return;
-		}
-
-		event.currentTarget.href = canvas.toDataURL( 'image/png' );
-		event.currentTarget.download = event.currentTarget.getAttribute( 'data-filename' ) || 'qr-code.png';
-	}
-
-	function printQr( event ) {
-		if ( event ) {
-			event.preventDefault();
-		}
-
-		if ( ! qrCanvas() ) {
-			renderQrCodes();
-		}
-
-		window.print();
-	}
-
 	document.addEventListener( 'DOMContentLoaded', function () {
 		var person = document.getElementById( 'sbm-booking-person' );
 		var location = document.getElementById( 'sbm-booking-location' );
@@ -95,17 +67,5 @@
 		}
 
 		renderQrCodes();
-
-		Array.prototype.forEach.call( document.querySelectorAll( '.sbm-qr-download' ), function ( link ) {
-			link.addEventListener( 'click', downloadQr );
-		} );
-
-		Array.prototype.forEach.call( document.querySelectorAll( '.sbm-qr-print' ), function ( button ) {
-			button.addEventListener( 'click', printQr );
-		} );
-
-		if ( document.querySelector( '[data-sbm-auto-print="1"]' ) ) {
-			window.setTimeout( printQr, 400 );
-		}
 	} );
 }() );

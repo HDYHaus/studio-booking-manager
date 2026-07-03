@@ -154,25 +154,3 @@
 	gap: 8px;
 	justify-content: center;
 }
-
-@media print {
-	#adminmenumain,
-	#wpadminbar,
-	.notice,
-	.sbm-qr-actions,
-	.sbm-qr-output form {
-		display: none !important;
-	}
-
-	#wpcontent {
-		margin-left: 0 !important;
-		padding-left: 0 !important;
-	}
-
-	.sbm-admin-page .sbm-card.sbm-qr-output {
-		border: 0;
-		box-shadow: none;
-		margin: 0 auto;
-		max-width: 420px;
-	}
-}
