@@ -13,6 +13,7 @@ use StudioBookingManager\Admin\AdminNotices;
 use StudioBookingManager\IssuePass\IssuePassService;
 use StudioBookingManager\People\PersonService;
 use StudioBookingManager\Locations\LocationService;
+use StudioBookingManager\UI\Badge;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -188,29 +189,34 @@ final class PassTypeAdmin extends AbstractAdminPage {
 				<table class="widefat striped sbm-table">
 					<thead>
 						<tr>
-							<th><?php echo esc_html__( 'Name', 'studio-booking-manager' ); ?></th>
-							<th><?php echo esc_html__( 'Behaviour', 'studio-booking-manager' ); ?></th>
-							<th><?php echo esc_html__( 'Number of Visits', 'studio-booking-manager' ); ?></th>
-							<th><?php echo esc_html__( 'Maximum Visits Per Week', 'studio-booking-manager' ); ?></th>
-							<th><?php echo esc_html__( 'Guest Allowance', 'studio-booking-manager' ); ?></th>
-							<th><?php echo esc_html__( 'Valid For', 'studio-booking-manager' ); ?></th>
+							<th><?php echo esc_html__( 'Pass', 'studio-booking-manager' ); ?></th>
+							<th><?php echo esc_html__( 'Included', 'studio-booking-manager' ); ?></th>
+							<th><?php echo esc_html__( 'Limits', 'studio-booking-manager' ); ?></th>
+							<th><?php echo esc_html__( 'Validity', 'studio-booking-manager' ); ?></th>
+							<th><?php echo esc_html__( 'Requirements', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'Status', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'Actions', 'studio-booking-manager' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
 						<?php if ( empty( $records ) ) : ?>
-							<tr><td colspan="8"><?php echo esc_html__( 'No passes found.', 'studio-booking-manager' ); ?></td></tr>
+							<tr><td colspan="7"><?php echo esc_html__( 'No passes yet. Add one for single visits, visit packs, memberships, or booking-required access.', 'studio-booking-manager' ); ?></td></tr>
 						<?php endif; ?>
 						<?php foreach ( $records as $record ) : ?>
 							<tr>
-								<td><?php echo esc_html( $record->name ); ?><div class="row-actions"><span class="edit"><a href="<?php echo esc_url( $this->edit_url( (int) $record->id ) ); ?>"><?php echo esc_html__( 'Edit', 'studio-booking-manager' ); ?></a></span></div></td>
-								<td><?php echo esc_html( $this->behaviour_label( $record->behaviour ) ); ?></td>
-								<td><?php echo esc_html( $record->number_of_visits ? (string) absint( $record->number_of_visits ) : __( 'Unlimited', 'studio-booking-manager' ) ); ?></td>
-								<td><?php echo esc_html( $record->maximum_visits_per_week ? (string) absint( $record->maximum_visits_per_week ) : __( 'None', 'studio-booking-manager' ) ); ?></td>
-								<td><?php echo esc_html( (string) absint( $record->guest_allowance ) ); ?></td>
-								<td><?php echo esc_html( $record->valid_for ? sprintf( /* translators: %d: number of days. */ __( '%d days', 'studio-booking-manager' ), absint( $record->valid_for ) ) : __( 'No expiry', 'studio-booking-manager' ) ); ?></td>
-								<td><?php echo esc_html( ucfirst( $record->status ) ); ?></td>
+								<td>
+									<span class="sbm-pass-marker sbm-pass-marker-<?php echo esc_attr( $this->behaviour_class( $record->behaviour ) ); ?>" aria-hidden="true"></span>
+									<strong><?php echo esc_html( $record->name ); ?></strong>
+									<div class="description"><?php echo esc_html( $this->behaviour_label( $record->behaviour ) ); ?></div>
+									<?php if ( '' !== $record->description ) : ?>
+										<div class="row-actions"><?php echo esc_html( wp_trim_words( $record->description, 14 ) ); ?></div>
+									<?php endif; ?>
+								</td>
+								<td><?php echo esc_html( $this->included_label( $record ) ); ?></td>
+								<td><?php echo esc_html( $this->limits_label( $record ) ); ?></td>
+								<td><?php echo esc_html( $this->validity_label( $record ) ); ?></td>
+								<td><?php echo wp_kses_post( $this->requirements_badges( $record ) ); ?></td>
+								<td><?php echo wp_kses_post( Badge::render( $this->status_label( $record->status ), $record->status ) ); ?></td>
 								<td><?php $this->render_row_actions( $record ); ?></td>
 							</tr>
 						<?php endforeach; ?>
@@ -274,28 +280,13 @@ final class PassTypeAdmin extends AbstractAdminPage {
 				<div class="sbm-card sbm-card-wide">
 					<h2><?php echo esc_html( $pass->name ); ?></h2>
 					<p><?php echo esc_html( $pass->description ); ?></p>
+					<div class="sbm-pass-summary-grid">
+						<div><strong><?php echo esc_html__( 'Included', 'studio-booking-manager' ); ?></strong><br><?php echo esc_html( $this->included_label( $pass ) ); ?></div>
+						<div><strong><?php echo esc_html__( 'Limits', 'studio-booking-manager' ); ?></strong><br><?php echo esc_html( $this->limits_label( $pass ) ); ?></div>
+						<div><strong><?php echo esc_html__( 'Validity', 'studio-booking-manager' ); ?></strong><br><?php echo esc_html( $this->validity_label( $pass ) ); ?></div>
+					</div>
 					<table class="form-table" role="presentation">
 						<tbody>
-							<tr>
-								<th scope="row"><?php echo esc_html__( 'Behaviour', 'studio-booking-manager' ); ?></th>
-								<td><?php echo esc_html( $this->service->behaviours()[ $pass->behaviour ] ?? $pass->behaviour ); ?></td>
-							</tr>
-							<tr>
-								<th scope="row"><?php echo esc_html__( 'Number of Visits', 'studio-booking-manager' ); ?></th>
-								<td><?php echo esc_html( $pass->number_of_visits ? (string) absint( $pass->number_of_visits ) : __( 'Unlimited', 'studio-booking-manager' ) ); ?></td>
-							</tr>
-							<tr>
-								<th scope="row"><?php echo esc_html__( 'Maximum Visits Per Week', 'studio-booking-manager' ); ?></th>
-								<td><?php echo esc_html( $pass->maximum_visits_per_week ? (string) absint( $pass->maximum_visits_per_week ) : __( 'None', 'studio-booking-manager' ) ); ?></td>
-							</tr>
-							<tr>
-								<th scope="row"><?php echo esc_html__( 'Guest Allowance', 'studio-booking-manager' ); ?></th>
-								<td><?php echo esc_html( (string) absint( $pass->guest_allowance ) ); ?></td>
-							</tr>
-							<tr>
-								<th scope="row"><?php echo esc_html__( 'Valid For', 'studio-booking-manager' ); ?></th>
-								<td><?php echo esc_html( $pass->valid_for ? sprintf( /* translators: %d: number of days. */ __( '%d days', 'studio-booking-manager' ), absint( $pass->valid_for ) ) : __( 'No expiry', 'studio-booking-manager' ) ); ?></td>
-							</tr>
 							<tr>
 								<th scope="row"><?php echo esc_html__( 'Person', 'studio-booking-manager' ); ?></th>
 								<td>
@@ -348,35 +339,35 @@ final class PassTypeAdmin extends AbstractAdminPage {
 					<tbody>
 						<tr>
 							<th scope="row"><label for="sbm-pass-name"><?php echo esc_html__( 'Name', 'studio-booking-manager' ); ?></label></th>
-							<td><input name="name" id="sbm-pass-name" type="text" class="regular-text" required value="<?php echo esc_attr( $is_edit ? $record->name : '' ); ?>"></td>
+							<td><input name="name" id="sbm-pass-name" type="text" class="regular-text" required value="<?php echo esc_attr( $is_edit ? $record->name : '' ); ?>"><p class="description"><?php echo esc_html__( 'Use the customer-facing pass name staff will recognize, such as Day Pass, 10 Visit Pack, or Monthly Membership.', 'studio-booking-manager' ); ?></p></td>
 						</tr>
 						<tr>
 							<th scope="row"><label for="sbm-pass-description"><?php echo esc_html__( 'Description', 'studio-booking-manager' ); ?></label></th>
 							<td><textarea name="description" id="sbm-pass-description" class="large-text" rows="5"><?php echo esc_textarea( $is_edit ? $record->description : '' ); ?></textarea></td>
 						</tr>
 						<tr>
-							<th scope="row"><label for="sbm-pass-behaviour"><?php echo esc_html__( 'Behaviour', 'studio-booking-manager' ); ?></label></th>
-							<td><?php $this->render_select( 'behaviour', 'sbm-pass-behaviour', $behaviours, $is_edit ? $record->behaviour : 'one_time' ); ?></td>
+							<th scope="row"><label for="sbm-pass-behaviour"><?php echo esc_html__( 'Pass type', 'studio-booking-manager' ); ?></label></th>
+							<td><?php $this->render_select( 'behaviour', 'sbm-pass-behaviour', $behaviours, $is_edit ? $record->behaviour : 'one_time' ); ?><p class="description"><?php echo esc_html__( 'Single visit creates one visit credit. Visit pack creates a finite balance. Membership creates ongoing access until expiry.', 'studio-booking-manager' ); ?></p></td>
 						</tr>
 						<tr>
-							<th scope="row"><label for="sbm-pass-number-of-visits"><?php echo esc_html__( 'Number of Visits', 'studio-booking-manager' ); ?></label></th>
-							<td><input name="number_of_visits" id="sbm-pass-number-of-visits" type="number" min="0" class="small-text" value="<?php echo esc_attr( $is_edit && null !== $record->number_of_visits ? (string) absint( $record->number_of_visits ) : '' ); ?>"><p class="description"><?php echo esc_html__( 'Leave empty for unlimited visits.', 'studio-booking-manager' ); ?></p></td>
+							<th scope="row"><label for="sbm-pass-number-of-visits"><?php echo esc_html__( 'Visits included', 'studio-booking-manager' ); ?></label></th>
+							<td><input name="number_of_visits" id="sbm-pass-number-of-visits" type="number" min="0" class="small-text" value="<?php echo esc_attr( $is_edit && null !== $record->number_of_visits ? (string) absint( $record->number_of_visits ) : '' ); ?>"><p class="description"><?php echo esc_html__( 'Used for visit packs. Single visit passes are saved as 1 visit; memberships are unlimited.', 'studio-booking-manager' ); ?></p></td>
 						</tr>
 						<tr>
-							<th scope="row"><label for="sbm-pass-maximum-visits-per-week"><?php echo esc_html__( 'Maximum Visits Per Week', 'studio-booking-manager' ); ?></label></th>
-							<td><input name="maximum_visits_per_week" id="sbm-pass-maximum-visits-per-week" type="number" min="0" class="small-text" value="<?php echo esc_attr( $is_edit && null !== $record->maximum_visits_per_week ? (string) absint( $record->maximum_visits_per_week ) : '' ); ?>"></td>
+							<th scope="row"><label for="sbm-pass-maximum-visits-per-week"><?php echo esc_html__( 'Weekly visit limit', 'studio-booking-manager' ); ?></label></th>
+							<td><input name="maximum_visits_per_week" id="sbm-pass-maximum-visits-per-week" type="number" min="0" class="small-text" value="<?php echo esc_attr( $is_edit && null !== $record->maximum_visits_per_week ? (string) absint( $record->maximum_visits_per_week ) : '' ); ?>"><p class="description"><?php echo esc_html__( 'Optional cap for visit packs or memberships, for example 3 visits per week.', 'studio-booking-manager' ); ?></p></td>
 						</tr>
 						<tr>
-							<th scope="row"><label for="sbm-pass-guest-allowance"><?php echo esc_html__( 'Guest Allowance', 'studio-booking-manager' ); ?></label></th>
-							<td><input name="guest_allowance" id="sbm-pass-guest-allowance" type="number" min="0" class="small-text" value="<?php echo esc_attr( $is_edit ? (string) absint( $record->guest_allowance ) : '0' ); ?>"></td>
+							<th scope="row"><label for="sbm-pass-guest-allowance"><?php echo esc_html__( 'Guests allowed per visit', 'studio-booking-manager' ); ?></label></th>
+							<td><input name="guest_allowance" id="sbm-pass-guest-allowance" type="number" min="0" class="small-text" value="<?php echo esc_attr( $is_edit ? (string) absint( $record->guest_allowance ) : '0' ); ?>"><p class="description"><?php echo esc_html__( 'Use 0 when guests are not included.', 'studio-booking-manager' ); ?></p></td>
 						</tr>
 						<tr>
-							<th scope="row"><label for="sbm-pass-booking-required"><?php echo esc_html__( 'Booking Required', 'studio-booking-manager' ); ?></label></th>
-							<td><input name="booking_required" id="sbm-pass-booking-required" type="checkbox" value="1" <?php checked( $is_edit ? $record->booking_required : false ); ?>></td>
+							<th scope="row"><label for="sbm-pass-booking-required"><?php echo esc_html__( 'Booking requirement', 'studio-booking-manager' ); ?></label></th>
+							<td><label><input name="booking_required" id="sbm-pass-booking-required" type="checkbox" value="1" <?php checked( $is_edit ? $record->booking_required : false ); ?>> <?php echo esc_html__( 'Require a booking before check-in', 'studio-booking-manager' ); ?></label></td>
 						</tr>
 						<tr>
-							<th scope="row"><label for="sbm-pass-valid-for"><?php echo esc_html__( 'Valid For', 'studio-booking-manager' ); ?></label></th>
-							<td><input name="valid_for" id="sbm-pass-valid-for" type="number" min="0" class="small-text" value="<?php echo esc_attr( $is_edit && null !== $record->valid_for ? (string) absint( $record->valid_for ) : '' ); ?>"><p class="description"><?php echo esc_html__( 'Number of days this pass remains valid.', 'studio-booking-manager' ); ?></p></td>
+							<th scope="row"><label for="sbm-pass-valid-for"><?php echo esc_html__( 'Expires after', 'studio-booking-manager' ); ?></label></th>
+							<td><input name="valid_for" id="sbm-pass-valid-for" type="number" min="0" class="small-text" value="<?php echo esc_attr( $is_edit && null !== $record->valid_for ? (string) absint( $record->valid_for ) : '' ); ?>"> <?php echo esc_html__( 'days', 'studio-booking-manager' ); ?><p class="description"><?php echo esc_html__( 'Leave empty for no automatic expiry.', 'studio-booking-manager' ); ?></p></td>
 						</tr>
 						<tr>
 							<th scope="row"><label for="sbm-pass-status"><?php echo esc_html__( 'Status', 'studio-booking-manager' ); ?></label></th>
@@ -450,5 +441,105 @@ final class PassTypeAdmin extends AbstractAdminPage {
 	private function behaviour_label( string $behaviour ): string {
 		$behaviours = $this->service->behaviours();
 		return $behaviours[ $behaviour ] ?? $behaviour;
+	}
+
+	/**
+	 * Included access label.
+	 *
+	 * @param PassType $record Pass.
+	 */
+	private function included_label( PassType $record ): string {
+		if ( 'one_time' === $record->behaviour ) {
+			return __( '1 visit credit', 'studio-booking-manager' );
+		}
+
+		if ( 'membership' === $record->behaviour ) {
+			return __( 'Unlimited visits', 'studio-booking-manager' );
+		}
+
+		if ( null !== $record->number_of_visits && $record->number_of_visits > 0 ) {
+			return sprintf(
+				/* translators: %d: visit count. */
+				__( '%d visit credits', 'studio-booking-manager' ),
+				absint( $record->number_of_visits )
+			);
+		}
+
+		return __( 'Visit credits not set', 'studio-booking-manager' );
+	}
+
+	/**
+	 * Limits label.
+	 *
+	 * @param PassType $record Pass.
+	 */
+	private function limits_label( PassType $record ): string {
+		$parts = array();
+
+		if ( null !== $record->maximum_visits_per_week && $record->maximum_visits_per_week > 0 ) {
+			$parts[] = sprintf(
+				/* translators: %d: weekly visit limit. */
+				__( '%d/week', 'studio-booking-manager' ),
+				absint( $record->maximum_visits_per_week )
+			);
+		}
+
+		$parts[] = $record->guest_allowance > 0
+			? sprintf(
+				/* translators: %d: guest allowance. */
+				_n( '%d guest', '%d guests', absint( $record->guest_allowance ), 'studio-booking-manager' ),
+				absint( $record->guest_allowance )
+			)
+			: __( 'No guests', 'studio-booking-manager' );
+
+		return implode( ' · ', $parts );
+	}
+
+	/**
+	 * Validity label.
+	 *
+	 * @param PassType $record Pass.
+	 */
+	private function validity_label( PassType $record ): string {
+		return null !== $record->valid_for && $record->valid_for > 0
+			? sprintf(
+				/* translators: %d: number of days. */
+				__( '%d days from issue', 'studio-booking-manager' ),
+				absint( $record->valid_for )
+			)
+			: __( 'No automatic expiry', 'studio-booking-manager' );
+	}
+
+	/**
+	 * Requirement badges.
+	 *
+	 * @param PassType $record Pass.
+	 */
+	private function requirements_badges( PassType $record ): string {
+		if ( $record->booking_required ) {
+			return Badge::render( __( 'Booking required', 'studio-booking-manager' ), 'warning' );
+		}
+
+		return Badge::render( __( 'Walk-in allowed', 'studio-booking-manager' ), 'success' );
+	}
+
+	/**
+	 * Status label.
+	 *
+	 * @param string $status Status.
+	 */
+	private function status_label( string $status ): string {
+		$statuses = $this->service->statuses();
+
+		return $statuses[ $status ] ?? ucfirst( $status );
+	}
+
+	/**
+	 * Behavior class.
+	 *
+	 * @param string $behaviour Behaviour.
+	 */
+	private function behaviour_class( string $behaviour ): string {
+		return sanitize_html_class( str_replace( '_', '-', $behaviour ) );
 	}
 }

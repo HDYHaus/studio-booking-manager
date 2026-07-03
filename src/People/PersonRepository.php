@@ -229,6 +229,34 @@ final class PersonRepository {
 	}
 
 	/**
+	 * Regenerate a person's QR token.
+	 *
+	 * @param int $id Person ID.
+	 * @return string
+	 */
+	public function regenerate_qr_token( int $id ): string {
+		if ( $id <= 0 ) {
+			return '';
+		}
+
+		$token = $this->generate_qr_token();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom operational table update.
+		$updated = $this->wpdb->update(
+			$this->table,
+			array(
+				'qr_token'   => $token,
+				'updated_at' => current_time( 'mysql' ),
+			),
+			array( 'id' => $id ),
+			array( '%s', '%s' ),
+			array( '%d' )
+		);
+
+		return false === $updated ? '' : $token;
+	}
+
+	/**
 	 * Prepare data for storage.
 	 *
 	 * @param array<string, mixed> $data Raw data.

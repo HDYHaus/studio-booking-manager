@@ -119,6 +119,9 @@ final class IssuePassService {
 			);
 		}
 
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- `sbm_` is the documented public API prefix for Studio Booking Manager.
+		do_action( 'sbm_pass_issued', $access_id, $pass, $person, $location );
+
 		return array(
 			'success' => true,
 			'access_id' => $access_id,

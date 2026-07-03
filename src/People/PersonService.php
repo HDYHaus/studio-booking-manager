@@ -103,4 +103,14 @@ final class PersonService {
 	public function archive( int $id ): bool {
 		return $this->repository->archive( $id );
 	}
+
+	/**
+	 * Regenerate a person's QR token.
+	 *
+	 * @param int $id Person ID.
+	 * @return string
+	 */
+	public function regenerate_qr_token( int $id ): string {
+		return $this->repository->regenerate_qr_token( $id );
+	}
 }

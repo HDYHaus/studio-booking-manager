@@ -132,3 +132,60 @@
 	box-sizing: border-box;
 	max-width: none;
 }
+
+.sbm-pass-marker {
+	border-radius: 999px;
+	display: inline-block;
+	height: 10px;
+	margin-right: 6px;
+	vertical-align: middle;
+	width: 10px;
+}
+
+.sbm-pass-marker-one-time {
+	background: #2271b1;
+}
+
+.sbm-pass-marker-multiple-visits {
+	background: #00a32a;
+}
+
+.sbm-pass-marker-membership {
+	background: #8c54ff;
+}
+
+.sbm-pass-summary-grid {
+	display: grid;
+	gap: 12px;
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	margin: 12px 0 18px;
+}
+
+.sbm-pass-summary-grid div {
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	padding: 12px;
+}
+
+.sbm-qr-output {
+	text-align: center;
+}
+
+.sbm-qr-code {
+	margin: 0 auto 16px;
+	max-width: 360px;
+}
+
+.sbm-qr-code canvas,
+.sbm-qr-code svg {
+	height: auto;
+	max-width: 100%;
+}
+
+.sbm-qr-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	justify-content: center;
+}
