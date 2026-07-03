@@ -80,8 +80,8 @@ final class PassTypeService {
 	 */
 	public function behaviours(): array {
 		return array(
-			'one_time'       => __( 'One-time', 'studio-booking-manager' ),
-			'multiple_visits' => __( 'Multiple Visits', 'studio-booking-manager' ),
+			'one_time'       => __( 'Single visit', 'studio-booking-manager' ),
+			'multiple_visits' => __( 'Visit pack', 'studio-booking-manager' ),
 			'membership'     => __( 'Membership', 'studio-booking-manager' ),
 		);
 	}
