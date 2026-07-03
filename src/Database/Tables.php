@@ -25,6 +25,7 @@ final class Tables {
 		'bookings'  => true,
 		'visits'    => true,
 		'pass_types' => true,
+		'notifications' => true,
 	);
 
 	/**
