@@ -142,6 +142,7 @@
 	max-width: 360px;
 }
 
+.sbm-qr-code canvas,
 .sbm-qr-code svg {
 	height: auto;
 	max-width: 100%;

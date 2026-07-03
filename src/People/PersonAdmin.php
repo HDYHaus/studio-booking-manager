@@ -250,7 +250,6 @@ final class PersonAdmin extends AbstractAdminPage {
 									<p class="description"><?php echo esc_html__( 'Regenerate this token to revoke existing QR codes for this person.', 'studio-booking-manager' ); ?></p>
 									<p>
 										<a class="button" href="<?php echo esc_url( $this->qr_view_url( (int) $person->id ) ); ?>"><?php echo esc_html__( 'View QR Code', 'studio-booking-manager' ); ?></a>
-										<a class="button" href="<?php echo esc_url( $this->qr_download_url( (int) $person->id ) ); ?>"><?php echo esc_html__( 'Download SVG', 'studio-booking-manager' ); ?></a>
 									</p>
 								</td>
 							</tr>
@@ -330,24 +329,6 @@ final class PersonAdmin extends AbstractAdminPage {
 				'person_id' => $id,
 			),
 			admin_url( 'admin.php' )
-		);
-	}
-
-	/**
-	 * Create QR download URL.
-	 *
-	 * @param int $id Person ID.
-	 */
-	private function qr_download_url( int $id ): string {
-		return wp_nonce_url(
-			add_query_arg(
-				array(
-					'action'    => 'sbm_download_person_qr',
-					'person_id' => $id,
-				),
-				admin_url( 'admin-post.php' )
-			),
-			'sbm_download_person_qr_' . $id
 		);
 	}
 
