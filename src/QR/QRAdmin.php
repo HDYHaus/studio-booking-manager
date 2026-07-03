@@ -240,8 +240,9 @@ final class QRAdmin extends AbstractAdminPage {
 				</p>
 				<p class="sbm-qr-actions">
 					<a class="button button-primary" href="<?php echo esc_url( $this->qr_checkin_url( $person ) ); ?>"><?php echo esc_html__( 'Open Check-in', 'studio-booking-manager' ); ?></a>
-					<a class="button" href="<?php echo esc_attr( $this->svg_data_url( $svg ) ); ?>" download="<?php echo esc_attr( $this->download_filename( $person ) ); ?>"><?php echo esc_html__( 'Download SVG', 'studio-booking-manager' ); ?></a>
-					<a class="button" href="<?php echo esc_url( $this->print_url( (int) $person->id ) ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html__( 'Print', 'studio-booking-manager' ); ?></a>
+					<a class="button" href="<?php echo esc_url( $this->download_url( (int) $person->id ) ); ?>"><?php echo esc_html__( 'Download SVG', 'studio-booking-manager' ); ?></a>
+					<button type="button" class="button" onclick="window.print(); return false;"><?php echo esc_html__( 'Print', 'studio-booking-manager' ); ?></button>
+					<a class="button" href="<?php echo esc_url( $this->print_url( (int) $person->id ) ); ?>"><?php echo esc_html__( 'Print View', 'studio-booking-manager' ); ?></a>
 				</p>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 					<?php wp_nonce_field( 'sbm_regenerate_person_qr' ); ?>
@@ -253,7 +254,9 @@ final class QRAdmin extends AbstractAdminPage {
 			<?php if ( $is_print_view ) : ?>
 				<script>
 					window.addEventListener( 'load', function() {
-						window.print();
+						setTimeout( function() {
+							window.print();
+						}, 250 );
 					} );
 				</script>
 			<?php endif; ?>
@@ -355,15 +358,6 @@ final class QRAdmin extends AbstractAdminPage {
 			),
 			admin_url( 'admin.php' )
 		);
-	}
-
-	/**
-	 * SVG data URL for direct browser download.
-	 *
-	 * @param string $svg SVG.
-	 */
-	private function svg_data_url( string $svg ): string {
-		return 'data:image/svg+xml;base64,' . base64_encode( $svg );
 	}
 
 	/**

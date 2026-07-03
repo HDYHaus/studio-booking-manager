@@ -244,8 +244,12 @@ final class QRCode {
 		self::draw_finder( $modules, $is_func, 3, self::SIZE - 4 );
 
 		for ( $i = 0; $i < self::SIZE; $i++ ) {
-			self::set_function( $modules, $is_func, 6, $i, 0 === $i % 2 );
-			self::set_function( $modules, $is_func, $i, 6, 0 === $i % 2 );
+			if ( ! $is_func[ $i ][6] ) {
+				self::set_function( $modules, $is_func, 6, $i, 0 === $i % 2 );
+			}
+			if ( ! $is_func[6][ $i ] ) {
+				self::set_function( $modules, $is_func, $i, 6, 0 === $i % 2 );
+			}
 		}
 
 		foreach ( array( 6, 28, 50 ) as $x ) {
