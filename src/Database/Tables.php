@@ -22,6 +22,7 @@ final class Tables {
 		'people'    => true,
 		'locations' => true,
 		'access'    => true,
+		'bookings'  => true,
 		'visits'    => true,
 		'pass_types' => true,
 	);

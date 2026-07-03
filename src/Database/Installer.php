@@ -137,6 +137,30 @@ final class Installer {
 			KEY checked_out_at (checked_out_at)
 		) $charset_collate;";
 
+		$sql[] = "CREATE TABLE " . Tables::get( 'bookings' ) . " (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			person_id bigint(20) unsigned NOT NULL,
+			location_id bigint(20) unsigned NOT NULL,
+			access_id bigint(20) unsigned NULL,
+			status varchar(20) NOT NULL DEFAULT 'pending',
+			starts_at datetime NOT NULL,
+			ends_at datetime NOT NULL,
+			guest_count int(11) unsigned NOT NULL DEFAULT 0,
+			guest_names longtext NULL,
+			calendar_event_id varchar(190) NULL,
+			notes longtext NULL,
+			created_at datetime NOT NULL,
+			updated_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY person_id (person_id),
+			KEY location_id (location_id),
+			KEY access_id (access_id),
+			KEY status (status),
+			KEY starts_at (starts_at),
+			KEY ends_at (ends_at),
+			KEY calendar_event_id (calendar_event_id)
+		) $charset_collate;";
+
 		foreach ( $sql as $statement ) {
 			dbDelta( $statement );
 		}

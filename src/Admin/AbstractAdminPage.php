@@ -62,7 +62,7 @@ abstract class AbstractAdminPage {
 			return;
 		}
 
-		$type = ( 'error' === $message || str_ends_with( $message, '_error' ) ) ? 'error' : 'success';
+		$type = ( 'error' === $message || str_starts_with( $message, 'error_' ) || str_ends_with( $message, '_error' ) ) ? 'error' : 'success';
 		AdminNotices::render( $type, $messages[ $message ] );
 	}
 

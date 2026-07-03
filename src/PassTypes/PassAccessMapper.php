@@ -37,6 +37,12 @@ final class PassAccessMapper {
 			'weekly_limit'      => $pass->maximum_visits_per_week,
 			'starts_at'         => $now,
 			'expires_at'        => $this->calculate_expiry( $pass->valid_for ),
+			'metadata'          => wp_json_encode(
+				array(
+					'pass_type_id'     => $pass->id,
+					'booking_required' => (bool) $pass->booking_required,
+				)
+			),
 		);
 
 		if ( 'one_time' === $pass->behaviour ) {

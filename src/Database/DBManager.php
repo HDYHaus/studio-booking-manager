@@ -35,14 +35,23 @@ final class DBManager {
 	private function requires_install(): bool {
 		global $wpdb;
 
-		$pass_table = Tables::get( 'pass_types' );
+		$required = array(
+			Tables::get( 'pass_types' ),
+			Tables::get( 'bookings' ),
+		);
 
-		if ( '' === $pass_table ) {
-			return false;
+		foreach ( $required as $table ) {
+			if ( '' === $table ) {
+				continue;
+			}
+
+			$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+
+			if ( false === $exists || null === $exists ) {
+				return true;
+			}
 		}
 
-		$exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $pass_table ) );
-
-		return false === $exists || null === $exists;
+		return false;
 	}
 }
