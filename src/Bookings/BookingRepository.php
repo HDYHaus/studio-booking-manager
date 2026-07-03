@@ -130,8 +130,23 @@ final class BookingRepository {
 			return array();
 		}
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name comes from trusted Tables registry; values are prepared.
-		$query = $this->wpdb->prepare( "SELECT * FROM `{$this->table}` WHERE person_id = %d AND status IN ( %s, %s ) AND ends_at >= %s ORDER BY starts_at ASC, id ASC", $person_id, 'pending', 'confirmed', current_time( 'mysql' ) );
+		$locations_table = Tables::get( 'locations' );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names come from trusted Tables registry; values are prepared.
+		$query = $this->wpdb->prepare(
+			"SELECT bookings.*, locations.name AS location_name, locations.timezone AS location_timezone
+			FROM `{$this->table}` bookings
+			LEFT JOIN `{$locations_table}` locations ON locations.id = bookings.location_id
+			WHERE bookings.person_id = %d
+			AND bookings.status IN ( %s, %s )
+			AND bookings.ends_at >= %s
+			ORDER BY bookings.starts_at ASC, bookings.id ASC",
+			$person_id,
+			'pending',
+			'confirmed',
+			current_time( 'mysql' )
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom operational table query using trusted table name and prepared values.
 		$records = $this->wpdb->get_results( $query );

@@ -132,6 +132,25 @@ final class OrderListener {
 		$person = $people->find_by_email( $email );
 
 		if ( $person instanceof \stdClass ) {
+			$customer_id = absint( $order->get_customer_id() );
+			$linked      = $customer_id > 0 ? $people->find_by_wp_user_id( $customer_id ) : null;
+
+			if ( $customer_id > 0 && absint( $person->wp_user_id ) <= 0 && ! ( $linked instanceof \stdClass ) ) {
+				$people->save(
+					array(
+						'id'           => absint( $person->id ),
+						'wp_user_id'   => $customer_id,
+						'first_name'   => (string) $person->first_name,
+						'last_name'    => (string) $person->last_name,
+						'display_name' => (string) $person->display_name,
+						'email'        => (string) $person->email,
+						'phone'        => (string) $person->phone,
+						'status'       => (string) $person->status,
+						'notes'        => (string) $person->notes,
+					)
+				);
+			}
+
 			return (int) $person->id;
 		}
 

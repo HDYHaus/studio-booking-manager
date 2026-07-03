@@ -14,6 +14,7 @@ use StudioBookingManager\Commerce\WooCommerce\OrderListener;
 use StudioBookingManager\Admin\AdminAssets;
 use StudioBookingManager\Admin\AdminMenu;
 use StudioBookingManager\Database\DBManager;
+use StudioBookingManager\Frontend\MemberAccount;
 use StudioBookingManager\Frontend\MemberScheduleShortcode;
 use StudioBookingManager\Locations\LocationAdmin;
 use StudioBookingManager\Notifications\NotificationAdmin;
@@ -70,6 +71,7 @@ final class Plugin {
 		( new QRAdmin() )->register();
 		( new AdminMenu() )->register();
 		( new SettingsPage() )->register();
+		( new MemberAccount() )->register();
 		( new NotificationAdmin() )->register();
 		( new MemberScheduleShortcode() )->register();
 
