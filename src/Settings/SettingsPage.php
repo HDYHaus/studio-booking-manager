@@ -108,7 +108,7 @@ final class SettingsPage {
 		}
 
 		if ( isset( $settings['google_calendar_service_account_json'] ) && '' !== trim( (string) $settings['google_calendar_service_account_json'] ) ) {
-			$clean['google_calendar_service_account_json'] = trim( wp_unslash( (string) $settings['google_calendar_service_account_json'] ) );
+			$clean['google_calendar_service_account_json'] = $this->sanitize_service_account_json( (string) $settings['google_calendar_service_account_json'] );
 		} else {
 			$current = get_option( 'sbm_settings', array() );
 			if ( is_array( $current ) && isset( $current['google_calendar_service_account_json'] ) ) {
@@ -117,6 +117,46 @@ final class SettingsPage {
 		}
 
 		return $clean;
+	}
+
+	/**
+	 * Sanitize service account JSON without corrupting escaped private key newlines.
+	 *
+	 * @param string $json Raw JSON.
+	 * @return string
+	 */
+	private function sanitize_service_account_json( string $json ): string {
+		$json = trim( $json );
+		$data = json_decode( $json, true );
+
+		if ( ! is_array( $data ) ) {
+			return $json;
+		}
+
+		$allowed = array(
+			'type',
+			'project_id',
+			'private_key_id',
+			'private_key',
+			'client_email',
+			'client_id',
+			'auth_uri',
+			'token_uri',
+			'auth_provider_x509_cert_url',
+			'client_x509_cert_url',
+			'universe_domain',
+		);
+		$clean   = array();
+
+		foreach ( $allowed as $key ) {
+			if ( isset( $data[ $key ] ) && is_scalar( $data[ $key ] ) ) {
+				$clean[ $key ] = (string) $data[ $key ];
+			}
+		}
+
+		$encoded = wp_json_encode( $clean );
+
+		return is_string( $encoded ) ? $encoded : $json;
 	}
 
 	/**

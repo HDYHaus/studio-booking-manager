@@ -240,7 +240,9 @@ final class GoogleCalendarClient {
 		$key         = openssl_pkey_get_private( $private_key );
 
 		if ( false === $key ) {
-			$this->last_error = __( 'Google Calendar private key could not be read. Paste the full service account JSON key file, including the BEGIN PRIVATE KEY block.', 'studio-booking-manager' );
+			$this->last_error = false !== strpos( $private_key, 'BEGIN PRIVATE KEY' ) && false === strpos( $private_key, "\n" )
+				? __( 'Google Calendar private key appears to have lost its line breaks. Paste the untouched JSON key file and save settings again.', 'studio-booking-manager' )
+				: __( 'Google Calendar private key could not be read. Paste the full service account JSON key file, including the BEGIN PRIVATE KEY block.', 'studio-booking-manager' );
 			return '';
 		}
 
