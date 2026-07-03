@@ -54,4 +54,3 @@ add_action(
 		StudioBookingManager\Core\Plugin::instance()->boot();
 	}
 );
-

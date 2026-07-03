@@ -27,4 +27,3 @@ For ops scripts, log:
 - environment (dev/staging/prod)
 - exact WP-CLI commands
 - exit codes
-

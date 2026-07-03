@@ -19,4 +19,3 @@ Read the canonical guide for supported `source`/`selector`/`attribute` patterns:
 - Changing saved HTML without a `deprecated` version breaks existing posts.
 - Using the `meta` attribute source (deprecated) causes long-term pain; avoid it.
 - Choosing brittle selectors leads to attributes “not found” when markup changes slightly.
-

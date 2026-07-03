@@ -323,4 +323,3 @@ final class PersonAdmin extends AbstractAdminPage {
 		$this->verify_admin_request( $action, __( 'You do not have permission to manage people.', 'studio-booking-manager' ) );
 	}
 }
-

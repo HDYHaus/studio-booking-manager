@@ -20,4 +20,3 @@ Use this file when debugging background jobs or “changes not visible”.
 
 - Don’t “run all cron events” on production without understanding impact.
 - Cache flush can cause load spikes; coordinate if needed.
-

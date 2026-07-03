@@ -17,4 +17,3 @@ Fix patterns:
 - De-duplicate scheduled events and reduce frequency where possible.
 - Ensure tasks are idempotent and short.
 - Move heavy work off-request; cron that runs on page load can hurt TTFB.
-

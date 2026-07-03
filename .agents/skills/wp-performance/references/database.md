@@ -17,4 +17,3 @@ Tools (backend-only):
 References:
 
 - Query Monitor plugin: https://wordpress.org/plugins/query-monitor/
-

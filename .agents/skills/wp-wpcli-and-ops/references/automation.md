@@ -27,4 +27,3 @@ Prefer CI jobs that are read-only by default:
 - `wp theme list`
 
 Only enable write operations in dedicated deploy/maintenance workflows.
-

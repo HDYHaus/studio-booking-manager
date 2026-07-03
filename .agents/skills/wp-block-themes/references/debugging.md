@@ -21,4 +21,3 @@ Remember the hierarchy:
 
 - If a user already selected the variation, the selection is stored in the DB.
 - Test with a fresh site/user or reset customizations when appropriate.
-

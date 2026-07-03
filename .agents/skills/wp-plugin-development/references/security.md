@@ -26,4 +26,3 @@ Practical rules:
 Common review guidance:
 
 - https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/
-

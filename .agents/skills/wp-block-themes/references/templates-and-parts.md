@@ -13,4 +13,3 @@ Upstream references:
 
 - Templates + parts overview: https://developer.wordpress.org/themes/block-themes/theme-structure/
 - Template parts details: https://developer.wordpress.org/themes/block-themes/template-parts/
-

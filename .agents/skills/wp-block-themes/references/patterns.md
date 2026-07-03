@@ -15,4 +15,3 @@ Upstream reference:
 
 - Keep pattern markup stable; changing block names inside patterns can break older content in subtle ways.
 - If a pattern should not be inserted directly by users, mark it as non-inserter / internal-only (per upstream header conventions).
-

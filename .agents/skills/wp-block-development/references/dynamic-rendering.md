@@ -20,4 +20,3 @@ This preserves support-generated classes/styles.
 - Ensure PHP file exists and is reachable from the block root.
 - Ensure registration runs on every request (not only in admin).
 - Keep `save()` empty or `null` for fully dynamic output, unless you intentionally save fallback markup.
-

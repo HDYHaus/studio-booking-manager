@@ -27,4 +27,3 @@ Both handlers will fire. The ID after `---` must be unique per element.
 ## Deprecated directive
 
 - **`data-wp-ignore`**: Deprecated in WordPress 6.9. It was intended to prevent hydration of a region but broke context inheritance and client-side navigation. Will be removed in future versions. Avoid using it.
-

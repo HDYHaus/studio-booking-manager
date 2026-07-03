@@ -214,4 +214,3 @@ CC-BY-SA 4.0 is one-way compatible with GPLv3 (CC-BY-SA material can be included
 
 **What about fonts bundled in plugins?**
 Fonts must be under GPL-compatible licenses. Common acceptable font licenses: OFL (SIL Open Font License), Apache 2.0 (with GPLv3), MIT, GPL with font exception.
-

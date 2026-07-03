@@ -43,4 +43,3 @@ If you cannot run `create-block` (no Node tooling or restricted network):
 4. Add editor JS and (optionally) frontend view assets.
 
 Then follow the rest of `wp-block-development` for metadata, registration, and serialization.
-

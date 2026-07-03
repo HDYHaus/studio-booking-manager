@@ -34,4 +34,3 @@ References:
   - https://developer.wordpress.org/themes/global-settings-and-styles/introduction-to-theme-json/
 - Theme.json version 3 dev note:
   - https://make.wordpress.org/core/2024/06/19/theme-json-version-3/
-

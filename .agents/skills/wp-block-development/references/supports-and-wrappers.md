@@ -15,4 +15,3 @@ Upstream reference:
 
 - https://developer.wordpress.org/block-editor/reference-guides/block-api/block-supports/
 - https://developer.wordpress.org/reference/functions/get_block_wrapper_attributes/
-

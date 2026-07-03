@@ -37,4 +37,3 @@ WP-CLI search-replace is designed to handle PHP serialized data, but you must st
 
 - avoid replacing within binary/blob columns
 - validate results with application smoke tests
-

@@ -33,4 +33,3 @@ If styles work on frontend but not in the editor:
 - Ensure style handles are declared in block.json (`editorStyle`, `style`).
 - Styles not included in block.json won't load inside the iframed editor.
 - Check for Dashicons or other dependencies that need explicit inclusion.
-

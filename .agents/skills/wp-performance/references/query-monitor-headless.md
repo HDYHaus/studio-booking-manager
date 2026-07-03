@@ -35,4 +35,3 @@ High-level approach:
 
 - Query Monitor adds some overhead; don’t enable it in production without approval.
 - If it’s already installed by your platform (e.g. VIP), you may need to grant `view_query_monitor`.
-

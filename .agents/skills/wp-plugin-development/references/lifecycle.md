@@ -30,4 +30,3 @@ Guardrails:
 Upstream reference:
 
 - https://developer.wordpress.org/plugins/plugin-basics/uninstall-methods/
-

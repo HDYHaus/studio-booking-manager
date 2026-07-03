@@ -12,4 +12,3 @@ Fix patterns:
 Tooling:
 
 - Query Monitor can report HTTP API calls (including timing) via REST envelope info.
-

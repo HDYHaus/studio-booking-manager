@@ -46,4 +46,3 @@ This is not a full schema; it’s a “what matters in practice” list:
   - https://developer.wordpress.org/block-editor/reference-guides/block-api/block-metadata/
 - Block.json schema (editor tooling):
   - https://schemas.wp.org/trunk/block.json
-

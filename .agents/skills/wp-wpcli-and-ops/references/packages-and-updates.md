@@ -19,4 +19,3 @@ Use this file for installs, activation, updates, and listing state.
 
 - On production, avoid `update --all` without a maintenance window.
 - On multisite, plugin activation may be per-site or network-wide; confirm intent.
-

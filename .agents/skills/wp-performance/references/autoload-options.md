@@ -21,4 +21,3 @@ Docs:
   - store large data in non-autoload options (autoload=off)
   - move large computed data to transients/object cache
 - Remove stale options left behind by removed plugins/themes (careful: confirm usage before deleting).
-

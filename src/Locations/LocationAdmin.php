@@ -331,4 +331,3 @@ final class LocationAdmin extends AbstractAdminPage {
 		$this->verify_admin_request( $action, __( 'You do not have permission to manage locations.', 'studio-booking-manager' ) );
 	}
 }
-

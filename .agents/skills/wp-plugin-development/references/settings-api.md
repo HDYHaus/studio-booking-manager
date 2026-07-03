@@ -19,4 +19,3 @@ Practical guardrails:
 - Use `sanitize_callback` to validate/sanitize data.
 - Use capability checks (commonly `manage_options`) for settings screens and saves.
 - Escape values on output (`esc_attr`, `esc_html`, etc.).
-

@@ -22,4 +22,3 @@ Use this file when your block contains other blocks (container blocks).
 - Only one `InnerBlocks` should exist per block.
 - Changing the wrapper structure that contains inner blocks can invalidate existing content; consider deprecations/migrations.
 - If you need to constrain allowed blocks, prefer doing it intentionally and documenting why.
-

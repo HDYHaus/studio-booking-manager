@@ -27,4 +27,3 @@ Upstream reference:
 
 If `block.json` includes `render`, ensure the file exists relative to the block root.
 Inside the render file, use `get_block_wrapper_attributes()` for wrapper attributes.
-

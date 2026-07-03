@@ -21,4 +21,3 @@ Upstream reference:
 
 - Keep fixtures: store example content for each deprecated version.
 - When in doubt, add a migration path rather than silently changing selectors.
-

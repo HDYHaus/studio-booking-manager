@@ -18,4 +18,3 @@ References:
 
 - Measuring performance handbook: https://make.wordpress.org/performance/handbook/measuring-performance/
 - Benchmarking with Server-Timing: https://make.wordpress.org/performance/handbook/measuring-performance/benchmarking-server-timing/
-

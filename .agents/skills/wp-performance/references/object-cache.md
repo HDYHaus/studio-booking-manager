@@ -21,4 +21,3 @@ Guardrails:
 - Cache expensive computed results (transients or object cache) with explicit invalidation.
 - Avoid unbounded caches (set expirations or implement invalidation hooks).
 - If adding a persistent object cache, coordinate with infra (Redis/Memcached) and test cache flush behavior.
-

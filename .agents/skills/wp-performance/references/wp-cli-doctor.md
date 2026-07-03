@@ -21,4 +21,3 @@ Especially relevant to performance:
 - `autoload-options-size` (autoloaded options threshold)
 - `constant-savequeries-falsy` / `constant-wp-debug-falsy` (avoid perf-costly debug flags in prod)
 - cron checks (count/duplicates)
-

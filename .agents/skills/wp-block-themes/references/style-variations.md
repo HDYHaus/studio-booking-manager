@@ -11,4 +11,3 @@ Key points:
 Upstream reference:
 
 - https://developer.wordpress.org/themes/global-settings-and-styles/style-variations/
-

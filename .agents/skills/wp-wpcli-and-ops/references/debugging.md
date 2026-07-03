@@ -14,4 +14,3 @@
 
 - If running in containers, ensure you’re using the same user/volume mapping as the app.
 - Avoid `--allow-root` unless you understand the environment and have no alternative.
-

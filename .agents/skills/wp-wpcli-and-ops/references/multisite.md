@@ -19,4 +19,3 @@ Use this file any time you might be operating on multisite.
 - Always include `--url` when you mean “one site” in a multisite install.
 - If you need to run something across sites, prefer scripting:
   - list sites → iterate → run a safe per-site command.
-

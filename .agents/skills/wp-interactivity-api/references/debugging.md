@@ -26,4 +26,3 @@
 **Router regions / overlays not rendering:**
 - WordPress 6.9 adds `attachTo` property for router regions to render overlays anywhere on the page.
 - Ensure nested router regions are properly structured.
-
