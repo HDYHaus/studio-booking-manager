@@ -240,7 +240,13 @@ final class BookingAdmin extends AbstractAdminPage {
 					<tbody>
 						<tr><th scope="row"><label for="sbm-booking-person"><?php echo esc_html__( 'Person', 'studio-booking-manager' ); ?></label></th><td><?php $this->render_people_select( $people, $is_edit ? (int) $record->person_id : 0 ); ?></td></tr>
 						<tr><th scope="row"><label for="sbm-booking-location"><?php echo esc_html__( 'Location', 'studio-booking-manager' ); ?></label></th><td><?php $this->render_location_select( $locations, $is_edit ? (int) $record->location_id : 0 ); ?></td></tr>
-						<tr><th scope="row"><label for="sbm-booking-access"><?php echo esc_html__( 'Access', 'studio-booking-manager' ); ?></label></th><td><?php $this->render_access_select( $access, $is_edit ? (int) $record->access_id : 0 ); ?></td></tr>
+						<tr>
+							<th scope="row"><label for="sbm-booking-access"><?php echo esc_html__( 'Access', 'studio-booking-manager' ); ?></label></th>
+							<td>
+								<?php $this->render_access_select( $access, $is_edit ? (int) $record->access_id : 0 ); ?>
+								<p class="description"><?php echo esc_html__( 'Access options are filtered to the selected person and location.', 'studio-booking-manager' ); ?></p>
+							</td>
+						</tr>
 						<tr><th scope="row"><label for="sbm-booking-status"><?php echo esc_html__( 'Status', 'studio-booking-manager' ); ?></label></th><td><?php $this->render_status_select( $statuses, $is_edit ? (string) $record->status : 'pending' ); ?></td></tr>
 						<tr><th scope="row"><label for="sbm-booking-starts"><?php echo esc_html__( 'Starts At', 'studio-booking-manager' ); ?></label></th><td><input class="regular-text" type="datetime-local" id="sbm-booking-starts" name="starts_at" value="<?php echo esc_attr( $this->datetime_value( $is_edit ? (string) $record->starts_at : '' ) ); ?>" required></td></tr>
 						<tr><th scope="row"><label for="sbm-booking-ends"><?php echo esc_html__( 'Ends At', 'studio-booking-manager' ); ?></label></th><td><input class="regular-text" type="datetime-local" id="sbm-booking-ends" name="ends_at" value="<?php echo esc_attr( $this->datetime_value( $is_edit ? (string) $record->ends_at : '' ) ); ?>" required></td></tr>
@@ -341,12 +347,38 @@ final class BookingAdmin extends AbstractAdminPage {
 		<select id="sbm-booking-access" name="access_id">
 			<option value=""><?php echo esc_html__( 'No access selected', 'studio-booking-manager' ); ?></option>
 			<?php foreach ( $records as $record ) : ?>
-				<option value="<?php echo esc_attr( (string) absint( $record->id ) ); ?>" <?php selected( $selected, (int) $record->id ); ?>>
-					<?php echo esc_html( sprintf( '#%1$d %2$s', absint( $record->id ), str_replace( '_', ' ', (string) $record->access_type ) ) ); ?>
+				<option
+					value="<?php echo esc_attr( (string) absint( $record->id ) ); ?>"
+					data-person-id="<?php echo esc_attr( (string) absint( $record->person_id ) ); ?>"
+					data-location-id="<?php echo esc_attr( (string) absint( $record->location_id ) ); ?>"
+					<?php selected( $selected, (int) $record->id ); ?>
+				>
+					<?php echo esc_html( $this->access_label( $record ) ); ?>
 				</option>
 			<?php endforeach; ?>
 		</select>
 		<?php
+	}
+
+	/**
+	 * Access select label.
+	 *
+	 * @param object $record Access row.
+	 * @return string
+	 */
+	private function access_label( object $record ): string {
+		$person   = isset( $record->person_name ) && '' !== (string) $record->person_name ? (string) $record->person_name : __( 'Unknown person', 'studio-booking-manager' );
+		$location = isset( $record->location_name ) && '' !== (string) $record->location_name ? (string) $record->location_name : __( 'Unknown location', 'studio-booking-manager' );
+		$type     = ucwords( str_replace( '_', ' ', (string) $record->access_type ) );
+
+		return sprintf(
+			/* translators: 1: access ID, 2: access type, 3: person name, 4: location name. */
+			__( '#%1$d %2$s - %3$s at %4$s', 'studio-booking-manager' ),
+			absint( $record->id ),
+			$type,
+			$person,
+			$location
+		);
 	}
 
 	/**

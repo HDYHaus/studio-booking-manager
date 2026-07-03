@@ -36,5 +36,13 @@ final class AdminAssets {
 			array(),
 			SBM_VERSION
 		);
+
+		wp_enqueue_script(
+			'studio-booking-manager-admin',
+			SBM_PLUGIN_URL . 'assets/js/admin.js',
+			array(),
+			SBM_VERSION,
+			true
+		);
 	}
 }
