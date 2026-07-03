@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Logs
+*.log
+
+# PHPUnit
+.phpunit.result.cache
+
+# Composer
+/vendor/
+
+# Node
+/node_modules/
+
+# IDE
+.idea/
+.vscode/settings.json

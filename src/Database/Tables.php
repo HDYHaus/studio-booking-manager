@@ -23,6 +23,7 @@ final class Tables {
 		'locations' => true,
 		'access'    => true,
 		'visits'    => true,
+		'pass_types' => true,
 	);
 
 	/**

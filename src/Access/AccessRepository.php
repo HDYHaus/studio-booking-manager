@@ -88,6 +88,54 @@ final class AccessRepository {
 	}
 
 	/**
+	 * Find an existing active access record with matching issue criteria.
+	 *
+	 * @param int $person_id Person ID.
+	 * @param int $location_id Location ID.
+	 * @param string $access_type Access type.
+	 * @param int|null $total_credits Total credits.
+	 * @param int|null $weekly_limit Weekly limit.
+	 * @param int $guest_limit Guest limit.
+	 * @param string|null $expires_at Expiry timestamp.
+	 * @return object|null
+	 */
+	public function find_duplicate_active( int $person_id, int $location_id, string $access_type, ?int $total_credits, ?int $weekly_limit, int $guest_limit, ?string $expires_at ): ?object {
+		$total_credits_is_null = null === $total_credits ? 1 : 0;
+		$weekly_limit_is_null  = null === $weekly_limit ? 1 : 0;
+		$expires_at_is_null    = null === $expires_at ? 1 : 0;
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name comes from the trusted Tables registry.
+		return $this->wpdb->get_row(
+			$this->wpdb->prepare(
+				"SELECT * FROM `{$this->table}`
+				WHERE person_id = %d
+				AND location_id = %d
+				AND access_type = %s
+				AND status = %s
+				AND guest_limit = %d
+				AND ( ( %d = 1 AND total_credits IS NULL ) OR ( %d = 0 AND total_credits = %d ) )
+				AND ( ( %d = 1 AND weekly_limit IS NULL ) OR ( %d = 0 AND weekly_limit = %d ) )
+				AND ( ( %d = 1 AND expires_at IS NULL ) OR ( %d = 0 AND expires_at = %s ) )
+				ORDER BY created_at DESC LIMIT 1",
+				$person_id,
+				$location_id,
+				$access_type,
+				'active',
+				$guest_limit,
+				$total_credits_is_null,
+				$total_credits_is_null,
+				null === $total_credits ? 0 : $total_credits,
+				$weekly_limit_is_null,
+				$weekly_limit_is_null,
+				null === $weekly_limit ? 0 : $weekly_limit,
+				$expires_at_is_null,
+				$expires_at_is_null,
+				null === $expires_at ? '' : $expires_at
+			)
+		);
+	}
+
+	/**
 	 * Create an access record.
 	 *
 	 * @param array<string, mixed> $data Access data.
@@ -161,6 +209,33 @@ final class AccessRepository {
 			),
 			array( 'id' => $id ),
 			array( '%s', '%s' ),
+			array( '%d' )
+		);
+
+		return false !== $updated;
+	}
+
+	/**
+	 * Update the remaining credits for an access record.
+	 *
+	 * @param int $id Access ID.
+	 * @param int $remaining_credits Remaining credits.
+	 * @return bool
+	 */
+	public function update_remaining_credits( int $id, int $remaining_credits ): bool {
+		if ( $id <= 0 ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom operational table update for access credit consumption.
+		$updated = $this->wpdb->update(
+			$this->table,
+			array(
+				'remaining_credits' => max( 0, $remaining_credits ),
+				'updated_at'        => current_time( 'mysql' ),
+			),
+			array( 'id' => $id ),
+			array( '%d', '%s' ),
 			array( '%d' )
 		);
 

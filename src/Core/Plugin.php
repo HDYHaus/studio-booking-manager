@@ -14,6 +14,7 @@ use StudioBookingManager\Admin\AdminMenu;
 use StudioBookingManager\Database\DBManager;
 use StudioBookingManager\Locations\LocationAdmin;
 use StudioBookingManager\Operations\OperationsAdmin;
+use StudioBookingManager\PassTypes\PassTypeAdmin;
 use StudioBookingManager\People\PersonAdmin;
 use StudioBookingManager\QR\QRAdmin;
 use StudioBookingManager\Roles\RoleInstaller;
@@ -56,6 +57,7 @@ final class Plugin {
 		( new PersonAdmin() )->register();
 		( new AccessAdmin() )->register();
 		( new VisitAdmin() )->register();
+		( new PassTypeAdmin() )->register();
 		( new OperationsAdmin() )->register();
 		( new QRAdmin() )->register();
 		( new AdminMenu() )->register();

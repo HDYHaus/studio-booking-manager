@@ -8,6 +8,7 @@
 namespace StudioBookingManager\WooCommerce;
 
 use StudioBookingManager\Locations\LocationService;
+use StudioBookingManager\PassTypes\PassTypeService;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -15,6 +16,13 @@ defined( 'ABSPATH' ) || exit;
  * Registers product settings panel.
  */
 final class ProductPanel {
+	/**
+	 * Cached pass type options.
+	 *
+	 * @var array<int,string>|null
+	 */
+	private ?array $pass_type_options = null;
+
 	/**
 	 * Register hooks.
 	 */
@@ -80,6 +88,16 @@ final class ProductPanel {
 				'name'          => "_sbm_enabled[{$loop}]",
 				'label'         => __( 'Enable Studio Booking', 'studio-booking-manager' ),
 				'value'         => 'yes' === get_post_meta( $variation_id, '_sbm_enabled', true ) ? 'yes' : 'no',
+				'wrapper_class' => 'form-row form-row-full',
+			)
+		);
+		woocommerce_wp_select(
+			array(
+				'id'            => "_sbm_pass_type_id_{$loop}",
+				'name'          => "_sbm_pass_type_id[{$loop}]",
+				'label'         => __( 'Pass', 'studio-booking-manager' ),
+				'value'         => get_post_meta( $variation_id, '_sbm_pass_type_id', true ),
+				'options'       => $this->pass_type_options(),
 				'wrapper_class' => 'form-row form-row-full',
 			)
 		);
@@ -167,6 +185,14 @@ final class ProductPanel {
 		);
 		woocommerce_wp_select(
 			array(
+				'id'          => '_sbm_pass_type_id',
+				'label'       => __( 'Pass', 'studio-booking-manager' ),
+				'description' => __( 'Select a Pass to issue, or use the legacy access fields below.', 'studio-booking-manager' ),
+				'options'     => $this->pass_type_options(),
+			)
+		);
+		woocommerce_wp_select(
+			array(
 				'id'          => '_sbm_access_type',
 				'label'       => __( 'Access type', 'studio-booking-manager' ),
 				'options'     => $this->access_type_options(),
@@ -238,7 +264,7 @@ final class ProductPanel {
 	 */
 	public function save_variation_fields( int $variation_id, int $loop ): void {
 		$raw = array();
-		$keys = array( '_sbm_enabled', '_sbm_access_type', '_sbm_location_id', '_sbm_total_credits', '_sbm_weekly_limit', '_sbm_guest_limit', '_sbm_validity_days' );
+		$keys = array( '_sbm_enabled', '_sbm_pass_type_id', '_sbm_access_type', '_sbm_location_id', '_sbm_total_credits', '_sbm_weekly_limit', '_sbm_guest_limit', '_sbm_validity_days' );
 
 		foreach ( $keys as $key ) {
 			if ( isset( $_POST[ $key ][ $loop ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce verifies variation save requests.
@@ -257,6 +283,7 @@ final class ProductPanel {
 	 */
 	private function save_meta_values( int $post_id, array $raw ): void {
 		$enabled       = isset( $raw['_sbm_enabled'] ) ? 'yes' : 'no';
+		$pass_type_id  = isset( $raw['_sbm_pass_type_id'] ) ? absint( $raw['_sbm_pass_type_id'] ) : 0;
 		$access_type   = isset( $raw['_sbm_access_type'] ) ? sanitize_key( (string) $raw['_sbm_access_type'] ) : '';
 		$location_id   = isset( $raw['_sbm_location_id'] ) ? absint( $raw['_sbm_location_id'] ) : 0;
 		$total_credits = isset( $raw['_sbm_total_credits'] ) ? absint( $raw['_sbm_total_credits'] ) : 0;
@@ -268,7 +295,12 @@ final class ProductPanel {
 			$access_type = '';
 		}
 
+		if ( ! isset( $this->pass_type_options()[ $pass_type_id ] ) ) {
+			$pass_type_id = 0;
+		}
+
 		update_post_meta( $post_id, '_sbm_enabled', $enabled );
+		update_post_meta( $post_id, '_sbm_pass_type_id', $pass_type_id );
 		update_post_meta( $post_id, '_sbm_access_type', $access_type );
 		update_post_meta( $post_id, '_sbm_location_id', $location_id );
 		update_post_meta( $post_id, '_sbm_total_credits', $total_credits );
@@ -303,5 +335,42 @@ final class ProductPanel {
 		}
 
 		return $options;
+	}
+
+	/**
+	 * Pass type options.
+	 *
+	 * @return array<int,string>
+	 */
+	private function pass_type_options(): array {
+		if ( null !== $this->pass_type_options ) {
+			return $this->pass_type_options;
+		}
+
+		$options = array(
+			0 => __( 'Use legacy access settings', 'studio-booking-manager' ),
+		);
+
+		$service  = new PassTypeService();
+		$statuses = $service->statuses();
+
+		foreach ( $service->all() as $pass ) {
+			$label = $pass->name;
+
+			if ( 'active' !== $pass->status ) {
+				$label = sprintf(
+					/* translators: 1: pass name, 2: pass status. */
+					__( '%1$s (%2$s)', 'studio-booking-manager' ),
+					$pass->name,
+					$statuses[ $pass->status ] ?? $pass->status
+				);
+			}
+
+			$options[ (int) $pass->id ] = $label;
+		}
+
+		$this->pass_type_options = $options;
+
+		return $this->pass_type_options;
 	}
 }
