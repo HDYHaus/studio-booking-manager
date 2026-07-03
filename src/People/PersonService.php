@@ -58,6 +58,16 @@ final class PersonService {
 	}
 
 	/**
+	 * Find a person by linked WordPress user ID.
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return object|null
+	 */
+	public function find_by_wp_user_id( int $user_id ): ?object {
+		return $this->repository->find_by_wp_user_id( $user_id );
+	}
+
+	/**
 	 * Find a person by QR token.
 	 *
 	 * @param string $token QR identity token.
@@ -92,5 +102,15 @@ final class PersonService {
 	 */
 	public function archive( int $id ): bool {
 		return $this->repository->archive( $id );
+	}
+
+	/**
+	 * Regenerate a person's QR token.
+	 *
+	 * @param int $id Person ID.
+	 * @return string
+	 */
+	public function regenerate_qr_token( int $id ): string {
+		return $this->repository->regenerate_qr_token( $id );
 	}
 }

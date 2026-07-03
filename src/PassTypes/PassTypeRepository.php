@@ -160,6 +160,8 @@ final class PassTypeRepository {
 	 * @return array<string,mixed>
 	 */
 	private function prepare_for_storage( array $data ): array {
+		$name = isset( $data['name'] ) ? sanitize_text_field( (string) $data['name'] ) : '';
+
 		$behaviour = isset( $data['behaviour'] ) ? sanitize_key( (string) $data['behaviour'] ) : 'one_time';
 		$allowed   = array( 'one_time', 'multiple_visits', 'membership' );
 		if ( ! in_array( $behaviour, $allowed, true ) ) {
@@ -177,8 +179,17 @@ final class PassTypeRepository {
 			$status = 'active';
 		}
 
+		if ( 'one_time' === $behaviour ) {
+			$number_of_visits        = 1;
+			$maximum_visits_per_week = null;
+		}
+
+		if ( 'membership' === $behaviour ) {
+			$number_of_visits = null;
+		}
+
 		return array(
-			'name' => sanitize_text_field( (string) $data['name'] ),
+			'name' => '' !== $name ? $name : __( 'Untitled Pass', 'studio-booking-manager' ),
 			'description' => isset( $data['description'] ) ? sanitize_textarea_field( (string) $data['description'] ) : '',
 			'behaviour' => $behaviour,
 			'number_of_visits' => $number_of_visits,

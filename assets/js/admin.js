@@ -33,6 +33,25 @@
 		}
 	}
 
+	function renderQrCodes() {
+		if ( 'undefined' === typeof jQuery || 'function' !== typeof jQuery.fn.qrcode ) {
+			return;
+		}
+
+		Array.prototype.forEach.call( document.querySelectorAll( '[data-sbm-qr-value]' ), function ( element ) {
+			if ( element.getAttribute( 'data-sbm-qr-rendered' ) ) {
+				return;
+			}
+
+			element.setAttribute( 'data-sbm-qr-rendered', '1' );
+			jQuery( element ).empty().qrcode( {
+				text: element.getAttribute( 'data-sbm-qr-value' ) || '',
+				width: 320,
+				height: 320
+			} );
+		} );
+	}
+
 	document.addEventListener( 'DOMContentLoaded', function () {
 		var person = document.getElementById( 'sbm-booking-person' );
 		var location = document.getElementById( 'sbm-booking-location' );
@@ -46,5 +65,7 @@
 		if ( location ) {
 			location.addEventListener( 'change', updateBookingAccessOptions );
 		}
+
+		renderQrCodes();
 	} );
 }() );

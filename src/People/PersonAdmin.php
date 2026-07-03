@@ -9,6 +9,7 @@ namespace StudioBookingManager\People;
 
 use StudioBookingManager\Admin\AbstractAdminPage;
 use StudioBookingManager\Admin\PageHeader;
+use StudioBookingManager\QR\QRService;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -80,6 +81,23 @@ final class PersonAdmin extends AbstractAdminPage {
 		);
 		// phpcs:enable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
+		if ( $data['wp_user_id'] > 0 ) {
+			$linked = $this->service->find_by_wp_user_id( (int) $data['wp_user_id'] );
+
+			if ( $linked instanceof \stdClass && (int) $linked->id !== (int) $data['id'] ) {
+				wp_safe_redirect(
+					add_query_arg(
+						array(
+							'page'    => 'sbm-people',
+							'message' => 'linked_user_exists',
+						),
+						admin_url( 'admin.php' )
+					)
+				);
+				exit;
+			}
+		}
+
 		$saved_id = $this->service->save( $data );
 
 		$redirect = add_query_arg(
@@ -148,6 +166,7 @@ final class PersonAdmin extends AbstractAdminPage {
 							<th><?php echo esc_html__( 'Name', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'Email', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'Phone', 'studio-booking-manager' ); ?></th>
+							<th><?php echo esc_html__( 'Account', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'QR Identity', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'Status', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'Actions', 'studio-booking-manager' ); ?></th>
@@ -156,7 +175,7 @@ final class PersonAdmin extends AbstractAdminPage {
 					<tbody>
 						<?php if ( empty( $people ) ) : ?>
 							<tr>
-								<td colspan="6"><?php echo esc_html__( 'No people found.', 'studio-booking-manager' ); ?></td>
+								<td colspan="7"><?php echo esc_html__( 'No people found.', 'studio-booking-manager' ); ?></td>
 							</tr>
 						<?php endif; ?>
 						<?php foreach ( $people as $person ) : ?>
@@ -164,11 +183,12 @@ final class PersonAdmin extends AbstractAdminPage {
 								<td>
 									<strong><?php echo esc_html( $person->display_name ); ?></strong>
 									<div class="row-actions">
-										<span class="edit"><a href="<?php echo esc_url( $this->edit_url( (int) $person->id ) ); ?>"><?php echo esc_html__( 'Edit', 'studio-booking-manager' ); ?></a></span> | <span class="qr"><a href="<?php echo esc_url( $this->qr_checkin_url( (string) $person->qr_token ) ); ?>"><?php echo esc_html__( 'QR Check-in', 'studio-booking-manager' ); ?></a></span>
+										<span class="edit"><a href="<?php echo esc_url( $this->edit_url( (int) $person->id ) ); ?>"><?php echo esc_html__( 'Edit', 'studio-booking-manager' ); ?></a></span> | <span class="qr"><a href="<?php echo esc_url( $this->qr_view_url( (int) $person->id ) ); ?>"><?php echo esc_html__( 'QR Code', 'studio-booking-manager' ); ?></a></span> | <span class="checkin"><a href="<?php echo esc_url( $this->qr_checkin_url( $person ) ); ?>"><?php echo esc_html__( 'QR Check-in', 'studio-booking-manager' ); ?></a></span>
 									</div>
 								</td>
 								<td><?php echo esc_html( (string) $person->email ); ?></td>
 								<td><?php echo esc_html( (string) $person->phone ); ?></td>
+								<td><?php echo esc_html( $this->account_label( $person ) ); ?></td>
 								<td><code><?php echo esc_html( substr( (string) $person->qr_token, 0, 12 ) ); ?>...</code></td>
 								<td><?php echo esc_html( ucfirst( (string) $person->status ) ); ?></td>
 								<td><?php $this->render_row_actions( $person ); ?></td>
@@ -189,7 +209,8 @@ final class PersonAdmin extends AbstractAdminPage {
 	private function render_row_actions( object $person ): void {
 		?>
 		<a class="button button-small" href="<?php echo esc_url( $this->edit_url( (int) $person->id ) ); ?>"><?php echo esc_html__( 'Edit', 'studio-booking-manager' ); ?></a>
-		<a class="button button-small" href="<?php echo esc_url( $this->qr_checkin_url( (string) $person->qr_token ) ); ?>"><?php echo esc_html__( 'QR Check-in', 'studio-booking-manager' ); ?></a>
+		<a class="button button-small" href="<?php echo esc_url( $this->qr_view_url( (int) $person->id ) ); ?>"><?php echo esc_html__( 'QR Code', 'studio-booking-manager' ); ?></a>
+		<a class="button button-small" href="<?php echo esc_url( $this->qr_checkin_url( $person ) ); ?>"><?php echo esc_html__( 'QR Check-in', 'studio-booking-manager' ); ?></a>
 		<form class="sbm-inline-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<?php wp_nonce_field( 'sbm_archive_person' ); ?>
 			<input type="hidden" name="action" value="sbm_archive_person">
@@ -237,13 +258,22 @@ final class PersonAdmin extends AbstractAdminPage {
 							<td><input name="phone" id="sbm-person-phone" type="text" class="regular-text" value="<?php echo esc_attr( $is_edit ? (string) $person->phone : '' ); ?>"></td>
 						</tr>
 						<tr>
-							<th scope="row"><label for="sbm-person-wp-user-id"><?php echo esc_html__( 'WordPress User ID', 'studio-booking-manager' ); ?></label></th>
-							<td><input name="wp_user_id" id="sbm-person-wp-user-id" type="number" min="0" class="small-text" value="<?php echo esc_attr( $is_edit ? (string) absint( $person->wp_user_id ) : '0' ); ?>"><p class="description"><?php echo esc_html__( 'Optional link to a WordPress user account.', 'studio-booking-manager' ); ?></p></td>
+							<th scope="row"><label for="sbm-person-wp-user-id"><?php echo esc_html__( 'WordPress account', 'studio-booking-manager' ); ?></label></th>
+							<td>
+								<?php $this->render_user_select( $is_edit ? absint( $person->wp_user_id ) : 0 ); ?>
+								<p class="description"><?php echo esc_html__( 'Link this person to a customer account so they can view their own passes, bookings, and QR identity in My Account. Choose No linked account to unlink them.', 'studio-booking-manager' ); ?></p>
+							</td>
 						</tr>
 						<?php if ( $is_edit ) : ?>
 							<tr>
 								<th scope="row"><?php echo esc_html__( 'QR Identity', 'studio-booking-manager' ); ?></th>
-								<td><code><?php echo esc_html( (string) $person->qr_token ); ?></code><p class="description"><?php echo esc_html__( 'This permanent identity will be used for future QR check-in.', 'studio-booking-manager' ); ?></p></td>
+								<td>
+									<code><?php echo esc_html( (string) $person->qr_token ); ?></code>
+									<p class="description"><?php echo esc_html__( 'Regenerate this token to revoke existing QR codes for this person.', 'studio-booking-manager' ); ?></p>
+									<p>
+										<a class="button" href="<?php echo esc_url( $this->qr_view_url( (int) $person->id ) ); ?>"><?php echo esc_html__( 'View QR Code', 'studio-booking-manager' ); ?></a>
+									</p>
+								</td>
 							</tr>
 						<?php endif; ?>
 						<tr>
@@ -275,8 +305,87 @@ final class PersonAdmin extends AbstractAdminPage {
 			array(
 				'saved'    => __( 'Person saved.', 'studio-booking-manager' ),
 				'archived' => __( 'Person archived.', 'studio-booking-manager' ),
+				'linked_user_exists' => __( 'That WordPress account is already linked to another person.', 'studio-booking-manager' ),
 				'error'    => __( 'Person could not be saved.', 'studio-booking-manager' ),
 			)
+		);
+	}
+
+	/**
+	 * Render WordPress user selector.
+	 *
+	 * @param int $selected Selected user ID.
+	 */
+	private function render_user_select( int $selected ): void {
+		$users = get_users(
+			array(
+				'fields'  => array( 'ID', 'display_name', 'user_email' ),
+				'number'  => 200,
+				'orderby' => 'display_name',
+				'order'   => 'ASC',
+			)
+		);
+
+		if ( $selected > 0 ) {
+			$selected_user = get_userdata( $selected );
+			$has_selected  = false;
+
+			foreach ( $users as $user ) {
+				if ( (int) $user->ID === $selected ) {
+					$has_selected = true;
+					break;
+				}
+			}
+
+			if ( $selected_user instanceof \WP_User && ! $has_selected ) {
+				$users[] = $selected_user;
+			}
+		}
+		?>
+		<select name="wp_user_id" id="sbm-person-wp-user-id">
+			<option value="0"><?php echo esc_html__( 'No linked account', 'studio-booking-manager' ); ?></option>
+			<?php foreach ( $users as $user ) : ?>
+				<option value="<?php echo esc_attr( (string) absint( $user->ID ) ); ?>" <?php selected( $selected, (int) $user->ID ); ?>><?php echo esc_html( $this->user_option_label( $user ) ); ?></option>
+			<?php endforeach; ?>
+		</select>
+		<?php
+	}
+
+	/**
+	 * Build an account label for the people list.
+	 *
+	 * @param object $person Person row.
+	 */
+	private function account_label( object $person ): string {
+		$user_id = absint( $person->wp_user_id );
+
+		if ( $user_id <= 0 ) {
+			return __( 'Not linked', 'studio-booking-manager' );
+		}
+
+		$user = get_userdata( $user_id );
+
+		return $user instanceof \WP_User ? $this->user_option_label( $user ) : __( 'Linked account missing', 'studio-booking-manager' );
+	}
+
+	/**
+	 * Build a user option label.
+	 *
+	 * @param object $user WordPress user-like object.
+	 */
+	private function user_option_label( object $user ): string {
+		$name  = '' !== (string) $user->display_name ? (string) $user->display_name : __( 'Unnamed user', 'studio-booking-manager' );
+		$email = isset( $user->user_email ) ? (string) $user->user_email : '';
+
+		if ( '' === $email ) {
+			return $name;
+		}
+
+		return sprintf(
+			/* translators: 1: user display name, 2: user email. */
+			__( '%1$s (%2$s)', 'studio-booking-manager' ),
+			$name,
+			$email
 		);
 	}
 
@@ -299,16 +408,26 @@ final class PersonAdmin extends AbstractAdminPage {
 
 
 	/**
-	 * Create QR check-in URL for a person token.
+	 * Create QR check-in URL for a person.
 	 *
-	 * @param string $token QR identity token.
+	 * @param object $person Person row.
 	 * @return string
 	 */
-	private function qr_checkin_url( string $token ): string {
+	private function qr_checkin_url( object $person ): string {
+		return ( new QRService() )->person_checkin_url( $person );
+	}
+
+	/**
+	 * Create QR view URL.
+	 *
+	 * @param int $id Person ID.
+	 */
+	private function qr_view_url( int $id ): string {
 		return add_query_arg(
 			array(
-				'page'  => 'sbm-qr-checkin',
-				'token' => rawurlencode( $token ),
+				'page'      => 'sbm-qr-checkin',
+				'action'    => 'person',
+				'person_id' => $id,
 			),
 			admin_url( 'admin.php' )
 		);
