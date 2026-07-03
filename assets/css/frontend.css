@@ -1,0 +1,68 @@
+.sbm-member-schedule {
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	margin: 1.5rem 0;
+	overflow: hidden;
+}
+
+.sbm-member-schedule-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.sbm-member-schedule-item {
+	align-items: center;
+	border-bottom: 1px solid #dcdcde;
+	display: grid;
+	gap: 12px;
+	grid-template-columns: minmax(120px, 0.8fr) minmax(180px, 1.4fr) auto;
+	padding: 14px 16px;
+}
+
+.sbm-member-schedule-item:last-child {
+	border-bottom: 0;
+}
+
+.sbm-member-schedule-date {
+	font-weight: 600;
+}
+
+.sbm-member-schedule-main {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.sbm-member-schedule-main span,
+.sbm-member-schedule-empty,
+.sbm-member-schedule-login {
+	color: #646970;
+}
+
+.sbm-member-schedule-status {
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 999px;
+	font-size: 0.875rem;
+	line-height: 1;
+	padding: 7px 10px;
+	white-space: nowrap;
+}
+
+.sbm-member-schedule-empty,
+.sbm-member-schedule-login {
+	margin: 0;
+	padding: 16px;
+}
+
+@media (max-width: 640px) {
+	.sbm-member-schedule-item {
+		align-items: start;
+		grid-template-columns: 1fr;
+	}
+
+	.sbm-member-schedule-status {
+		justify-self: start;
+	}
+}

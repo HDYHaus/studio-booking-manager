@@ -140,6 +140,54 @@ final class BookingRepository {
 	}
 
 	/**
+	 * Find upcoming booking blocks safe for member-facing schedule views.
+	 *
+	 * @param int $days Number of days ahead.
+	 * @param int $location_id Optional location ID.
+	 * @param int $limit Maximum rows.
+	 * @return array<int, object>
+	 */
+	public function member_schedule( int $days = 14, int $location_id = 0, int $limit = 30 ): array {
+		$locations_table = Tables::get( 'locations' );
+		$days            = max( 1, min( 120, $days ) );
+		$limit           = max( 1, min( 100, $limit ) );
+		$now             = current_time( 'mysql' );
+		$end             = gmdate( 'Y-m-d H:i:s', strtotime( '+' . $days . ' days', strtotime( $now ) ) );
+
+		$where = array(
+			'bookings.status IN ( %s, %s )',
+			'bookings.ends_at >= %s',
+			'bookings.starts_at <= %s',
+		);
+		$args  = array( 'pending', 'confirmed', $now, $end );
+
+		if ( $location_id > 0 ) {
+			$where[] = 'bookings.location_id = %d';
+			$args[]  = $location_id;
+		}
+
+		$where_sql = implode( ' AND ', $where );
+		$args[]    = $limit;
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names and WHERE fragments are internal trusted values.
+		$query = $this->wpdb->prepare(
+			"SELECT bookings.id, bookings.location_id, bookings.status, bookings.starts_at, bookings.ends_at, locations.name AS location_name, locations.timezone AS location_timezone
+			FROM `{$this->table}` bookings
+			LEFT JOIN `{$locations_table}` locations ON locations.id = bookings.location_id
+			WHERE {$where_sql}
+			ORDER BY bookings.starts_at ASC, bookings.id ASC
+			LIMIT %d",
+			$args
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Custom operational table query with trusted table names and prepared values.
+		$records = $this->wpdb->get_results( $query );
+
+		return is_array( $records ) ? $records : array();
+	}
+
+	/**
 	 * Create a booking.
 	 *
 	 * @param array<string,mixed> $data Booking data.
