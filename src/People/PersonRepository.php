@@ -104,6 +104,26 @@ final class PersonRepository {
 		return $person instanceof \stdClass ? $person : null;
 	}
 
+	/**
+	 * Find a person by linked WordPress user ID.
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return object|null
+	 */
+	public function find_by_wp_user_id( int $user_id ): ?object {
+		if ( $user_id <= 0 ) {
+			return null;
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name comes from the trusted Tables registry; the user ID is prepared.
+		$query = $this->wpdb->prepare( "SELECT * FROM `{$this->table}` WHERE wp_user_id = %d AND status <> %s ORDER BY id DESC LIMIT 1", $user_id, 'archived' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom operational table query using a trusted table name from the Tables registry; values are prepared above.
+		$person = $this->wpdb->get_row( $query );
+
+		return $person instanceof \stdClass ? $person : null;
+	}
+
 
 	/**
 	 * Find a person by QR token.
@@ -228,7 +248,7 @@ final class PersonRepository {
 		$status = isset( $data['status'] ) && 'inactive' === $data['status'] ? 'inactive' : 'active';
 
 		return array(
-			'wp_user_id'   => isset( $data['wp_user_id'] ) ? absint( $data['wp_user_id'] ) : null,
+			'wp_user_id'   => isset( $data['wp_user_id'] ) && absint( $data['wp_user_id'] ) > 0 ? absint( $data['wp_user_id'] ) : null,
 			'first_name'   => $first_name,
 			'last_name'    => $last_name,
 			'display_name' => '' !== $display_name ? $display_name : __( 'Unnamed Person', 'studio-booking-manager' ),
