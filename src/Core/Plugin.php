@@ -15,6 +15,7 @@ use StudioBookingManager\Admin\AdminAssets;
 use StudioBookingManager\Admin\AdminMenu;
 use StudioBookingManager\Database\DBManager;
 use StudioBookingManager\Frontend\MemberScheduleShortcode;
+use StudioBookingManager\ImportExport\ImportExportAdmin;
 use StudioBookingManager\Locations\LocationAdmin;
 use StudioBookingManager\Operations\OperationsAdmin;
 use StudioBookingManager\PassTypes\PassTypeAdmin;
@@ -65,6 +66,7 @@ final class Plugin {
 		( new PassTypeAdmin() )->register();
 		( new OperationsAdmin() )->register();
 		( new QRAdmin() )->register();
+		( new ImportExportAdmin() )->register();
 		( new AdminMenu() )->register();
 		( new SettingsPage() )->register();
 		( new MemberScheduleShortcode() )->register();

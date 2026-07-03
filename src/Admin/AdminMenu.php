@@ -11,6 +11,7 @@ use StudioBookingManager\Access\AccessAdmin;
 use StudioBookingManager\Bookings\BookingAdmin;
 use StudioBookingManager\Commerce\WooCommerce\CommerceAdmin;
 use StudioBookingManager\Database\Tables;
+use StudioBookingManager\ImportExport\ImportExportAdmin;
 use StudioBookingManager\Locations\LocationAdmin;
 use StudioBookingManager\Operations\OperationsAdmin;
 use StudioBookingManager\PassTypes\PassTypeAdmin;
@@ -140,6 +141,15 @@ final class AdminMenu {
 			'sbm_view_reports',
 			'sbm-reports',
 			array( new ReportsAdmin(), 'render' )
+		);
+
+		add_submenu_page(
+			'sbm-dashboard',
+			__( 'Import / Export', 'studio-booking-manager' ),
+			__( 'Import / Export', 'studio-booking-manager' ),
+			'sbm_manage_settings',
+			'sbm-import-export',
+			array( new ImportExportAdmin(), 'render' )
 		);
 
 		add_submenu_page(
