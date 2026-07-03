@@ -218,7 +218,7 @@ final class SettingsPage {
 				<section id="google-calendar" class="sbm-card">
 					<h2><?php echo esc_html__( 'Google Calendar', 'studio-booking-manager' ); ?></h2>
 					<div class="sbm-settings-help">
-						<p><?php echo esc_html__( 'Use a Google Cloud service account for server-to-server calendar sync. You will paste the downloaded JSON key here, then share the target calendar with the service account email inside that JSON file.', 'studio-booking-manager' ); ?></p>
+						<p><?php echo esc_html__( 'Use a Google Cloud service account for server-to-server calendar sync. You will paste the downloaded JSON key here, then share the target Google Calendar with the service account email inside that JSON file.', 'studio-booking-manager' ); ?></p>
 						<ol>
 							<li>
 								<?php
@@ -244,7 +244,7 @@ final class SettingsPage {
 								<?php
 								printf(
 									/* translators: 1: opening link tag, 2: closing link tag. */
-									esc_html__( 'Open Google Calendar settings, copy the Calendar ID, and share that calendar with the service account client_email. Google explains calendar sharing in %1$sthis help article%2$s.', 'studio-booking-manager' ),
+									esc_html__( 'Open the target calendar settings, copy its Calendar ID, and share that exact calendar with the service account client_email. Google explains calendar sharing in %1$sthis help article%2$s.', 'studio-booking-manager' ),
 									'<a href="' . esc_url( 'https://support.google.com/calendar/answer/37082' ) . '" target="_blank" rel="noopener noreferrer">',
 									'</a>'
 								);
@@ -268,7 +268,7 @@ final class SettingsPage {
 							</th>
 							<td>
 								<input id="sbm-google-calendar-id" type="text" class="regular-text" name="sbm_settings[google_calendar_id]" value="<?php echo esc_attr( $calendar_id ); ?>" />
-								<p class="description"><?php echo esc_html__( 'In Google Calendar: Settings and sharing > Integrate calendar > Calendar ID. Use the full ID for shared calendars.', 'studio-booking-manager' ); ?></p>
+								<p class="description"><?php echo esc_html__( 'In Google Calendar: Settings and sharing > Integrate calendar > Calendar ID. Use the full calendar ID, not the calendar name or the word primary.', 'studio-booking-manager' ); ?></p>
 							</td>
 						</tr>
 						<tr>

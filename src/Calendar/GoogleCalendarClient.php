@@ -321,7 +321,13 @@ final class GoogleCalendarClient {
 			return $response->get_error_message();
 		}
 
+		$code = (int) wp_remote_retrieve_response_code( $response );
 		$decoded = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+
+		if ( 404 === $code ) {
+			return __( 'Google Calendar could not find that calendar. Verify the Calendar ID and make sure the calendar is shared with the service account client_email with permission to make changes to events.', 'studio-booking-manager' );
+		}
+
 		if ( is_array( $decoded ) && isset( $decoded['error']['message'] ) ) {
 			return sanitize_text_field( (string) $decoded['error']['message'] );
 		}
@@ -329,7 +335,7 @@ final class GoogleCalendarClient {
 		return sprintf(
 			/* translators: %d: HTTP response code. */
 			__( 'Google Calendar returned HTTP %d.', 'studio-booking-manager' ),
-			(int) wp_remote_retrieve_response_code( $response )
+			$code
 		);
 	}
 }
