@@ -4,7 +4,7 @@ Tags: bookings, coworking, studio, memberships, operations
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.9.1
+Stable tag: 0.10.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,9 +14,32 @@ Open source booking and operations management for studios, coworking spaces, cre
 
 Studio Booking Manager helps shared spaces manage people, access, visits, locations, memberships, and operations from WordPress.
 
-This release adds plugin-specific roles, capabilities, a system health screen, and the initial security policy foundation.
+This release adds booking workflows, calendar sync, member self-service, QR tools, reporting, import/export tools, and release quality checks.
 
 == Changelog ==
+
+= 0.10.0 =
+
+- Added booking and reservation management with conflict handling.
+- Added Google Calendar booking sync and settings guidance.
+- Added notification settings, notification logging, and staff alert support.
+- Added member schedule and self-service account shortcodes.
+- Added QR settings and QR output tools.
+- Added reports dashboard, import/export tools, and pass management polish.
+- Added local release quality checks.
+
+= 0.9.1 =
+
+- Updated readme stable tag to match the plugin version.
+- Clarified WooCommerce variation nonce handling for Plugin Check.
+- Documented the sbm_ public hook prefix for WooCommerce access creation hooks.
+
+= 0.9.0 =
+
+- Added optional WooCommerce commerce adapter.
+- Added product and variation access mapping fields.
+- Added automatic person and access creation after paid WooCommerce orders.
+- Added Commerce status screen.
 
 = 0.8.5 =
 

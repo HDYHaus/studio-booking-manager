@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.10.0 - 2026-07-04
+
+### Added
+- Added booking and reservation management with conflict handling.
+- Added Google Calendar booking sync and settings guidance.
+- Added notification settings, notification logging, and staff alert support.
+- Added member schedule and self-service account shortcodes.
+- Added QR settings and QR output tools.
+- Added reports dashboard and import/export tools.
+- Added local release quality checks.
+
+### Changed
+- Polished pass management screens and admin workflows.
+
 ## 0.9.1 - 2026-06-27
 
 ### Fixed
