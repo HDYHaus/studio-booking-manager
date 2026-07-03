@@ -177,6 +177,41 @@ final class SettingsPage {
 
 				<section id="google-calendar" class="sbm-card">
 					<h2><?php echo esc_html__( 'Google Calendar', 'studio-booking-manager' ); ?></h2>
+					<div class="sbm-settings-help">
+						<p><?php echo esc_html__( 'Use a Google Cloud service account for server-to-server calendar sync. You will paste the downloaded JSON key here, then share the target calendar with the service account email inside that JSON file.', 'studio-booking-manager' ); ?></p>
+						<ol>
+							<li>
+								<?php
+								printf(
+									/* translators: 1: opening link tag, 2: closing link tag. */
+									esc_html__( 'Create or choose a Google Cloud project, then enable the Google Calendar API from the %1$sGoogle Cloud console%2$s.', 'studio-booking-manager' ),
+									'<a href="' . esc_url( 'https://console.cloud.google.com/apis/library/calendar-json.googleapis.com' ) . '" target="_blank" rel="noopener noreferrer">',
+									'</a>'
+								);
+								?>
+							</li>
+							<li>
+								<?php
+								printf(
+									/* translators: 1: opening link tag, 2: closing link tag. */
+									esc_html__( 'Create a service account key, choose JSON as the key type, and paste the downloaded file contents into Service account JSON. See Google\'s %1$sservice account key guide%2$s.', 'studio-booking-manager' ),
+									'<a href="' . esc_url( 'https://cloud.google.com/iam/docs/keys-create-delete#creating' ) . '" target="_blank" rel="noopener noreferrer">',
+									'</a>'
+								);
+								?>
+							</li>
+							<li>
+								<?php
+								printf(
+									/* translators: 1: opening link tag, 2: closing link tag. */
+									esc_html__( 'Open Google Calendar settings, copy the Calendar ID, and share that calendar with the service account client_email. Google explains calendar sharing in %1$sthis help article%2$s.', 'studio-booking-manager' ),
+									'<a href="' . esc_url( 'https://support.google.com/calendar/answer/37082' ) . '" target="_blank" rel="noopener noreferrer">',
+									'</a>'
+								);
+								?>
+							</li>
+						</ol>
+					</div>
 					<table class="form-table" role="presentation">
 						<tr>
 							<th scope="row"><?php echo esc_html__( 'Enable sync', 'studio-booking-manager' ); ?></th>
@@ -193,7 +228,7 @@ final class SettingsPage {
 							</th>
 							<td>
 								<input id="sbm-google-calendar-id" type="text" class="regular-text" name="sbm_settings[google_calendar_id]" value="<?php echo esc_attr( $calendar_id ); ?>" />
-								<p class="description"><?php echo esc_html__( 'Use the calendar address from Google Calendar settings, such as primary or a shared calendar ID.', 'studio-booking-manager' ); ?></p>
+								<p class="description"><?php echo esc_html__( 'In Google Calendar: Settings and sharing > Integrate calendar > Calendar ID. Use the full ID for shared calendars.', 'studio-booking-manager' ); ?></p>
 							</td>
 						</tr>
 						<tr>
@@ -202,7 +237,7 @@ final class SettingsPage {
 							</th>
 							<td>
 								<textarea id="sbm-google-calendar-service-account" class="large-text code" rows="8" name="sbm_settings[google_calendar_service_account_json]" placeholder="<?php echo esc_attr( $has_credentials ? __( 'Service account JSON is already saved. Leave blank to keep it.', 'studio-booking-manager' ) : '' ); ?>"></textarea>
-								<p class="description"><?php echo esc_html__( 'Paste the Google Cloud service account JSON. Share the target calendar with the service account email.', 'studio-booking-manager' ); ?></p>
+								<p class="description"><?php echo esc_html__( 'Paste the entire downloaded JSON key file, including client_email and private_key. Do not paste only the private key.', 'studio-booking-manager' ); ?></p>
 								<?php if ( $has_credentials ) : ?>
 									<p class="description"><?php echo esc_html__( 'Credentials are saved and hidden.', 'studio-booking-manager' ); ?></p>
 								<?php endif; ?>

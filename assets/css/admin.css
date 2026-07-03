@@ -72,6 +72,26 @@
 	padding: 12px 20px 20px;
 }
 
+.sbm-settings-help {
+	background: #f6f7f7;
+	border-left: 4px solid #2271b1;
+	margin: 12px 0 18px;
+	max-width: 760px;
+	padding: 12px 16px;
+}
+
+.sbm-settings-help p {
+	margin: 0 0 8px;
+}
+
+.sbm-settings-help ol {
+	margin: 0 0 0 20px;
+}
+
+.sbm-settings-help li {
+	margin: 0 0 6px;
+}
+
 .sbm-search-form {
 	min-height: 34px;
 }
