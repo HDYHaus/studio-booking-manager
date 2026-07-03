@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.10.1 - 2026-07-04
+
+### Fixed
+- Improved Plugin Check compatibility for release packaging.
+- Removed tracked placeholder files from development-only directories.
+- Clarified trusted custom-table SQL handling in access duplicate checks.
+- Sanitized QR lookup tokens before resolving them.
+- Documented intentional CSV streaming for import/export and report exports.
+
 ## 0.10.0 - 2026-07-04
 
 ### Added

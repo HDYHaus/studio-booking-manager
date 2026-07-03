@@ -133,18 +133,22 @@ final class ImportExportAdmin extends AbstractAdminPage {
 		header( 'Content-Type: text/csv; charset=utf-8' );
 		header( 'Content-Disposition: attachment; filename="' . sanitize_file_name( 'studio-booking-' . $dataset . '-' . current_time( 'Y-m-d' ) . '.csv' ) . '"' );
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- CSV export streams directly to the HTTP response.
 		$output = fopen( 'php://output', 'w' );
 
 		if ( false === $output ) {
 			exit;
 		}
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- CSV export streams directly to the HTTP response.
 		fputcsv( $output, $export['headers'] );
 
 		foreach ( $export['rows'] as $row ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- CSV export streams directly to the HTTP response.
 			fputcsv( $output, $row );
 		}
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- CSV export streams directly to the HTTP response.
 		fclose( $output );
 		exit;
 	}
@@ -386,11 +390,12 @@ final class ImportExportAdmin extends AbstractAdminPage {
 	 * @return array<int,array<string,string>>|\WP_Error
 	 */
 	private function read_uploaded_csv() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce and capability are verified before this method is called.
 		if ( empty( $_FILES['import_file'] ) || ! is_array( $_FILES['import_file'] ) ) {
 			return new \WP_Error( 'missing_file', __( 'Upload a CSV file.', 'studio-booking-manager' ) );
 		}
 
-		$file = $_FILES['import_file']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Upload metadata validated below.
+			$file = $_FILES['import_file']; // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified by caller; upload metadata validated below.
 
 		if ( ! empty( $file['error'] ) ) {
 			return new \WP_Error( 'upload_error', __( 'The CSV file could not be uploaded.', 'studio-booking-manager' ) );
@@ -402,6 +407,7 @@ final class ImportExportAdmin extends AbstractAdminPage {
 			return new \WP_Error( 'invalid_file', __( 'The uploaded file was not valid.', 'studio-booking-manager' ) );
 		}
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Reading a verified uploaded CSV stream.
 		$handle = fopen( $tmp_name, 'r' );
 
 		if ( false === $handle ) {
@@ -411,6 +417,7 @@ final class ImportExportAdmin extends AbstractAdminPage {
 		$header = fgetcsv( $handle );
 
 		if ( ! is_array( $header ) || empty( $header ) ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing a verified uploaded CSV stream.
 			fclose( $handle );
 			return new \WP_Error( 'empty_file', __( 'The CSV file must include a header row.', 'studio-booking-manager' ) );
 		}
@@ -436,6 +443,7 @@ final class ImportExportAdmin extends AbstractAdminPage {
 			$rows[] = $row;
 		}
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing a verified uploaded CSV stream.
 		fclose( $handle );
 
 		return $rows;

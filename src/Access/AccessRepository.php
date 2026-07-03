@@ -104,35 +104,37 @@ final class AccessRepository {
 		$weekly_limit_is_null  = null === $weekly_limit ? 1 : 0;
 		$expires_at_is_null    = null === $expires_at ? 1 : 0;
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name comes from the trusted Tables registry.
-		return $this->wpdb->get_row(
-			$this->wpdb->prepare(
-				"SELECT * FROM `{$this->table}`
-				WHERE person_id = %d
-				AND location_id = %d
-				AND access_type = %s
-				AND status = %s
-				AND guest_limit = %d
-				AND ( ( %d = 1 AND total_credits IS NULL ) OR ( %d = 0 AND total_credits = %d ) )
-				AND ( ( %d = 1 AND weekly_limit IS NULL ) OR ( %d = 0 AND weekly_limit = %d ) )
-				AND ( ( %d = 1 AND expires_at IS NULL ) OR ( %d = 0 AND expires_at = %s ) )
-				ORDER BY created_at DESC LIMIT 1",
-				$person_id,
-				$location_id,
-				$access_type,
-				'active',
-				$guest_limit,
-				$total_credits_is_null,
-				$total_credits_is_null,
-				null === $total_credits ? 0 : $total_credits,
-				$weekly_limit_is_null,
-				$weekly_limit_is_null,
-				null === $weekly_limit ? 0 : $weekly_limit,
-				$expires_at_is_null,
-				$expires_at_is_null,
-				null === $expires_at ? '' : $expires_at
-			)
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name comes from the trusted Tables registry; values are prepared.
+		$query = $this->wpdb->prepare(
+			"SELECT * FROM `{$this->table}`
+			WHERE person_id = %d
+			AND location_id = %d
+			AND access_type = %s
+			AND status = %s
+			AND guest_limit = %d
+			AND ( ( %d = 1 AND total_credits IS NULL ) OR ( %d = 0 AND total_credits = %d ) )
+			AND ( ( %d = 1 AND weekly_limit IS NULL ) OR ( %d = 0 AND weekly_limit = %d ) )
+			AND ( ( %d = 1 AND expires_at IS NULL ) OR ( %d = 0 AND expires_at = %s ) )
+			ORDER BY created_at DESC LIMIT 1",
+			$person_id,
+			$location_id,
+			$access_type,
+			'active',
+			$guest_limit,
+			$total_credits_is_null,
+			$total_credits_is_null,
+			null === $total_credits ? 0 : $total_credits,
+			$weekly_limit_is_null,
+			$weekly_limit_is_null,
+			null === $weekly_limit ? 0 : $weekly_limit,
+			$expires_at_is_null,
+			$expires_at_is_null,
+			null === $expires_at ? '' : $expires_at
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Custom operational table query using trusted table name and prepared values.
+		return $this->wpdb->get_row( $query );
 	}
 
 	/**

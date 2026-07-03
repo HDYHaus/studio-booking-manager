@@ -80,7 +80,7 @@ final class BookingRepository {
 
 		$where_sql = implode( ' AND ', $where );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names and WHERE fragments are internal trusted values.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Table names and WHERE fragments are internal trusted values with prepared placeholder args.
 		$query = $this->wpdb->prepare(
 			"SELECT bookings.*, people.display_name AS person_name, locations.name AS location_name, access.access_type AS access_type
 			FROM `{$this->table}` bookings
@@ -91,7 +91,7 @@ final class BookingRepository {
 			ORDER BY bookings.starts_at ASC, bookings.id ASC",
 			$args
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Custom operational table query with trusted table names and prepared values.
 		$records = $this->wpdb->get_results( $query );
@@ -148,7 +148,7 @@ final class BookingRepository {
 		);
 		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom operational table query using trusted table name and prepared values.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Custom operational table query using trusted table name and prepared values.
 		$records = $this->wpdb->get_results( $query );
 
 		return is_array( $records ) ? $records : array();
@@ -369,7 +369,7 @@ final class BookingRepository {
 			return false;
 		}
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name comes from trusted Tables registry; values are prepared.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name comes from trusted Tables registry; values are prepared.
 		$query = $this->wpdb->prepare(
 			"SELECT COUNT(*) FROM `{$this->table}`
 			WHERE location_id = %d
@@ -384,8 +384,9 @@ final class BookingRepository {
 			$ends_at,
 			$starts_at
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom operational table conflict check using prepared values.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Custom operational table conflict check using prepared values.
 		return (int) $this->wpdb->get_var( $query ) > 0;
 	}
 

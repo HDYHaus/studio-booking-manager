@@ -132,7 +132,8 @@ final class QRAdmin extends AbstractAdminPage {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only QR lookup request.
 		if ( isset( $_GET['qr'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only QR lookup request.
-			return $this->qr->resolve( (string) wp_unslash( $_GET['qr'] ) );
+			$qr_token = sanitize_text_field( wp_unslash( $_GET['qr'] ) );
+			return $this->qr->resolve( $qr_token );
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only manual lookup request.

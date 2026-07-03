@@ -1,10 +1,14 @@
 .DS_Store
+**/.DS_Store
+**/.gitkeep
 .git
 .github
 .gitignore
+.distignore
 .phpunit.result.cache
 .agents
 .codex
+AI.md
 composer.lock
 node_modules
 vendor

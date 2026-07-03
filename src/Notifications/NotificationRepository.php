@@ -52,7 +52,7 @@ final class NotificationRepository {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name comes from trusted Tables registry; limit is prepared.
 		$query = $this->wpdb->prepare( "SELECT * FROM `{$this->table}` ORDER BY created_at DESC, id DESC LIMIT %d", $limit );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom operational table query using a trusted table name and prepared limit.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Custom operational table query using a trusted table name and prepared limit.
 		$records = $this->wpdb->get_results( $query );
 
 		return is_array( $records ) ? $records : array();

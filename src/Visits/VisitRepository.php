@@ -259,7 +259,7 @@ final class VisitRepository {
 			return 0;
 		}
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name comes from the trusted Tables registry; values are prepared.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name comes from the trusted Tables registry; values are prepared.
 		$query = $this->wpdb->prepare(
 			"SELECT COUNT(*) FROM `{$this->table}` WHERE access_id = %d AND status IN (%s, %s) AND checked_in_at >= %s",
 			$access_id,
@@ -267,8 +267,9 @@ final class VisitRepository {
 			'checked_out',
 			$since
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom operational table query for access validation.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Custom operational table query for access validation.
 		return (int) $this->wpdb->get_var( $query );
 	}
 

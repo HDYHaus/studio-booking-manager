@@ -4,7 +4,7 @@ Tags: bookings, coworking, studio, memberships, operations
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.10.0
+Stable tag: 0.10.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,6 +17,14 @@ Studio Booking Manager helps shared spaces manage people, access, visits, locati
 This release adds booking workflows, calendar sync, member self-service, QR tools, reporting, import/export tools, and release quality checks.
 
 == Changelog ==
+
+= 0.10.1 =
+
+- Improved Plugin Check compatibility for release packaging.
+- Removed tracked placeholder files from development-only directories.
+- Clarified trusted custom-table SQL handling in access duplicate checks.
+- Sanitized QR lookup tokens before resolving them.
+- Documented intentional CSV streaming for import/export and report exports.
 
 = 0.10.0 =
 
