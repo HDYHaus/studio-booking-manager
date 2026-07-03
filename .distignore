@@ -1,0 +1,16 @@
+.DS_Store
+.git
+.github
+.gitignore
+.phpunit.result.cache
+.agents
+.codex
+composer.lock
+node_modules
+vendor
+tests
+tools
+phpcs.xml.dist
+phpunit.xml.dist
+reports-plan.md
+skills-lock.json

@@ -1,0 +1,27 @@
+{
+  "name": "hdyhaus/studio-booking-manager",
+  "description": "Studio booking, access, check-in, and reporting tools for WordPress.",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0-or-later",
+  "require": {
+    "php": ">=7.2.24"
+  },
+  "require-dev": {
+    "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+    "phpunit/phpunit": "^8.5 || ^9.6",
+    "squizlabs/php_codesniffer": "^3.10",
+    "wp-coding-standards/wpcs": "^3.1",
+    "wp-phpunit/wp-phpunit": "^6.7 || ^6.8 || ^6.9"
+  },
+  "scripts": {
+    "quality": "php tools/quality-check.php",
+    "test": "php tools/run-tests.php",
+    "lint": "php tools/quality-check.php --lint-only"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    },
+    "sort-packages": true
+  }
+}
