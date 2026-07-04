@@ -1,3 +1,19 @@
+.sbm-booking-date-field {
+	display: grid;
+	gap: 6px;
+	margin: 1rem 0;
+	max-width: 260px;
+}
+
+.sbm-booking-date-field label {
+	font-weight: 600;
+}
+
+.sbm-booking-date-field input[type="date"] {
+	box-sizing: border-box;
+	width: 100%;
+}
+
 .sbm-member-schedule {
 	border: 1px solid #dcdcde;
 	border-radius: 8px;
