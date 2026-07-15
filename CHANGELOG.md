@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Added WooCommerce visit-date selection for booking products, including product/variation controls for default start time, end time, duration, and daily booking capacity.
+- Added public-safe schedule context on date-required product pages so customers can see public, private, and unavailable studio activity before choosing a visit date.
+- Added shop-loop "Choose date" behavior so date-required products send customers to the product page instead of failing from the shop grid.
+- Added simplified checkout support for booking-only carts, including WooCommerce Checkout Block support.
+- Added automated coverage for WooCommerce booking date validation, shop-loop choose-date links, and simplified checkout behavior.
+
+### Changed
+- Day-pass unavailable dates now disable the add-to-basket button and show "Date unavailable" before submit.
+- Booking-only checkout labels physical billing details as customer details and hides placeholder address values from customer-facing order output.
+
 ## 0.10.1 - 2026-07-04
 
 ### Fixed

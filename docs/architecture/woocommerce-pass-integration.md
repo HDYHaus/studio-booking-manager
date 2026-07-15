@@ -19,6 +19,35 @@ When enabled, the product or variation can select a Pass. If a Pass is selected,
 
 Variable products use the variation configuration when the variation has Studio Booking enabled. Otherwise, they fall back to the parent product configuration.
 
+Date-required products can also define booking behavior:
+
+- **Require booking date** asks the customer to choose a visit date before adding the item to the cart.
+- **Booking start time** and **Booking end time** define the booking window created from a customer-selected date.
+- **Booking duration minutes** overrides the selected Pass default duration when no valid end time is configured.
+- **Daily booking capacity** limits how many quantities can be booked for the same visit date.
+
+Pass Types can define a **Default booking duration** in minutes. This supports 30-minute, 60-minute, or other hourly/minute booking products while keeping day, flex, and resident passes on the same pass template model.
+
+## Customer Date Selection
+
+Products that require a booking date render a visit-date field on the single product page. The date field also shows public-safe schedule context for the selected date:
+
+- Public bookings show their public title.
+- Private bookings show as private booking activity.
+- Unavailable bookings show as studio unavailable and block day-pass purchase for that date.
+
+When a selected date is unavailable, the add-to-basket button is disabled and relabeled **Date unavailable**. Server-side validation still blocks unavailable dates and over-capacity requests.
+
+Shop and product collection buttons for date-required products are relabeled **Choose date** and link to the single product page. They do not perform direct add-to-cart actions from the shop grid because the customer must choose a visit date first.
+
+## Checkout
+
+The **Simplify checkout for booking-only carts** setting lives under **Studio Booking → Settings → Commerce**.
+
+When enabled and every cart item is a Studio Booking product, checkout keeps the customer contact fields and hides physical address fields. This applies to both classic checkout fields and the WooCommerce Checkout Block. The Checkout Block still receives internal fallback address values so payment validation can complete, but customer-facing order output hides those placeholder address values.
+
+Mixed carts, such as a Studio Booking product plus a shippable merchandise product, keep WooCommerce's normal billing and shipping address behavior.
+
 ## Order Flow
 
 ```text
