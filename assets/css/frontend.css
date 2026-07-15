@@ -117,6 +117,20 @@
 	text-decoration: none;
 }
 
+.sbm-simplify-booking-checkout .wc-block-components-address-form__address_1,
+.sbm-simplify-booking-checkout .wc-block-components-address-form__address_2,
+.sbm-simplify-booking-checkout .wc-block-components-address-form__city,
+.sbm-simplify-booking-checkout .wc-block-components-address-form__country,
+.sbm-simplify-booking-checkout .wc-block-components-address-form__postcode,
+.sbm-simplify-booking-checkout .wc-block-components-address-form__state {
+	display: none !important;
+}
+
+.sbm-simplify-booking-checkout .wc-block-components-address-card address br,
+.sbm-simplify-booking-checkout .wc-block-components-address-card address span:not(:first-child) {
+	display: none;
+}
+
 .sbm-member-schedule {
 	border: 1px solid #dcdcde;
 	border-radius: 8px;

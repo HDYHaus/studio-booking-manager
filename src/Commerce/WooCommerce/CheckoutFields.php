@@ -18,6 +18,12 @@ final class CheckoutFields {
 	 */
 	public function register(): void {
 		add_filter( 'woocommerce_checkout_fields', array( $this, 'maybe_simplify_checkout_fields' ) );
+		add_filter( 'woocommerce_default_address_fields', array( $this, 'maybe_simplify_default_address_fields' ) );
+		add_filter( 'woocommerce_get_country_locale', array( $this, 'maybe_simplify_country_locale' ) );
+		add_filter( 'body_class', array( $this, 'add_checkout_body_class' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_checkout_styles' ) );
+		add_action( 'woocommerce_checkout_create_order', array( $this, 'fill_classic_checkout_order_address' ), 10, 2 );
+		add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( $this, 'fill_block_checkout_order_address' ), 10, 2 );
 	}
 
 	/**
@@ -56,12 +62,157 @@ final class CheckoutFields {
 	}
 
 	/**
+	 * Mark address fields as optional and hidden for block checkout address forms.
+	 *
+	 * @param array<string,array<string,mixed>> $fields Default address fields.
+	 * @return array<string,array<string,mixed>>
+	 */
+	public function maybe_simplify_default_address_fields( array $fields ): array {
+		if ( ! $this->should_simplify_checkout() ) {
+			return $fields;
+		}
+
+		foreach ( array( 'address_1', 'address_2', 'city', 'state', 'postcode' ) as $key ) {
+			if ( isset( $fields[ $key ] ) && is_array( $fields[ $key ] ) ) {
+				$fields[ $key ]['required'] = false;
+				$fields[ $key ]['hidden']   = true;
+			}
+		}
+
+		return $fields;
+	}
+
+	/**
+	 * Mark localized address fields as optional and hidden for block checkout.
+	 *
+	 * @param array<string,array<string,array<string,mixed>>> $locale Country locale settings.
+	 * @return array<string,array<string,array<string,mixed>>>
+	 */
+	public function maybe_simplify_country_locale( array $locale ): array {
+		if ( ! $this->should_simplify_checkout() ) {
+			return $locale;
+		}
+
+		foreach ( $locale as $country => $fields ) {
+			foreach ( array( 'address_1', 'address_2', 'city', 'state', 'postcode' ) as $key ) {
+				if ( isset( $fields[ $key ] ) && is_array( $fields[ $key ] ) ) {
+					$locale[ $country ][ $key ]['required'] = false;
+					$locale[ $country ][ $key ]['hidden']   = true;
+				}
+			}
+		}
+
+		return $locale;
+	}
+
+	/**
+	 * Add a body class when the checkout can be simplified.
+	 *
+	 * @param array<int,string> $classes Body classes.
+	 * @return array<int,string>
+	 */
+	public function add_checkout_body_class( array $classes ): array {
+		if ( $this->is_checkout_screen() && $this->should_simplify_checkout() ) {
+			$classes[] = 'sbm-simplify-booking-checkout';
+		}
+
+		return $classes;
+	}
+
+	/**
+	 * Enqueue frontend styles on simplified checkout screens.
+	 */
+	public function enqueue_checkout_styles(): void {
+		if ( ! $this->is_checkout_screen() || ! $this->should_simplify_checkout() ) {
+			return;
+		}
+
+		wp_enqueue_style(
+			'studio-booking-manager-frontend',
+			SBM_PLUGIN_URL . 'assets/css/frontend.css',
+			array(),
+			SBM_VERSION
+		);
+	}
+
+	/**
+	 * Keep block checkout orders valid when physical address fields are omitted.
+	 *
+	 * @param \WC_Order        $order Order object.
+	 * @param \WP_REST_Request $request Store API request.
+	 */
+	public function fill_block_checkout_order_address( \WC_Order $order, \WP_REST_Request $request ): void {
+		if ( ! $this->should_simplify_checkout() ) {
+			return;
+		}
+
+		$this->fill_missing_billing_address( $order );
+	}
+
+	/**
+	 * Keep classic checkout orders valid when physical address fields are omitted.
+	 *
+	 * @param \WC_Order           $order Order object.
+	 * @param array<string,mixed> $data Posted checkout data.
+	 */
+	public function fill_classic_checkout_order_address( \WC_Order $order, array $data ): void {
+		if ( ! $this->should_simplify_checkout() ) {
+			return;
+		}
+
+		$this->fill_missing_billing_address( $order );
+	}
+
+	/**
 	 * Determine whether simplified checkout is enabled.
 	 */
 	private function is_enabled(): bool {
 		$settings = get_option( 'sbm_settings', array() );
 
 		return is_array( $settings ) && ! empty( $settings['woocommerce_simplify_booking_checkout'] );
+	}
+
+	/**
+	 * Determine whether the current request should use simplified checkout.
+	 */
+	private function should_simplify_checkout(): bool {
+		return $this->is_enabled() && $this->cart_is_booking_only();
+	}
+
+	/**
+	 * Determine whether the current frontend page is checkout.
+	 */
+	private function is_checkout_screen(): bool {
+		return function_exists( 'is_checkout' ) && is_checkout();
+	}
+
+	/**
+	 * Fill only the physical address pieces Woo may expect when the block omits them.
+	 *
+	 * @param \WC_Order $order Order object.
+	 */
+	private function fill_missing_billing_address( \WC_Order $order ): void {
+		$base = wc_get_base_location();
+
+		if ( '' === $order->get_billing_country() && ! empty( $base['country'] ) ) {
+			$order->set_billing_country( (string) $base['country'] );
+		}
+
+		if ( '' === $order->get_billing_state() && ! empty( $base['state'] ) ) {
+			$order->set_billing_state( (string) $base['state'] );
+		}
+
+		if ( '' === $order->get_billing_address_1() ) {
+			$order->set_billing_address_1( __( 'Studio booking', 'studio-booking-manager' ) );
+		}
+
+		if ( '' === $order->get_billing_city() ) {
+			$order->set_billing_city( __( 'Not required', 'studio-booking-manager' ) );
+		}
+
+		if ( '' === $order->get_billing_postcode() ) {
+			$order->set_billing_postcode( '00000' );
+		}
 	}
 
 	/**
