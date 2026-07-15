@@ -7,6 +7,8 @@
 
 namespace StudioBookingManager\Commerce\WooCommerce;
 
+use StudioBookingManager\Database\Tables;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -23,6 +25,7 @@ final class BookingDateField {
 		add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_add_to_cart' ), 10, 4 );
 		add_filter( 'woocommerce_add_cart_item_data', array( $this, 'add_cart_item_data' ), 10, 3 );
 		add_filter( 'woocommerce_get_item_data', array( $this, 'display_cart_item_data' ), 10, 2 );
+		add_action( 'woocommerce_check_cart_items', array( $this, 'validate_cart_capacity' ) );
 		add_action( 'woocommerce_checkout_create_order_line_item', array( $this, 'add_order_item_data' ), 10, 4 );
 	}
 
@@ -119,8 +122,6 @@ final class BookingDateField {
 	 * @return bool
 	 */
 	public function validate_add_to_cart( bool $passed, int $product_id, int $quantity = 1, int $variation_id = 0 ): bool {
-		unset( $quantity );
-
 		$config_id = $this->get_config_id( $product_id, $variation_id );
 
 		if ( ! $this->requires_booking_date_for_config_id( $config_id ) ) {
@@ -131,6 +132,11 @@ final class BookingDateField {
 
 		if ( '' === $date ) {
 			wc_add_notice( __( 'Choose a visit date before adding this item to your cart.', 'studio-booking-manager' ), 'error' );
+			return false;
+		}
+
+		if ( ! $this->has_capacity_for_request( $config_id, $product_id, $variation_id, $date, max( 1, absint( $quantity ) ) ) ) {
+			wc_add_notice( $this->capacity_notice( $config_id, $date ), 'error' );
 			return false;
 		}
 
@@ -178,6 +184,51 @@ final class BookingDateField {
 	}
 
 	/**
+	 * Validate dated booking capacity for existing cart contents.
+	 */
+	public function validate_cart_capacity(): void {
+		if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+			return;
+		}
+
+		$requested = array();
+
+		foreach ( WC()->cart->get_cart() as $cart_item ) {
+			if ( empty( $cart_item['sbm_booking_date'] ) ) {
+				continue;
+			}
+
+			$product_id   = isset( $cart_item['product_id'] ) ? absint( $cart_item['product_id'] ) : 0;
+			$variation_id = isset( $cart_item['variation_id'] ) ? absint( $cart_item['variation_id'] ) : 0;
+			$config_id    = $this->get_config_id( $product_id, $variation_id );
+			$date         = $this->sanitize_booking_date( (string) $cart_item['sbm_booking_date'] );
+
+			if ( $config_id <= 0 || '' === $date || ! $this->requires_booking_date_for_config_id( $config_id ) ) {
+				continue;
+			}
+
+			$key = $config_id . '|' . $date;
+			if ( ! isset( $requested[ $key ] ) ) {
+				$requested[ $key ] = array(
+					'config_id'    => $config_id,
+					'product_id'   => $product_id,
+					'variation_id' => $variation_id,
+					'date'         => $date,
+					'quantity'     => 0,
+				);
+			}
+
+			$requested[ $key ]['quantity'] += isset( $cart_item['quantity'] ) ? max( 1, absint( $cart_item['quantity'] ) ) : 1;
+		}
+
+		foreach ( $requested as $request ) {
+			if ( ! $this->has_capacity_for_request( (int) $request['config_id'], (int) $request['product_id'], (int) $request['variation_id'], (string) $request['date'], (int) $request['quantity'], false ) ) {
+				wc_add_notice( $this->capacity_notice( (int) $request['config_id'], (string) $request['date'] ), 'error' );
+			}
+		}
+	}
+
+	/**
 	 * Persist selected date to the order line item.
 	 *
 	 * @param \WC_Order_Item_Product $item Order item.
@@ -220,6 +271,145 @@ final class BookingDateField {
 		return $config_id > 0
 			&& 'yes' === get_post_meta( $config_id, '_sbm_enabled', true )
 			&& 'yes' === get_post_meta( $config_id, '_sbm_requires_booking_date', true );
+	}
+
+	/**
+	 * Determine whether requested quantity fits the product's daily capacity.
+	 *
+	 * @param int    $config_id            Product or variation config ID.
+	 * @param int    $product_id           Product ID.
+	 * @param int    $variation_id         Variation ID.
+	 * @param string $date                 Visit date.
+	 * @param int    $quantity             Requested quantity.
+	 * @param bool   $include_current_cart Whether to add matching existing cart quantity.
+	 */
+	private function has_capacity_for_request( int $config_id, int $product_id, int $variation_id, string $date, int $quantity, bool $include_current_cart = true ): bool {
+		$capacity = $this->get_daily_capacity( $config_id );
+
+		if ( $capacity <= 0 ) {
+			return true;
+		}
+
+		$requested = max( 1, $quantity );
+
+		if ( $include_current_cart ) {
+			$requested += $this->count_matching_cart_quantity( $config_id, $date );
+		}
+
+		return ( $this->count_existing_bookings( $config_id, $product_id, $variation_id, $date ) + $requested ) <= $capacity;
+	}
+
+	/**
+	 * Get product-level daily booking capacity.
+	 *
+	 * @param int $config_id Product or variation config ID.
+	 */
+	private function get_daily_capacity( int $config_id ): int {
+		return absint( get_post_meta( $config_id, '_sbm_booking_daily_capacity', true ) );
+	}
+
+	/**
+	 * Count matching cart quantity already selected for the same dated config.
+	 *
+	 * @param int    $config_id Product or variation config ID.
+	 * @param string $date      Visit date.
+	 */
+	private function count_matching_cart_quantity( int $config_id, string $date ): int {
+		if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+			return 0;
+		}
+
+		$total = 0;
+
+		foreach ( WC()->cart->get_cart() as $cart_item ) {
+			if ( empty( $cart_item['sbm_booking_date'] ) || $date !== (string) $cart_item['sbm_booking_date'] ) {
+				continue;
+			}
+
+			$cart_product_id   = isset( $cart_item['product_id'] ) ? absint( $cart_item['product_id'] ) : 0;
+			$cart_variation_id = isset( $cart_item['variation_id'] ) ? absint( $cart_item['variation_id'] ) : 0;
+
+			if ( $config_id !== $this->get_config_id( $cart_product_id, $cart_variation_id ) ) {
+				continue;
+			}
+
+			$total += isset( $cart_item['quantity'] ) ? max( 1, absint( $cart_item['quantity'] ) ) : 1;
+		}
+
+		return $total;
+	}
+
+	/**
+	 * Count existing active bookings for the selected product config and date.
+	 *
+	 * @param int    $config_id    Product or variation config ID.
+	 * @param int    $product_id   Product ID.
+	 * @param int    $variation_id Variation ID.
+	 * @param string $date         Visit date.
+	 */
+	private function count_existing_bookings( int $config_id, int $product_id, int $variation_id, string $date ): int {
+		global $wpdb;
+
+		$bookings_table = Tables::get( 'bookings' );
+		$access_table   = Tables::get( 'access' );
+
+		if ( '' === $bookings_table || '' === $access_table ) {
+			return 0;
+		}
+
+		$match_variation = $variation_id > 0 && $config_id === $variation_id;
+
+		if ( $match_variation ) {
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names come from the trusted Tables registry; values are prepared.
+			$query = $wpdb->prepare(
+				"SELECT COUNT(bookings.id)
+				FROM `{$bookings_table}` bookings
+				INNER JOIN `{$access_table}` access ON access.id = bookings.access_id
+				WHERE bookings.status IN ( %s, %s )
+					AND DATE(bookings.starts_at) = %s
+					AND access.variation_id = %d",
+				'pending',
+				'confirmed',
+				$date,
+				$config_id
+			);
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		} else {
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names come from the trusted Tables registry; values are prepared.
+			$query = $wpdb->prepare(
+				"SELECT COUNT(bookings.id)
+				FROM `{$bookings_table}` bookings
+				INNER JOIN `{$access_table}` access ON access.id = bookings.access_id
+				WHERE bookings.status IN ( %s, %s )
+					AND DATE(bookings.starts_at) = %s
+					AND access.product_id = %d",
+				'pending',
+				'confirmed',
+				$date,
+				$product_id > 0 ? $product_id : $config_id
+			);
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom operational table capacity check using prepared values.
+		return (int) $wpdb->get_var( $query );
+	}
+
+	/**
+	 * Build daily capacity notice.
+	 *
+	 * @param int    $config_id Product or variation config ID.
+	 * @param string $date      Visit date.
+	 */
+	private function capacity_notice( int $config_id, string $date ): string {
+		$capacity = $this->get_daily_capacity( $config_id );
+
+		return sprintf(
+			/* translators: 1: formatted date, 2: daily product capacity. */
+			__( 'The selected visit date %1$s has reached the daily capacity of %2$d.', 'studio-booking-manager' ),
+			$this->format_date( $date ),
+			$capacity
+		);
 	}
 
 	/**

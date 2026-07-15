@@ -101,6 +101,7 @@ final class SettingsPage {
 			$clean['default_timezone'] = sanitize_text_field( $settings['default_timezone'] );
 		}
 
+		$clean['woocommerce_simplify_booking_checkout'] = ! empty( $settings['woocommerce_simplify_booking_checkout'] ) ? 1 : 0;
 		$clean['google_calendar_enabled'] = ! empty( $settings['google_calendar_enabled'] ) ? 1 : 0;
 
 		if ( isset( $settings['google_calendar_id'] ) ) {
@@ -204,12 +205,14 @@ final class SettingsPage {
 		$qr_show_name     = ! isset( $options['qr_show_person_name'] ) || ! empty( $options['qr_show_person_name'] );
 		$qr_show_email    = ! empty( $options['qr_show_person_email'] );
 		$staff_email      = isset( $options['notification_staff_email'] ) ? (string) $options['notification_staff_email'] : get_option( 'admin_email' );
+		$simplify_checkout = ! empty( $options['woocommerce_simplify_booking_checkout'] );
 		?>
 		<div class="wrap sbm-admin-page">
 			<h1><?php echo esc_html__( 'Studio Booking Manager Settings', 'studio-booking-manager' ); ?></h1>
 
 			<nav class="nav-tab-wrapper sbm-settings-tabs" aria-label="<?php echo esc_attr__( 'Settings sections', 'studio-booking-manager' ); ?>">
 				<a class="nav-tab nav-tab-active" href="#general"><?php echo esc_html__( 'General', 'studio-booking-manager' ); ?></a>
+				<a class="nav-tab" href="#commerce"><?php echo esc_html__( 'Commerce', 'studio-booking-manager' ); ?></a>
 				<a class="nav-tab" href="#google-calendar"><?php echo esc_html__( 'Google Calendar', 'studio-booking-manager' ); ?></a>
 				<a class="nav-tab" href="#qr-codes"><?php echo esc_html__( 'QR Codes', 'studio-booking-manager' ); ?></a>
 				<a class="nav-tab" href="#notifications"><?php echo esc_html__( 'Notifications', 'studio-booking-manager' ); ?></a>
@@ -237,6 +240,23 @@ final class SettingsPage {
 							<td>
 								<input id="sbm-default-timezone" type="text" class="regular-text" name="sbm_settings[default_timezone]" value="<?php echo esc_attr( $default_timezone ); ?>" />
 								<p class="description"><?php echo esc_html__( 'Used as the fallback timezone for new locations.', 'studio-booking-manager' ); ?></p>
+							</td>
+						</tr>
+					</table>
+				</section>
+
+				<section id="commerce" class="sbm-card">
+					<h2><?php echo esc_html__( 'Commerce', 'studio-booking-manager' ); ?></h2>
+					<p><?php echo esc_html__( 'Configure WooCommerce behavior for Studio Booking products.', 'studio-booking-manager' ); ?></p>
+					<table class="form-table" role="presentation">
+						<tr>
+							<th scope="row"><?php echo esc_html__( 'Checkout fields', 'studio-booking-manager' ); ?></th>
+							<td>
+								<label for="sbm-woocommerce-simplify-booking-checkout">
+									<input id="sbm-woocommerce-simplify-booking-checkout" type="checkbox" name="sbm_settings[woocommerce_simplify_booking_checkout]" value="1" <?php checked( $simplify_checkout ); ?> />
+									<?php echo esc_html__( 'Simplify checkout for booking-only carts', 'studio-booking-manager' ); ?>
+								</label>
+								<p class="description"><?php echo esc_html__( 'When every cart item is a Studio Booking product, keep name, email, and phone, and remove billing and shipping address fields.', 'studio-booking-manager' ); ?></p>
 							</td>
 						</tr>
 					</table>
