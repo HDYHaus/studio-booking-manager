@@ -187,12 +187,22 @@ final class ProductPanel {
 		);
 		woocommerce_wp_text_input(
 			array(
+				'id'            => "_sbm_booking_end_time_{$loop}",
+				'name'          => "_sbm_booking_end_time[{$loop}]",
+				'label'         => __( 'Booking end time', 'studio-booking-manager' ),
+				'value'         => get_post_meta( $variation_id, '_sbm_booking_end_time', true ),
+				'type'          => 'time',
+				'wrapper_class' => 'form-row form-row-last',
+			)
+		);
+		woocommerce_wp_text_input(
+			array(
 				'id'                => "_sbm_booking_duration_minutes_{$loop}",
 				'name'              => "_sbm_booking_duration_minutes[{$loop}]",
 				'label'             => __( 'Booking duration minutes', 'studio-booking-manager' ),
 				'value'             => get_post_meta( $variation_id, '_sbm_booking_duration_minutes', true ),
 				'type'              => 'number',
-				'wrapper_class'     => 'form-row form-row-last',
+				'wrapper_class'     => 'form-row form-row-full',
 				'custom_attributes' => array(
 					'min'  => '15',
 					'step' => '15',
@@ -303,9 +313,18 @@ final class ProductPanel {
 		);
 		woocommerce_wp_text_input(
 			array(
+				'id'          => '_sbm_booking_end_time',
+				'label'       => __( 'Booking end time', 'studio-booking-manager' ),
+				'description' => __( 'Default end time for bookings created from customer-selected dates, such as closing time for a day pass.', 'studio-booking-manager' ),
+				'type'        => 'time',
+				'value'       => get_post_meta( $product_id, '_sbm_booking_end_time', true ),
+			)
+		);
+		woocommerce_wp_text_input(
+			array(
 				'id'                => '_sbm_booking_duration_minutes',
 				'label'             => __( 'Booking duration minutes', 'studio-booking-manager' ),
-				'description'       => __( 'Use 480 for an 8-hour day pass. Leave empty to use 480 minutes.', 'studio-booking-manager' ),
+				'description'       => __( 'Fallback used when no valid booking end time is set. Leave empty to use 480 minutes.', 'studio-booking-manager' ),
 				'type'              => 'number',
 				'value'             => get_post_meta( $product_id, '_sbm_booking_duration_minutes', true ),
 				'custom_attributes' => array(
@@ -349,7 +368,7 @@ final class ProductPanel {
 	 */
 	public function save_variation_fields( int $variation_id, int $loop ): void {
 		$raw = array();
-		$keys = array( '_sbm_enabled', '_sbm_pass_type_id', '_sbm_access_type', '_sbm_location_id', '_sbm_total_credits', '_sbm_weekly_limit', '_sbm_guest_limit', '_sbm_validity_days', '_sbm_requires_booking_date', '_sbm_booking_start_time', '_sbm_booking_duration_minutes', '_sbm_booking_daily_capacity' );
+		$keys = array( '_sbm_enabled', '_sbm_pass_type_id', '_sbm_access_type', '_sbm_location_id', '_sbm_total_credits', '_sbm_weekly_limit', '_sbm_guest_limit', '_sbm_validity_days', '_sbm_requires_booking_date', '_sbm_booking_start_time', '_sbm_booking_end_time', '_sbm_booking_duration_minutes', '_sbm_booking_daily_capacity' );
 
 		foreach ( $keys as $key ) {
 			if ( isset( $_POST[ $key ][ $loop ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce verifies variation save requests.
@@ -377,6 +396,7 @@ final class ProductPanel {
 		$validity_days            = isset( $raw['_sbm_validity_days'] ) ? absint( $raw['_sbm_validity_days'] ) : 0;
 		$requires_booking_date    = isset( $raw['_sbm_requires_booking_date'] ) ? 'yes' : 'no';
 		$booking_start_time       = isset( $raw['_sbm_booking_start_time'] ) ? sanitize_text_field( (string) $raw['_sbm_booking_start_time'] ) : '';
+		$booking_end_time         = isset( $raw['_sbm_booking_end_time'] ) ? sanitize_text_field( (string) $raw['_sbm_booking_end_time'] ) : '';
 		$booking_duration_minutes = isset( $raw['_sbm_booking_duration_minutes'] ) ? absint( $raw['_sbm_booking_duration_minutes'] ) : 0;
 		$booking_daily_capacity   = isset( $raw['_sbm_booking_daily_capacity'] ) ? absint( $raw['_sbm_booking_daily_capacity'] ) : 0;
 
@@ -386,6 +406,10 @@ final class ProductPanel {
 
 		if ( ! preg_match( '/^\d{2}:\d{2}$/', $booking_start_time ) ) {
 			$booking_start_time = '';
+		}
+
+		if ( ! preg_match( '/^\d{2}:\d{2}$/', $booking_end_time ) ) {
+			$booking_end_time = '';
 		}
 
 		if ( ! isset( $this->pass_type_options()[ $pass_type_id ] ) ) {
@@ -402,6 +426,7 @@ final class ProductPanel {
 		update_post_meta( $post_id, '_sbm_validity_days', $validity_days );
 		update_post_meta( $post_id, '_sbm_requires_booking_date', $requires_booking_date );
 		update_post_meta( $post_id, '_sbm_booking_start_time', $booking_start_time );
+		update_post_meta( $post_id, '_sbm_booking_end_time', $booking_end_time );
 		update_post_meta( $post_id, '_sbm_booking_duration_minutes', $booking_duration_minutes );
 		update_post_meta( $post_id, '_sbm_booking_daily_capacity', $booking_daily_capacity );
 	}

@@ -500,17 +500,31 @@ final class OrderListener {
 	 */
 	private function get_item_booking_window( int $config_id, string $date ): array {
 		$start_time = sanitize_text_field( (string) get_post_meta( $config_id, '_sbm_booking_start_time', true ) );
+		$end_time   = sanitize_text_field( (string) get_post_meta( $config_id, '_sbm_booking_end_time', true ) );
 
 		if ( ! preg_match( '/^\d{2}:\d{2}$/', $start_time ) ) {
 			$start_time = '09:00';
 		}
 
-		$duration = absint( get_post_meta( $config_id, '_sbm_booking_duration_minutes', true ) );
-		$duration = $duration > 0 ? max( 15, $duration ) : 480;
 		$starts   = $date . ' ' . $start_time . ':00';
 		$start_ts = strtotime( $starts );
-		$end_ts   = false === $start_ts ? false : strtotime( '+' . $duration . ' minutes', $start_ts );
-		$ends     = false === $end_ts ? $starts : gmdate( 'Y-m-d H:i:s', $end_ts );
+		$ends     = '';
+
+		if ( preg_match( '/^\d{2}:\d{2}$/', $end_time ) ) {
+			$end_candidate    = $date . ' ' . $end_time . ':00';
+			$end_candidate_ts = strtotime( $end_candidate );
+
+			if ( false !== $start_ts && false !== $end_candidate_ts && $end_candidate_ts > $start_ts ) {
+				$ends = $end_candidate;
+			}
+		}
+
+		if ( '' === $ends ) {
+			$duration = absint( get_post_meta( $config_id, '_sbm_booking_duration_minutes', true ) );
+			$duration = $duration > 0 ? max( 15, $duration ) : 480;
+			$end_ts   = false === $start_ts ? false : strtotime( '+' . $duration . ' minutes', $start_ts );
+			$ends     = false === $end_ts ? $starts : gmdate( 'Y-m-d H:i:s', $end_ts );
+		}
 
 		return array(
 			'starts_at' => $starts,
