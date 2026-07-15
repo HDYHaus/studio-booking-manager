@@ -95,6 +95,7 @@ final class PassTypeAdmin extends AbstractAdminPage {
 			'maximum_visits_per_week' => isset( $_POST['maximum_visits_per_week'] ) ? wp_unslash( $_POST['maximum_visits_per_week'] ) : '',
 			'guest_allowance' => isset( $_POST['guest_allowance'] ) ? absint( wp_unslash( $_POST['guest_allowance'] ) ) : 0,
 			'booking_required' => isset( $_POST['booking_required'] ) ? 1 : 0,
+			'booking_duration_minutes' => isset( $_POST['booking_duration_minutes'] ) ? wp_unslash( $_POST['booking_duration_minutes'] ) : '',
 			'valid_for' => isset( $_POST['valid_for'] ) ? wp_unslash( $_POST['valid_for'] ) : '',
 			'status' => isset( $_POST['status'] ) ? sanitize_key( wp_unslash( $_POST['status'] ) ) : 'active',
 		);
@@ -366,6 +367,10 @@ final class PassTypeAdmin extends AbstractAdminPage {
 							<td><label><input name="booking_required" id="sbm-pass-booking-required" type="checkbox" value="1" <?php checked( $is_edit ? $record->booking_required : false ); ?>> <?php echo esc_html__( 'Require a booking before check-in', 'studio-booking-manager' ); ?></label></td>
 						</tr>
 						<tr>
+							<th scope="row"><label for="sbm-pass-booking-duration-minutes"><?php echo esc_html__( 'Default booking duration', 'studio-booking-manager' ); ?></label></th>
+							<td><input name="booking_duration_minutes" id="sbm-pass-booking-duration-minutes" type="number" min="0" step="15" class="small-text" value="<?php echo esc_attr( $is_edit && null !== $record->booking_duration_minutes ? (string) absint( $record->booking_duration_minutes ) : '' ); ?>"> <?php echo esc_html__( 'minutes', 'studio-booking-manager' ); ?><p class="description"><?php echo esc_html__( 'Used as the default length for booking-required passes, such as a 30-minute or 60-minute community experience. WooCommerce products can override this.', 'studio-booking-manager' ); ?></p></td>
+						</tr>
+						<tr>
 							<th scope="row"><label for="sbm-pass-valid-for"><?php echo esc_html__( 'Expires after', 'studio-booking-manager' ); ?></label></th>
 							<td><input name="valid_for" id="sbm-pass-valid-for" type="number" min="0" class="small-text" value="<?php echo esc_attr( $is_edit && null !== $record->valid_for ? (string) absint( $record->valid_for ) : '' ); ?>"> <?php echo esc_html__( 'days', 'studio-booking-manager' ); ?><p class="description"><?php echo esc_html__( 'Leave empty for no automatic expiry.', 'studio-booking-manager' ); ?></p></td>
 						</tr>
@@ -516,11 +521,19 @@ final class PassTypeAdmin extends AbstractAdminPage {
 	 * @param PassType $record Pass.
 	 */
 	private function requirements_badges( PassType $record ): string {
+		$duration = null !== $record->booking_duration_minutes && $record->booking_duration_minutes > 0
+			? sprintf(
+				/* translators: %d: default booking duration in minutes. */
+				__( ' · %d min', 'studio-booking-manager' ),
+				absint( $record->booking_duration_minutes )
+			)
+			: '';
+
 		if ( $record->booking_required ) {
-			return Badge::render( __( 'Booking required', 'studio-booking-manager' ), 'warning' );
+			return Badge::render( __( 'Booking required', 'studio-booking-manager' ) . $duration, 'warning' );
 		}
 
-		return Badge::render( __( 'Walk-in allowed', 'studio-booking-manager' ), 'success' );
+		return Badge::render( __( 'Walk-in allowed', 'studio-booking-manager' ) . $duration, 'success' );
 	}
 
 	/**

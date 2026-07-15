@@ -165,6 +165,61 @@ final class ProductPanel {
 				'custom_attributes' => array( 'min' => '0' ),
 			)
 		);
+		woocommerce_wp_checkbox(
+			array(
+				'id'            => "_sbm_requires_booking_date_{$loop}",
+				'name'          => "_sbm_requires_booking_date[{$loop}]",
+				'label'         => __( 'Require booking date', 'studio-booking-manager' ),
+				'description'   => __( 'Ask customers to choose their visit date before adding this variation to the cart.', 'studio-booking-manager' ),
+				'value'         => 'yes' === get_post_meta( $variation_id, '_sbm_requires_booking_date', true ) ? 'yes' : 'no',
+				'wrapper_class' => 'form-row form-row-full',
+			)
+		);
+		woocommerce_wp_text_input(
+			array(
+				'id'            => "_sbm_booking_start_time_{$loop}",
+				'name'          => "_sbm_booking_start_time[{$loop}]",
+				'label'         => __( 'Booking start time', 'studio-booking-manager' ),
+				'value'         => get_post_meta( $variation_id, '_sbm_booking_start_time', true ),
+				'type'          => 'time',
+				'wrapper_class' => 'form-row form-row-first',
+			)
+		);
+		woocommerce_wp_text_input(
+			array(
+				'id'            => "_sbm_booking_end_time_{$loop}",
+				'name'          => "_sbm_booking_end_time[{$loop}]",
+				'label'         => __( 'Booking end time', 'studio-booking-manager' ),
+				'value'         => get_post_meta( $variation_id, '_sbm_booking_end_time', true ),
+				'type'          => 'time',
+				'wrapper_class' => 'form-row form-row-last',
+			)
+		);
+		woocommerce_wp_text_input(
+			array(
+				'id'                => "_sbm_booking_duration_minutes_{$loop}",
+				'name'              => "_sbm_booking_duration_minutes[{$loop}]",
+				'label'             => __( 'Booking duration minutes', 'studio-booking-manager' ),
+				'value'             => get_post_meta( $variation_id, '_sbm_booking_duration_minutes', true ),
+				'type'              => 'number',
+				'wrapper_class'     => 'form-row form-row-full',
+				'custom_attributes' => array(
+					'min'  => '15',
+					'step' => '15',
+				),
+			)
+		);
+		woocommerce_wp_text_input(
+			array(
+				'id'                => "_sbm_booking_daily_capacity_{$loop}",
+				'name'              => "_sbm_booking_daily_capacity[{$loop}]",
+				'label'             => __( 'Daily booking capacity', 'studio-booking-manager' ),
+				'value'             => get_post_meta( $variation_id, '_sbm_booking_daily_capacity', true ),
+				'type'              => 'number',
+				'wrapper_class'     => 'form-row form-row-full',
+				'custom_attributes' => array( 'min' => '0' ),
+			)
+		);
 	}
 
 	/**
@@ -239,6 +294,55 @@ final class ProductPanel {
 				'custom_attributes' => array( 'min' => '0' ),
 			)
 		);
+		woocommerce_wp_checkbox(
+			array(
+				'id'          => '_sbm_requires_booking_date',
+				'label'       => __( 'Require booking date', 'studio-booking-manager' ),
+				'description' => __( 'Ask customers to choose their visit date before adding this product to the cart. Use for dated products such as a Day Pass.', 'studio-booking-manager' ),
+				'value'       => 'yes' === get_post_meta( $product_id, '_sbm_requires_booking_date', true ) ? 'yes' : 'no',
+			)
+		);
+		woocommerce_wp_text_input(
+			array(
+				'id'          => '_sbm_booking_start_time',
+				'label'       => __( 'Booking start time', 'studio-booking-manager' ),
+				'description' => __( 'Default start time for bookings created from customer-selected dates.', 'studio-booking-manager' ),
+				'type'        => 'time',
+				'value'       => get_post_meta( $product_id, '_sbm_booking_start_time', true ),
+			)
+		);
+		woocommerce_wp_text_input(
+			array(
+				'id'          => '_sbm_booking_end_time',
+				'label'       => __( 'Booking end time', 'studio-booking-manager' ),
+				'description' => __( 'Default end time for bookings created from customer-selected dates, such as closing time for a day pass.', 'studio-booking-manager' ),
+				'type'        => 'time',
+				'value'       => get_post_meta( $product_id, '_sbm_booking_end_time', true ),
+			)
+		);
+		woocommerce_wp_text_input(
+			array(
+				'id'                => '_sbm_booking_duration_minutes',
+				'label'             => __( 'Booking duration minutes', 'studio-booking-manager' ),
+				'description'       => __( 'Overrides the selected Pass default. Used when no valid booking end time is set; leave empty to use the Pass duration or 480 minutes.', 'studio-booking-manager' ),
+				'type'              => 'number',
+				'value'             => get_post_meta( $product_id, '_sbm_booking_duration_minutes', true ),
+				'custom_attributes' => array(
+					'min'  => '15',
+					'step' => '15',
+				),
+			)
+		);
+		woocommerce_wp_text_input(
+			array(
+				'id'                => '_sbm_booking_daily_capacity',
+				'label'             => __( 'Daily booking capacity', 'studio-booking-manager' ),
+				'description'       => __( 'Maximum quantity that can be booked for the same visit date. Leave empty or 0 for unlimited.', 'studio-booking-manager' ),
+				'type'              => 'number',
+				'value'             => get_post_meta( $product_id, '_sbm_booking_daily_capacity', true ),
+				'custom_attributes' => array( 'min' => '0' ),
+			)
+		);
 	}
 
 	/**
@@ -264,7 +368,7 @@ final class ProductPanel {
 	 */
 	public function save_variation_fields( int $variation_id, int $loop ): void {
 		$raw = array();
-		$keys = array( '_sbm_enabled', '_sbm_pass_type_id', '_sbm_access_type', '_sbm_location_id', '_sbm_total_credits', '_sbm_weekly_limit', '_sbm_guest_limit', '_sbm_validity_days' );
+		$keys = array( '_sbm_enabled', '_sbm_pass_type_id', '_sbm_access_type', '_sbm_location_id', '_sbm_total_credits', '_sbm_weekly_limit', '_sbm_guest_limit', '_sbm_validity_days', '_sbm_requires_booking_date', '_sbm_booking_start_time', '_sbm_booking_end_time', '_sbm_booking_duration_minutes', '_sbm_booking_daily_capacity' );
 
 		foreach ( $keys as $key ) {
 			if ( isset( $_POST[ $key ][ $loop ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce verifies variation save requests.
@@ -282,17 +386,30 @@ final class ProductPanel {
 	 * @param array<string, mixed> $raw     Raw input.
 	 */
 	private function save_meta_values( int $post_id, array $raw ): void {
-		$enabled       = isset( $raw['_sbm_enabled'] ) ? 'yes' : 'no';
-		$pass_type_id  = isset( $raw['_sbm_pass_type_id'] ) ? absint( $raw['_sbm_pass_type_id'] ) : 0;
-		$access_type   = isset( $raw['_sbm_access_type'] ) ? sanitize_key( (string) $raw['_sbm_access_type'] ) : '';
-		$location_id   = isset( $raw['_sbm_location_id'] ) ? absint( $raw['_sbm_location_id'] ) : 0;
-		$total_credits = isset( $raw['_sbm_total_credits'] ) ? absint( $raw['_sbm_total_credits'] ) : 0;
-		$weekly_limit  = isset( $raw['_sbm_weekly_limit'] ) ? absint( $raw['_sbm_weekly_limit'] ) : 0;
-		$guest_limit   = isset( $raw['_sbm_guest_limit'] ) ? absint( $raw['_sbm_guest_limit'] ) : 0;
-		$validity_days = isset( $raw['_sbm_validity_days'] ) ? absint( $raw['_sbm_validity_days'] ) : 0;
+		$enabled                  = isset( $raw['_sbm_enabled'] ) ? 'yes' : 'no';
+		$pass_type_id             = isset( $raw['_sbm_pass_type_id'] ) ? absint( $raw['_sbm_pass_type_id'] ) : 0;
+		$access_type              = isset( $raw['_sbm_access_type'] ) ? sanitize_key( (string) $raw['_sbm_access_type'] ) : '';
+		$location_id              = isset( $raw['_sbm_location_id'] ) ? absint( $raw['_sbm_location_id'] ) : 0;
+		$total_credits            = isset( $raw['_sbm_total_credits'] ) ? absint( $raw['_sbm_total_credits'] ) : 0;
+		$weekly_limit             = isset( $raw['_sbm_weekly_limit'] ) ? absint( $raw['_sbm_weekly_limit'] ) : 0;
+		$guest_limit              = isset( $raw['_sbm_guest_limit'] ) ? absint( $raw['_sbm_guest_limit'] ) : 0;
+		$validity_days            = isset( $raw['_sbm_validity_days'] ) ? absint( $raw['_sbm_validity_days'] ) : 0;
+		$requires_booking_date    = isset( $raw['_sbm_requires_booking_date'] ) ? 'yes' : 'no';
+		$booking_start_time       = isset( $raw['_sbm_booking_start_time'] ) ? sanitize_text_field( (string) $raw['_sbm_booking_start_time'] ) : '';
+		$booking_end_time         = isset( $raw['_sbm_booking_end_time'] ) ? sanitize_text_field( (string) $raw['_sbm_booking_end_time'] ) : '';
+		$booking_duration_minutes = isset( $raw['_sbm_booking_duration_minutes'] ) ? absint( $raw['_sbm_booking_duration_minutes'] ) : 0;
+		$booking_daily_capacity   = isset( $raw['_sbm_booking_daily_capacity'] ) ? absint( $raw['_sbm_booking_daily_capacity'] ) : 0;
 
 		if ( ! isset( $this->access_type_options()[ $access_type ] ) ) {
 			$access_type = '';
+		}
+
+		if ( ! preg_match( '/^\d{2}:\d{2}$/', $booking_start_time ) ) {
+			$booking_start_time = '';
+		}
+
+		if ( ! preg_match( '/^\d{2}:\d{2}$/', $booking_end_time ) ) {
+			$booking_end_time = '';
 		}
 
 		if ( ! isset( $this->pass_type_options()[ $pass_type_id ] ) ) {
@@ -307,6 +424,11 @@ final class ProductPanel {
 		update_post_meta( $post_id, '_sbm_weekly_limit', $weekly_limit );
 		update_post_meta( $post_id, '_sbm_guest_limit', $guest_limit );
 		update_post_meta( $post_id, '_sbm_validity_days', $validity_days );
+		update_post_meta( $post_id, '_sbm_requires_booking_date', $requires_booking_date );
+		update_post_meta( $post_id, '_sbm_booking_start_time', $booking_start_time );
+		update_post_meta( $post_id, '_sbm_booking_end_time', $booking_end_time );
+		update_post_meta( $post_id, '_sbm_booking_duration_minutes', $booking_duration_minutes );
+		update_post_meta( $post_id, '_sbm_booking_daily_capacity', $booking_daily_capacity );
 	}
 
 	/**

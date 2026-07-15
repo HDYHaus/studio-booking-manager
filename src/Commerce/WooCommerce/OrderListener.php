@@ -8,6 +8,7 @@
 namespace StudioBookingManager\Commerce\WooCommerce;
 
 use StudioBookingManager\Access\AccessService;
+use StudioBookingManager\Bookings\BookingService;
 use StudioBookingManager\Locations\LocationService;
 use StudioBookingManager\PassTypes\PassAccessMapper;
 use StudioBookingManager\PassTypes\PassType;
@@ -24,7 +25,6 @@ final class OrderListener {
 	 * Register hooks.
 	 */
 	public function register(): void {
-		add_action( 'woocommerce_order_status_processing', array( $this, 'maybe_create_access_from_order' ) );
 		add_action( 'woocommerce_order_status_completed', array( $this, 'maybe_create_access_from_order' ) );
 		add_filter( 'woocommerce_cod_process_payment_order_status', array( $this, 'set_offline_payment_order_status' ), 10, 2 );
 		add_filter( 'woocommerce_bacs_process_payment_order_status', array( $this, 'set_offline_payment_order_status' ), 10, 2 );
@@ -81,10 +81,6 @@ final class OrderListener {
 			$access_ids = $this->get_order_item_access_ids( (int) $item_id );
 			$quantity   = max( 1, absint( $item->get_quantity() ) );
 
-			if ( count( $access_ids ) >= $quantity ) {
-				continue;
-			}
-
 			for ( $i = count( $access_ids ); $i < $quantity; ++$i ) {
 				$access_id = ( new AccessService() )->save( $access_data );
 
@@ -96,6 +92,7 @@ final class OrderListener {
 			}
 
 			$this->update_order_item_access_ids( (int) $item_id, $access_ids );
+			$this->maybe_create_bookings_for_item( (int) $item_id, $item, $order, $person_id, $access_ids, $access_data );
 		}
 	}
 
@@ -379,6 +376,181 @@ final class OrderListener {
 
 		wc_update_order_item_meta( $item_id, '_sbm_access_ids', $access_ids );
 		wc_update_order_item_meta( $item_id, '_sbm_access_id', $access_ids[0] );
+	}
+
+	/**
+	 * Create linked bookings for order items that collected a visit date.
+	 *
+	 * @param int                    $item_id Order item ID.
+	 * @param \WC_Order_Item_Product $item Order item.
+	 * @param \WC_Order              $order WooCommerce order.
+	 * @param int                    $person_id Person ID.
+	 * @param int[]                  $access_ids Access IDs.
+	 * @param array<string,mixed>    $access_data Access data.
+	 */
+	private function maybe_create_bookings_for_item( int $item_id, \WC_Order_Item_Product $item, \WC_Order $order, int $person_id, array $access_ids, array $access_data ): void {
+		$date = $this->get_item_booking_date( $item );
+
+		if ( '' === $date || empty( $access_ids ) ) {
+			return;
+		}
+
+		$config_id   = $this->get_item_config_id( $item );
+		$location_id = isset( $access_data['location_id'] ) ? absint( $access_data['location_id'] ) : 0;
+
+		if ( $config_id <= 0 || $location_id <= 0 || 'yes' !== get_post_meta( $config_id, '_sbm_requires_booking_date', true ) ) {
+			return;
+		}
+
+		$quantity    = max( 1, absint( $item->get_quantity() ) );
+		$booking_ids = $this->get_order_item_booking_ids( $item_id );
+		$window      = $this->get_item_booking_window( $config_id, $date );
+
+		for ( $i = count( $booking_ids ); $i < $quantity && isset( $access_ids[ $i ] ); ++$i ) {
+			$booking_id = ( new BookingService() )->save(
+				array(
+					'person_id'            => $person_id,
+					'location_id'          => $location_id,
+					'access_id'            => absint( $access_ids[ $i ] ),
+					'status'               => 'confirmed',
+					'starts_at'            => $window['starts_at'],
+					'ends_at'              => $window['ends_at'],
+					'guest_count'          => 0,
+					'guest_names'          => '',
+					'notes'                => sprintf(
+						/* translators: %d: WooCommerce order ID. */
+						__( 'Created from WooCommerce order #%d for the selected visit date.', 'studio-booking-manager' ),
+						$order->get_id()
+					),
+					'skip_conflict_check' => true,
+				)
+			);
+
+			if ( $booking_id > 0 ) {
+				$booking_ids[] = $booking_id;
+			}
+		}
+
+		$this->update_order_item_booking_ids( $item_id, $booking_ids );
+	}
+
+	/**
+	 * Get booking IDs previously created for an order item.
+	 *
+	 * @param int $item_id Order item ID.
+	 * @return int[]
+	 */
+	private function get_order_item_booking_ids( int $item_id ): array {
+		$ids = wc_get_order_item_meta( $item_id, '_sbm_booking_ids', true );
+
+		if ( ! is_array( $ids ) ) {
+			$ids = array();
+		}
+
+		$legacy_id = absint( wc_get_order_item_meta( $item_id, '_sbm_booking_id', true ) );
+
+		if ( $legacy_id > 0 ) {
+			$ids[] = $legacy_id;
+		}
+
+		$ids = array_map( 'absint', $ids );
+		$ids = array_filter( $ids );
+
+		return array_values( array_unique( $ids ) );
+	}
+
+	/**
+	 * Store booking IDs created for an order item.
+	 *
+	 * @param int   $item_id Order item ID.
+	 * @param int[] $booking_ids Booking IDs.
+	 */
+	private function update_order_item_booking_ids( int $item_id, array $booking_ids ): void {
+		$booking_ids = array_values( array_unique( array_filter( array_map( 'absint', $booking_ids ) ) ) );
+
+		if ( empty( $booking_ids ) ) {
+			return;
+		}
+
+		wc_update_order_item_meta( $item_id, '_sbm_booking_ids', $booking_ids );
+		wc_update_order_item_meta( $item_id, '_sbm_booking_id', $booking_ids[0] );
+	}
+
+	/**
+	 * Get selected booking date from an order item.
+	 *
+	 * @param \WC_Order_Item_Product $item Order item.
+	 */
+	private function get_item_booking_date( \WC_Order_Item_Product $item ): string {
+		$date = sanitize_text_field( (string) $item->get_meta( '_sbm_booking_date', true ) );
+
+		if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
+			return '';
+		}
+
+		return $date;
+	}
+
+	/**
+	 * Build booking start and end datetimes for a selected visit date.
+	 *
+	 * @param int    $config_id Product or variation ID.
+	 * @param string $date Visit date.
+	 * @return array{starts_at:string,ends_at:string}
+	 */
+	private function get_item_booking_window( int $config_id, string $date ): array {
+		$start_time = sanitize_text_field( (string) get_post_meta( $config_id, '_sbm_booking_start_time', true ) );
+		$end_time   = sanitize_text_field( (string) get_post_meta( $config_id, '_sbm_booking_end_time', true ) );
+
+		if ( ! preg_match( '/^\d{2}:\d{2}$/', $start_time ) ) {
+			$start_time = '09:00';
+		}
+
+		$starts   = $date . ' ' . $start_time . ':00';
+		$start_ts = strtotime( $starts );
+		$ends     = '';
+
+		if ( preg_match( '/^\d{2}:\d{2}$/', $end_time ) ) {
+			$end_candidate    = $date . ' ' . $end_time . ':00';
+			$end_candidate_ts = strtotime( $end_candidate );
+
+			if ( false !== $start_ts && false !== $end_candidate_ts && $end_candidate_ts > $start_ts ) {
+				$ends = $end_candidate;
+			}
+		}
+
+		if ( '' === $ends ) {
+			$duration = $this->get_configured_booking_duration_minutes( $config_id );
+			$end_ts   = false === $start_ts ? false : strtotime( '+' . $duration . ' minutes', $start_ts );
+			$ends     = false === $end_ts ? $starts : gmdate( 'Y-m-d H:i:s', $end_ts );
+		}
+
+		return array(
+			'starts_at' => $starts,
+			'ends_at'   => $ends,
+		);
+	}
+
+	/**
+	 * Get booking duration from product override, selected Pass, or default.
+	 *
+	 * @param int $config_id Product or variation ID.
+	 */
+	private function get_configured_booking_duration_minutes( int $config_id ): int {
+		$product_duration = absint( get_post_meta( $config_id, '_sbm_booking_duration_minutes', true ) );
+
+		if ( $product_duration > 0 ) {
+			return max( 15, $product_duration );
+		}
+
+		$pass_type_id = absint( get_post_meta( $config_id, '_sbm_pass_type_id', true ) );
+		$pass         = $pass_type_id > 0 ? ( new PassTypeService() )->find( $pass_type_id ) : null;
+
+		if ( $pass instanceof PassType && null !== $pass->booking_duration_minutes && $pass->booking_duration_minutes > 0 ) {
+			return max( 15, absint( $pass->booking_duration_minutes ) );
+		}
+
+		return 480;
 	}
 
 	/**

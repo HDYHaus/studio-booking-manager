@@ -203,6 +203,48 @@ final class BookingRepository {
 	}
 
 	/**
+	 * Find public-safe schedule context for a selected date.
+	 *
+	 * @param string $date Date in Y-m-d format.
+	 * @param int    $location_id Optional location ID.
+	 * @return array<int, object>
+	 */
+	public function public_schedule_for_date( string $date, int $location_id = 0 ): array {
+		if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
+			return array();
+		}
+
+		$where = array(
+			'bookings.status IN ( %s, %s )',
+			'bookings.visibility IN ( %s, %s, %s )',
+			'DATE(bookings.starts_at) = %s',
+		);
+		$args  = array( 'pending', 'confirmed', 'public', 'private', 'blocked', $date );
+
+		if ( $location_id > 0 ) {
+			$where[] = 'bookings.location_id = %d';
+			$args[]  = $location_id;
+		}
+
+		$where_sql = implode( ' AND ', $where );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Table name and WHERE fragments are internal trusted values with prepared args.
+		$query = $this->wpdb->prepare(
+			"SELECT bookings.id, bookings.location_id, bookings.visibility, bookings.public_title, bookings.starts_at, bookings.ends_at
+			FROM `{$this->table}` bookings
+			WHERE {$where_sql}
+			ORDER BY bookings.starts_at ASC, bookings.id ASC",
+			$args
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Public schedule query uses prepared values.
+		$records = $this->wpdb->get_results( $query );
+
+		return is_array( $records ) ? $records : array();
+	}
+
+	/**
 	 * Create a booking.
 	 *
 	 * @param array<string,mixed> $data Booking data.
@@ -407,6 +449,8 @@ final class BookingRepository {
 			'location_id'     => isset( $data['location_id'] ) ? absint( $data['location_id'] ) : 0,
 			'access_id'       => isset( $data['access_id'] ) && '' !== (string) $data['access_id'] ? absint( $data['access_id'] ) : null,
 			'status'          => $status,
+			'visibility'      => $this->prepare_visibility( $data ),
+			'public_title'    => isset( $data['public_title'] ) ? sanitize_text_field( (string) $data['public_title'] ) : '',
 			'starts_at'       => isset( $data['starts_at'] ) ? sanitize_text_field( (string) $data['starts_at'] ) : '',
 			'ends_at'         => isset( $data['ends_at'] ) ? sanitize_text_field( (string) $data['ends_at'] ) : '',
 			'guest_count'     => isset( $data['guest_count'] ) ? absint( $data['guest_count'] ) : 0,
@@ -433,5 +477,16 @@ final class BookingRepository {
 		}
 
 		return $formats;
+	}
+
+	/**
+	 * Prepare public visibility for storage.
+	 *
+	 * @param array<string,mixed> $data Raw data.
+	 */
+	private function prepare_visibility( array $data ): string {
+		$visibility = isset( $data['visibility'] ) ? sanitize_key( (string) $data['visibility'] ) : 'internal';
+
+		return in_array( $visibility, array( 'public', 'private', 'blocked', 'internal' ), true ) ? $visibility : 'internal';
 	}
 }

@@ -309,7 +309,7 @@ final class ImportExportAdmin extends AbstractAdminPage {
 	 * @return array{headers:array<int,string>,rows:array<int,array<int,string>>}
 	 */
 	private function passes_export(): array {
-		$headers = array( 'id', 'name', 'description', 'behaviour', 'number_of_visits', 'maximum_visits_per_week', 'guest_allowance', 'booking_required', 'valid_for', 'status', 'created_at', 'updated_at' );
+		$headers = array( 'id', 'name', 'description', 'behaviour', 'number_of_visits', 'maximum_visits_per_week', 'guest_allowance', 'booking_required', 'booking_duration_minutes', 'valid_for', 'status', 'created_at', 'updated_at' );
 		$rows    = array();
 
 		foreach ( ( new PassTypeService() )->all() as $pass ) {
@@ -357,7 +357,7 @@ final class ImportExportAdmin extends AbstractAdminPage {
 	 * @return array{headers:array<int,string>,rows:array<int,array<int,string>>}
 	 */
 	private function bookings_export(): array {
-		$headers = array( 'id', 'person_id', 'person_name', 'location_id', 'location_name', 'access_id', 'access_type', 'status', 'starts_at', 'ends_at', 'guest_count', 'guest_names', 'calendar_sync_status', 'calendar_sync_error', 'notes', 'created_at', 'updated_at' );
+		$headers = array( 'id', 'person_id', 'person_name', 'location_id', 'location_name', 'access_id', 'access_type', 'status', 'visibility', 'public_title', 'starts_at', 'ends_at', 'guest_count', 'guest_names', 'calendar_sync_status', 'calendar_sync_error', 'notes', 'created_at', 'updated_at' );
 		$rows    = array();
 
 		foreach ( ( new BookingRepository() )->all() as $booking ) {

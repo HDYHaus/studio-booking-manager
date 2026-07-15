@@ -172,6 +172,7 @@ final class PassTypeRepository {
 		$maximum_visits_per_week = isset( $data['maximum_visits_per_week'] ) && '' !== (string) $data['maximum_visits_per_week'] ? absint( $data['maximum_visits_per_week'] ) : null;
 		$guest_allowance = isset( $data['guest_allowance'] ) ? absint( $data['guest_allowance'] ) : 0;
 		$booking_required = ! empty( $data['booking_required'] ) ? 1 : 0;
+		$booking_duration_minutes = isset( $data['booking_duration_minutes'] ) && '' !== (string) $data['booking_duration_minutes'] ? absint( $data['booking_duration_minutes'] ) : null;
 		$valid_for = isset( $data['valid_for'] ) && '' !== (string) $data['valid_for'] ? absint( $data['valid_for'] ) : null;
 		$status = isset( $data['status'] ) ? sanitize_key( (string) $data['status'] ) : 'active';
 		$allowed_status = array( 'active', 'inactive', 'archived' );
@@ -196,6 +197,7 @@ final class PassTypeRepository {
 			'maximum_visits_per_week' => $maximum_visits_per_week,
 			'guest_allowance' => $guest_allowance,
 			'booking_required' => $booking_required,
+			'booking_duration_minutes' => $booking_duration_minutes,
 			'valid_for' => $valid_for,
 			'status' => $status,
 		);
@@ -214,6 +216,7 @@ final class PassTypeRepository {
 			'maximum_visits_per_week',
 			'guest_allowance',
 			'booking_required',
+			'booking_duration_minutes',
 			'valid_for',
 		);
 

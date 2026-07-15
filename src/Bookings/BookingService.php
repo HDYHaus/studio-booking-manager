@@ -77,13 +77,14 @@ final class BookingService {
 	public function save( array $data ): int {
 		$this->last_error = '';
 		$id               = isset( $data['id'] ) ? absint( $data['id'] ) : 0;
+		$skip_conflict    = ! empty( $data['skip_conflict_check'] );
 		$data             = $this->normalize_payload( $data );
 
 		if ( ! $this->is_valid_payload( $data ) ) {
 			return 0;
 		}
 
-		if ( $this->repository->has_conflict( (int) $data['location_id'], (string) $data['starts_at'], (string) $data['ends_at'], $id ) ) {
+		if ( ! $skip_conflict && $this->repository->has_conflict( (int) $data['location_id'], (string) $data['starts_at'], (string) $data['ends_at'], $id ) ) {
 			$this->last_error = 'conflict';
 			return 0;
 		}

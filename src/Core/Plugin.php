@@ -9,7 +9,10 @@ namespace StudioBookingManager\Core;
 
 use StudioBookingManager\Access\AccessAdmin;
 use StudioBookingManager\Bookings\BookingAdmin;
+use StudioBookingManager\Commerce\WooCommerce\BookingDateField;
 use StudioBookingManager\Calendar\GoogleCalendarSync;
+use StudioBookingManager\Commerce\WooCommerce\CheckoutFields;
+use StudioBookingManager\Commerce\WooCommerce\LoopAddToCart;
 use StudioBookingManager\Commerce\WooCommerce\OrderListener;
 use StudioBookingManager\Admin\AdminAssets;
 use StudioBookingManager\Admin\AdminMenu;
@@ -80,6 +83,9 @@ final class Plugin {
 		( new MemberScheduleShortcode() )->register();
 
 		if ( class_exists( 'WooCommerce' ) ) {
+			( new BookingDateField() )->register();
+			( new CheckoutFields() )->register();
+			( new LoopAddToCart() )->register();
 			( new ProductPanel() )->register();
 			( new OrderListener() )->register();
 		}

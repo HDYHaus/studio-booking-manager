@@ -1,3 +1,146 @@
+.sbm-booking-date-field {
+	display: grid;
+	gap: 10px;
+	margin: 1.25rem 0;
+	max-width: 420px;
+}
+
+.sbm-booking-date-field label {
+	display: block;
+	font-weight: 600;
+	line-height: 1.25;
+}
+
+.sbm-booking-date-field input[type="date"] {
+	appearance: none;
+	background: #fff;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	box-sizing: border-box;
+	color: #1d2327;
+	font: inherit;
+	font-size: 1rem;
+	line-height: 1.4;
+	min-height: 48px;
+	padding: 11px 44px 11px 14px;
+	width: 100%;
+}
+
+.sbm-booking-date-field input[type="date"]:focus {
+	border-color: #111;
+	box-shadow: 0 0 0 2px rgba(17, 17, 17, 0.14);
+	outline: none;
+}
+
+.sbm-booking-date-field input[type="date"]::-webkit-calendar-picker-indicator {
+	cursor: pointer;
+	min-height: 22px;
+	min-width: 22px;
+	opacity: 0.75;
+}
+
+.sbm-booking-date-context {
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	display: grid;
+	gap: 6px;
+	margin-top: 8px;
+	padding: 10px 12px;
+	width: min(420px, 100%);
+}
+
+.sbm-booking-date-context[hidden] {
+	display: none;
+}
+
+.sbm-booking-date-context p,
+.sbm-booking-date-context ul {
+	margin: 0;
+}
+
+.sbm-booking-date-context ul {
+	list-style: none;
+	padding: 0;
+}
+
+.sbm-booking-date-context li {
+	border-top: 1px solid #dcdcde;
+	padding: 7px 0;
+}
+
+.sbm-booking-date-context li:first-child {
+	border-top: 0;
+}
+
+.sbm-booking-date-context li span {
+	color: #646970;
+	display: inline-block;
+	min-width: 7.5em;
+}
+
+.sbm-booking-context-blocked,
+.sbm-booking-context-warning {
+	color: #8a2424;
+	font-weight: 600;
+}
+
+.single_add_to_cart_button.sbm-booking-date-disabled {
+	cursor: not-allowed;
+	opacity: 0.65;
+}
+
+.woocommerce .products .product .sbm-choose-date-button,
+.wp-block-woocommerce-product-collection .sbm-choose-date-button,
+.wc-block-grid__product .sbm-choose-date-button {
+	align-items: center;
+	background: #10243b;
+	border: 0;
+	border-radius: 999px;
+	box-sizing: border-box;
+	color: #fff;
+	display: inline-flex;
+	height: auto;
+	justify-content: center;
+	line-height: 1.2;
+	max-width: 100%;
+	min-height: 0;
+	padding: 0.9em 1.6em;
+	text-align: center;
+	text-decoration: none;
+	width: auto;
+}
+
+.woocommerce .products .product .sbm-choose-date-button:focus,
+.woocommerce .products .product .sbm-choose-date-button:hover,
+.wp-block-woocommerce-product-collection .sbm-choose-date-button:focus,
+.wp-block-woocommerce-product-collection .sbm-choose-date-button:hover,
+.wc-block-grid__product .sbm-choose-date-button:focus,
+.wc-block-grid__product .sbm-choose-date-button:hover {
+	background: #18314f;
+	color: #fff;
+	text-decoration: none;
+}
+
+.sbm-simplify-booking-checkout .wc-block-components-address-form__address_1,
+.sbm-simplify-booking-checkout .wc-block-components-address-form__address_2,
+.sbm-simplify-booking-checkout .wc-block-components-address-form__city,
+.sbm-simplify-booking-checkout .wc-block-components-address-form__country,
+.sbm-simplify-booking-checkout .wc-block-components-address-form__postcode,
+.sbm-simplify-booking-checkout .wc-block-components-address-form__state {
+	display: none !important;
+}
+
+.sbm-simplify-booking-checkout .wc-block-components-address-form__address_2-hidden-input,
+.sbm-simplify-booking-checkout .wc-block-components-address-form__address_2-toggle {
+	display: none !important;
+}
+
+.sbm-simplify-booking-checkout .wc-block-components-address-card address br,
+.sbm-simplify-booking-checkout .wc-block-components-address-card address span:not(:first-child) {
+	display: none;
+}
+
 .sbm-member-schedule {
 	border: 1px solid #dcdcde;
 	border-radius: 8px;
