@@ -123,7 +123,7 @@ final class CheckoutFields {
 	 * Enqueue frontend styles on simplified checkout screens.
 	 */
 	public function enqueue_checkout_styles(): void {
-		if ( ! $this->is_checkout_screen() || ! $this->should_simplify_checkout() ) {
+		if ( ! $this->is_checkout_screen() || ! $this->is_enabled() ) {
 			return;
 		}
 
@@ -230,12 +230,6 @@ final class CheckoutFields {
 		}
 
 		foreach ( $cart as $cart_item ) {
-			$product = isset( $cart_item['data'] ) ? $cart_item['data'] : null;
-
-			if ( $product instanceof \WC_Product && $product->needs_shipping() ) {
-				return false;
-			}
-
 			$product_id   = isset( $cart_item['product_id'] ) ? absint( $cart_item['product_id'] ) : 0;
 			$variation_id = isset( $cart_item['variation_id'] ) ? absint( $cart_item['variation_id'] ) : 0;
 
