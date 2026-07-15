@@ -253,7 +253,7 @@ final class BookingDateField {
 			$visibility = isset( $booking->visibility ) ? sanitize_key( (string) $booking->visibility ) : 'private';
 			$label      = $this->public_booking_label( $booking );
 
-			if ( 'blocked' === $visibility ) {
+			if ( $this->visibility_blocks_booking_date( $visibility ) ) {
 				$blocked = true;
 			}
 
@@ -295,7 +295,7 @@ final class BookingDateField {
 			return false;
 		}
 
-		if ( $this->date_has_unavailable_booking( $date, $this->get_configured_location_id( $config_id ) ) ) {
+		if ( $this->date_has_customer_block( $date, $this->get_configured_location_id( $config_id ) ) ) {
 			wc_add_notice( __( 'The selected visit date is unavailable for day passes.', 'studio-booking-manager' ), 'error' );
 			return false;
 		}
@@ -372,7 +372,7 @@ final class BookingDateField {
 				continue;
 			}
 
-			if ( $this->date_has_unavailable_booking( $date, $this->get_configured_location_id( $config_id ) ) ) {
+			if ( $this->date_has_customer_block( $date, $this->get_configured_location_id( $config_id ) ) ) {
 				wc_add_notice( __( 'A selected visit date is no longer available for day passes.', 'studio-booking-manager' ), 'error' );
 				continue;
 			}
@@ -484,14 +484,23 @@ final class BookingDateField {
 	 * @param string $date Date in Y-m-d format.
 	 * @param int    $location_id Optional location ID.
 	 */
-	private function date_has_unavailable_booking( string $date, int $location_id = 0 ): bool {
+	private function date_has_customer_block( string $date, int $location_id = 0 ): bool {
 		foreach ( ( new BookingRepository() )->public_schedule_for_date( $date, $location_id ) as $booking ) {
-			if ( isset( $booking->visibility ) && 'blocked' === (string) $booking->visibility ) {
+			if ( isset( $booking->visibility ) && $this->visibility_blocks_booking_date( (string) $booking->visibility ) ) {
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	/**
+	 * Determine whether a schedule visibility blocks date-required products.
+	 *
+	 * @param string $visibility Booking visibility.
+	 */
+	private function visibility_blocks_booking_date( string $visibility ): bool {
+		return in_array( $visibility, array( 'private', 'blocked' ), true );
 	}
 
 	/**

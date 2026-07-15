@@ -60,6 +60,12 @@ final class BookingRepository {
 			$args[]  = $status;
 		}
 
+		$visibility = isset( $filters['visibility'] ) ? sanitize_key( (string) $filters['visibility'] ) : '';
+		if ( in_array( $visibility, array( 'internal', 'public', 'private', 'blocked' ), true ) ) {
+			$where[] = 'bookings.visibility = %s';
+			$args[]  = $visibility;
+		}
+
 		$person_id = isset( $filters['person_id'] ) ? absint( $filters['person_id'] ) : 0;
 		if ( $person_id > 0 ) {
 			$where[] = 'bookings.person_id = %d';

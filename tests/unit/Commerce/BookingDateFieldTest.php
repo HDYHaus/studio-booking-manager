@@ -77,6 +77,29 @@ final class BookingDateFieldTest extends TestCase {
 	}
 
 	/**
+	 * Private schedule blocks date-required products without exposing private details.
+	 */
+	public function test_private_schedule_blocks_add_to_cart(): void {
+		$this->set_up_test_state();
+		$this->configure_date_required_product( 42 );
+		$GLOBALS['wpdb']->results = array(
+			(object) array(
+				'id'           => 7,
+				'visibility'   => 'private',
+				'public_title' => '',
+				'starts_at'    => '2026-07-18 09:00:00',
+				'ends_at'      => '2026-07-18 10:00:00',
+			),
+		);
+		$_POST['sbm_booking_date'] = '2026-07-18';
+
+		$passed = ( new BookingDateField() )->validate_add_to_cart( true, 42, 1, 0 );
+
+		$this->assert_false( $passed );
+		$this->assert_same( 'The selected visit date is unavailable for day passes.', $GLOBALS['sbm_test_wc_notices'][0]['message'] );
+	}
+
+	/**
 	 * Configure a product as requiring a booking date.
 	 *
 	 * @param int $product_id Product ID.
