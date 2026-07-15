@@ -520,8 +520,7 @@ final class OrderListener {
 		}
 
 		if ( '' === $ends ) {
-			$duration = absint( get_post_meta( $config_id, '_sbm_booking_duration_minutes', true ) );
-			$duration = $duration > 0 ? max( 15, $duration ) : 480;
+			$duration = $this->get_configured_booking_duration_minutes( $config_id );
 			$end_ts   = false === $start_ts ? false : strtotime( '+' . $duration . ' minutes', $start_ts );
 			$ends     = false === $end_ts ? $starts : gmdate( 'Y-m-d H:i:s', $end_ts );
 		}
@@ -530,6 +529,28 @@ final class OrderListener {
 			'starts_at' => $starts,
 			'ends_at'   => $ends,
 		);
+	}
+
+	/**
+	 * Get booking duration from product override, selected Pass, or default.
+	 *
+	 * @param int $config_id Product or variation ID.
+	 */
+	private function get_configured_booking_duration_minutes( int $config_id ): int {
+		$product_duration = absint( get_post_meta( $config_id, '_sbm_booking_duration_minutes', true ) );
+
+		if ( $product_duration > 0 ) {
+			return max( 15, $product_duration );
+		}
+
+		$pass_type_id = absint( get_post_meta( $config_id, '_sbm_pass_type_id', true ) );
+		$pass         = $pass_type_id > 0 ? ( new PassTypeService() )->find( $pass_type_id ) : null;
+
+		if ( $pass instanceof PassType && null !== $pass->booking_duration_minutes && $pass->booking_duration_minutes > 0 ) {
+			return max( 15, absint( $pass->booking_duration_minutes ) );
+		}
+
+		return 480;
 	}
 
 	/**

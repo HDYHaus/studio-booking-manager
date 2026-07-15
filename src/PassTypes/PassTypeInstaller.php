@@ -34,6 +34,7 @@ final class PassTypeInstaller {
 			maximum_visits_per_week int(11) unsigned NULL,
 			guest_allowance int(11) unsigned NOT NULL DEFAULT 0,
 			booking_required tinyint(1) NOT NULL DEFAULT 0,
+			booking_duration_minutes int(11) unsigned NULL,
 			valid_for int(11) unsigned NULL,
 			status varchar(20) NOT NULL DEFAULT 'active',
 			created_at datetime NOT NULL,

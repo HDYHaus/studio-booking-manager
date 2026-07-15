@@ -41,6 +41,7 @@ final class PassAccessMapper {
 				array(
 					'pass_type_id'     => $pass->id,
 					'booking_required' => (bool) $pass->booking_required,
+					'booking_duration_minutes' => $pass->booking_duration_minutes,
 				)
 			),
 		);

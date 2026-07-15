@@ -324,7 +324,7 @@ final class ProductPanel {
 			array(
 				'id'                => '_sbm_booking_duration_minutes',
 				'label'             => __( 'Booking duration minutes', 'studio-booking-manager' ),
-				'description'       => __( 'Fallback used when no valid booking end time is set. Leave empty to use 480 minutes.', 'studio-booking-manager' ),
+				'description'       => __( 'Overrides the selected Pass default. Used when no valid booking end time is set; leave empty to use the Pass duration or 480 minutes.', 'studio-booking-manager' ),
 				'type'              => 'number',
 				'value'             => get_post_meta( $product_id, '_sbm_booking_duration_minutes', true ),
 				'custom_attributes' => array(

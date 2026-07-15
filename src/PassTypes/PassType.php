@@ -70,6 +70,13 @@ final class PassType {
 	public bool $booking_required;
 
 	/**
+	 * Default booking duration in minutes.
+	 *
+	 * @var int|null
+	 */
+	public ?int $booking_duration_minutes;
+
+	/**
 	 * Valid for (days).
 	 *
 	 * @var int|null
@@ -111,6 +118,7 @@ final class PassType {
 		$this->maximum_visits_per_week = isset( $data->maximum_visits_per_week ) ? absint( $data->maximum_visits_per_week ) : null;
 		$this->guest_allowance = isset( $data->guest_allowance ) ? absint( $data->guest_allowance ) : 0;
 		$this->booking_required = ! empty( $data->booking_required );
+		$this->booking_duration_minutes = isset( $data->booking_duration_minutes ) ? absint( $data->booking_duration_minutes ) : null;
 		$this->valid_for = isset( $data->valid_for ) ? absint( $data->valid_for ) : null;
 		$this->status = isset( $data->status ) ? (string) $data->status : 'active';
 		$this->created_at = isset( $data->created_at ) ? (string) $data->created_at : '';
