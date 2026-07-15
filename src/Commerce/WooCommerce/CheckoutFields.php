@@ -24,6 +24,7 @@ final class CheckoutFields {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_checkout_styles' ) );
 		add_action( 'woocommerce_checkout_create_order', array( $this, 'fill_classic_checkout_order_address' ), 10, 2 );
 		add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( $this, 'fill_block_checkout_order_address' ), 10, 2 );
+		add_filter( 'woocommerce_order_get_formatted_billing_address', array( $this, 'format_booking_order_billing_address' ), 10, 3 );
 	}
 
 	/**
@@ -133,6 +134,30 @@ final class CheckoutFields {
 			array(),
 			SBM_VERSION
 		);
+
+		if ( $this->should_simplify_checkout() ) {
+			$base = wc_get_base_location();
+
+			wp_enqueue_script(
+				'studio-booking-manager-checkout',
+				SBM_PLUGIN_URL . 'assets/js/checkout.js',
+				array(),
+				SBM_VERSION,
+				true
+			);
+
+			wp_localize_script(
+				'studio-booking-manager-checkout',
+				'sbmCheckoutFields',
+				array(
+					'address1' => __( 'Studio booking', 'studio-booking-manager' ),
+					'city'     => __( 'Not required', 'studio-booking-manager' ),
+					'postcode' => '00000',
+					'country'  => isset( $base['country'] ) ? (string) $base['country'] : '',
+					'state'    => isset( $base['state'] ) ? (string) $base['state'] : '',
+				)
+			);
+		}
 	}
 
 	/**
@@ -161,6 +186,31 @@ final class CheckoutFields {
 		}
 
 		$this->fill_missing_billing_address( $order );
+	}
+
+	/**
+	 * Hide placeholder physical address values on customer-facing order output.
+	 *
+	 * @param string              $address Formatted billing address.
+	 * @param array<string,mixed> $raw_address Raw billing address pieces.
+	 * @param \WC_Order           $order Order object.
+	 */
+	public function format_booking_order_billing_address( string $address, array $raw_address, \WC_Order $order ): string {
+		if ( ! $this->is_enabled() || ! $this->order_is_booking_only( $order ) ) {
+			return $address;
+		}
+
+		if (
+			'Studio booking' !== $order->get_billing_address_1()
+			|| 'Not required' !== $order->get_billing_city()
+			|| '00000' !== $order->get_billing_postcode()
+		) {
+			return $address;
+		}
+
+		$lines = array_filter( array( $order->get_formatted_billing_full_name() ) );
+
+		return implode( '<br/>', array_map( 'esc_html', $lines ) );
 	}
 
 	/**
@@ -234,6 +284,31 @@ final class CheckoutFields {
 			$variation_id = isset( $cart_item['variation_id'] ) ? absint( $cart_item['variation_id'] ) : 0;
 
 			if ( ! $this->has_access_config( $this->get_config_id( $product_id, $variation_id ) ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Determine whether every order line item is a Studio Booking access product.
+	 *
+	 * @param \WC_Order $order Order object.
+	 */
+	private function order_is_booking_only( \WC_Order $order ): bool {
+		$items = $order->get_items();
+
+		if ( empty( $items ) ) {
+			return false;
+		}
+
+		foreach ( $items as $item ) {
+			if ( ! $item instanceof \WC_Order_Item_Product ) {
+				return false;
+			}
+
+			if ( ! $this->has_access_config( $this->get_config_id( $item->get_product_id(), $item->get_variation_id() ) ) ) {
 				return false;
 			}
 		}

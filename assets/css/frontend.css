@@ -126,6 +126,11 @@
 	display: none !important;
 }
 
+.sbm-simplify-booking-checkout .wc-block-components-address-form__address_2-hidden-input,
+.sbm-simplify-booking-checkout .wc-block-components-address-form__address_2-toggle {
+	display: none !important;
+}
+
 .sbm-simplify-booking-checkout .wc-block-components-address-card address br,
 .sbm-simplify-booking-checkout .wc-block-components-address-card address span:not(:first-child) {
 	display: none;
