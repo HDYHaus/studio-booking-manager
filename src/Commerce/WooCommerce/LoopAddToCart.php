@@ -20,6 +20,7 @@ final class LoopAddToCart {
 		add_filter( 'woocommerce_product_add_to_cart_text', array( $this, 'add_to_cart_text' ), 10, 2 );
 		add_filter( 'woocommerce_product_add_to_cart_url', array( $this, 'add_to_cart_url' ), 10, 2 );
 		add_filter( 'woocommerce_loop_add_to_cart_args', array( $this, 'add_to_cart_args' ), 10, 2 );
+		add_filter( 'woocommerce_loop_add_to_cart_link', array( $this, 'add_to_cart_link' ), 20, 3 );
 	}
 
 	/**
@@ -58,6 +59,36 @@ final class LoopAddToCart {
 		$args['class'] = trim( str_replace( 'ajax_add_to_cart', '', $args['class'] ) . ' sbm-choose-date-button' );
 
 		return $args;
+	}
+
+	/**
+	 * Replace the final shop-loop button for date-required booking products.
+	 *
+	 * @param string              $html Product button HTML.
+	 * @param \WC_Product         $product Product.
+	 * @param array<string,mixed> $args Button args.
+	 */
+	public function add_to_cart_link( string $html, \WC_Product $product, array $args ): string {
+		if ( ! $this->requires_booking_date( $product ) ) {
+			return $html;
+		}
+
+		$classes = isset( $args['class'] ) ? (string) $args['class'] : 'button';
+		$classes = trim( str_replace( 'ajax_add_to_cart', '', $classes ) . ' sbm-choose-date-button' );
+
+		return sprintf(
+			'<a href="%1$s" class="%2$s" aria-label="%3$s" rel="nofollow">%4$s</a>',
+			esc_url( $product->get_permalink() ),
+			esc_attr( $classes ),
+			esc_attr(
+				sprintf(
+					/* translators: %s: product name. */
+					__( 'Choose a visit date for %s', 'studio-booking-manager' ),
+					$product->get_name()
+				)
+			),
+			esc_html__( 'Choose date', 'studio-booking-manager' )
+		);
 	}
 
 	/**

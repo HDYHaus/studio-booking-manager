@@ -255,7 +255,7 @@ final class BookingDateField {
 		$date = $this->posted_booking_date();
 
 		if ( '' === $date ) {
-			wc_add_notice( __( 'Choose a visit date before adding this item to your cart.', 'studio-booking-manager' ), 'error' );
+			wc_add_notice( __( 'Open this product and choose a visit date before adding it to your cart.', 'studio-booking-manager' ), 'error' );
 			return false;
 		}
 
