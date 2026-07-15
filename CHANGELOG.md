@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.11.1 - 2026-07-15
+
+### Fixed
+- Improved the booking calendar availability admin experience after the WooCommerce booking-date release.
+
 ## 0.11.0 - 2026-07-15
 
 ### Added

@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Studio Booking Manager is currently in active pre-release development. Security fixes are provided for the latest development release only until the first stable public release.
+Security fixes are provided for the latest published release of Studio Booking Manager. Sites running older versions should update to the latest release before requesting support for a security issue.
 
 ## Reporting a Vulnerability
 

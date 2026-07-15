@@ -4,7 +4,7 @@ Tags: bookings, coworking, studio, memberships, operations
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.11.0
+Stable tag: 0.11.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,9 +14,13 @@ Open source booking and operations management for studios, coworking spaces, cre
 
 Studio Booking Manager helps shared spaces manage people, access, visits, locations, memberships, and operations from WordPress.
 
-This release adds WooCommerce visit-date booking controls, day-pass availability context, simplified booking checkout, and clearer shop date-selection behavior.
+This release improves the booking calendar availability admin experience after the WooCommerce booking-date release.
 
 == Changelog ==
+
+= 0.11.1 =
+
+- Improved the booking calendar availability admin experience after the WooCommerce booking-date release.
 
 = 0.11.0 =
 
