@@ -92,6 +92,8 @@ final class BookingDateField {
 				var field = $('.sbm-booking-date-field');
 				var input = $('#sbm-booking-date');
 				var context = $('.sbm-booking-date-context');
+				var form = input.closest('form.cart');
+				var submitButtonText = '';
 				var request = null;
 
 				function escapeHtml(value) {
@@ -124,6 +126,35 @@ final class BookingDateField {
 					}
 
 					context.html(html).prop('hidden', false);
+					setSubmitBlocked(isBlocked);
+				}
+
+				function setSubmitBlocked(isBlocked) {
+					var submitButton = form.find('button.single_add_to_cart_button, button[type="submit"], input[type="submit"]').first();
+
+					if (! submitButton.length) {
+						return;
+					}
+
+					if (! submitButtonText) {
+						submitButtonText = submitButton.is('input') ? submitButton.val() : submitButton.text();
+					}
+
+					if (isBlocked) {
+						submitButton.prop('disabled', true).addClass('sbm-booking-date-disabled');
+						if (submitButton.is('input')) {
+							submitButton.val('<?php echo esc_js( __( 'Date unavailable', 'studio-booking-manager' ) ); ?>');
+						} else {
+							submitButton.text('<?php echo esc_js( __( 'Date unavailable', 'studio-booking-manager' ) ); ?>');
+						}
+					} else {
+						submitButton.prop('disabled', false).removeClass('sbm-booking-date-disabled');
+						if (submitButton.is('input')) {
+							submitButton.val(submitButtonText);
+						} else {
+							submitButton.text(submitButtonText);
+						}
+					}
 				}
 
 				function loadContext() {
@@ -132,6 +163,7 @@ final class BookingDateField {
 
 					if (! required || ! date) {
 						context.empty().prop('hidden', true);
+						setSubmitBlocked(false);
 						return;
 					}
 
@@ -149,12 +181,14 @@ final class BookingDateField {
 					}).done(function(response) {
 						if (! response || ! response.success) {
 							context.empty().prop('hidden', true);
+							setSubmitBlocked(false);
 							return;
 						}
 
 						renderContext(response.data.items || [], !! response.data.blocked);
 					}).fail(function() {
 						context.empty().prop('hidden', true);
+						setSubmitBlocked(false);
 					});
 				}
 
@@ -168,6 +202,7 @@ final class BookingDateField {
 					if (! required) {
 						input.val('');
 						context.empty().prop('hidden', true);
+						setSubmitBlocked(false);
 					} else {
 						loadContext();
 					}
@@ -175,6 +210,7 @@ final class BookingDateField {
 					field.hide();
 					input.prop('required', false).val('');
 					context.empty().prop('hidden', true);
+					setSubmitBlocked(false);
 				});
 			})(jQuery);
 		</script>

@@ -38,12 +38,31 @@
 		} );
 	}
 
-	fillHiddenAddressFields();
-	document.addEventListener( 'DOMContentLoaded', fillHiddenAddressFields );
-	window.addEventListener( 'load', fillHiddenAddressFields );
+	function relabelBillingStep() {
+		var billing = document.getElementById( 'billing-fields' );
+
+		if ( ! billing ) {
+			return;
+		}
+
+		billing.querySelectorAll( 'h2, legend, .wc-block-components-checkout-step__title' ).forEach( function ( element ) {
+			if ( 'Billing address' === element.textContent.trim() ) {
+				element.textContent = 'Your details';
+			}
+		} );
+	}
+
+	function syncCheckoutFields() {
+		fillHiddenAddressFields();
+		relabelBillingStep();
+	}
+
+	syncCheckoutFields();
+	document.addEventListener( 'DOMContentLoaded', syncCheckoutFields );
+	window.addEventListener( 'load', syncCheckoutFields );
 
 	if ( 'MutationObserver' in window ) {
-		new MutationObserver( fillHiddenAddressFields ).observe( document.body, {
+		new MutationObserver( syncCheckoutFields ).observe( document.body, {
 			childList: true,
 			subtree: true,
 		} );

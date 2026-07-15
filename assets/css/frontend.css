@@ -85,6 +85,11 @@
 	font-weight: 600;
 }
 
+.single_add_to_cart_button.sbm-booking-date-disabled {
+	cursor: not-allowed;
+	opacity: 0.65;
+}
+
 .woocommerce .products .product .sbm-choose-date-button,
 .wp-block-woocommerce-product-collection .sbm-choose-date-button,
 .wc-block-grid__product .sbm-choose-date-button {
