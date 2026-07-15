@@ -1,17 +1,42 @@
 .sbm-booking-date-field {
 	display: grid;
-	gap: 6px;
-	margin: 1rem 0;
+	gap: 10px;
+	margin: 1.25rem 0;
 	max-width: 420px;
 }
 
 .sbm-booking-date-field label {
+	display: block;
 	font-weight: 600;
+	line-height: 1.25;
 }
 
 .sbm-booking-date-field input[type="date"] {
+	appearance: none;
+	background: #fff;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
 	box-sizing: border-box;
+	color: #1d2327;
+	font: inherit;
+	font-size: 1rem;
+	line-height: 1.4;
+	min-height: 48px;
+	padding: 11px 44px 11px 14px;
 	width: 100%;
+}
+
+.sbm-booking-date-field input[type="date"]:focus {
+	border-color: #111;
+	box-shadow: 0 0 0 2px rgba(17, 17, 17, 0.14);
+	outline: none;
+}
+
+.sbm-booking-date-field input[type="date"]::-webkit-calendar-picker-indicator {
+	cursor: pointer;
+	min-height: 22px;
+	min-width: 22px;
+	opacity: 0.75;
 }
 
 .sbm-booking-date-context {
