@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.11.0 - 2026-07-15
+
 ### Added
 - Added WooCommerce visit-date selection for booking products, including product/variation controls for default start time, end time, duration, and daily booking capacity.
 - Added public-safe schedule context on date-required product pages so customers can see public, private, and unavailable studio activity before choosing a visit date.

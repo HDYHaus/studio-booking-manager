@@ -4,7 +4,7 @@ Tags: bookings, coworking, studio, memberships, operations
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.9.1
+Stable tag: 0.11.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,16 +14,42 @@ Open source booking and operations management for studios, coworking spaces, cre
 
 Studio Booking Manager helps shared spaces manage people, access, visits, locations, memberships, and operations from WordPress.
 
-This release adds the optional WooCommerce commerce adapter for creating access records from paid products.
+This release adds WooCommerce visit-date booking controls, day-pass availability context, simplified booking checkout, and clearer shop date-selection behavior.
 
 == Changelog ==
 
+= 0.11.0 =
+
+- Added WooCommerce visit-date selection for booking products, including product/variation controls for default start time, end time, duration, and daily booking capacity.
+- Added public-safe schedule context on date-required product pages so customers can see public, private, and unavailable studio activity before choosing a visit date.
+- Added shop-loop "Choose date" behavior so date-required products send customers to the product page instead of failing from the shop grid.
+- Added simplified checkout support for booking-only carts, including WooCommerce Checkout Block support.
+- Day-pass unavailable dates now disable the add-to-basket button and show "Date unavailable" before submit.
+- Booking-only checkout labels physical billing details as customer details and hides placeholder address values from customer-facing order output.
+
+= 0.10.1 =
+
+- Improved Plugin Check compatibility for release packaging.
+- Removed tracked placeholder files from development-only directories.
+- Clarified trusted custom-table SQL handling in access duplicate checks.
+- Sanitized QR lookup tokens before resolving them.
+- Documented intentional CSV streaming for import/export and report exports.
+
+= 0.10.0 =
+
+- Added booking and reservation management with conflict handling.
+- Added Google Calendar booking sync and settings guidance.
+- Added notification settings, notification logging, and staff alert support.
+- Added member schedule and self-service account shortcodes.
+- Added QR settings and QR output tools.
+- Added reports dashboard, import/export tools, and pass management polish.
+- Added local release quality checks.
+
 = 0.9.1 =
 
-- Added optional WooCommerce commerce adapter.
-- Added product and variation access mapping fields.
-- Added automatic person and access creation after paid WooCommerce orders.
-- Added Commerce status screen.
+- Updated readme stable tag to match the plugin version.
+- Clarified WooCommerce variation nonce handling for Plugin Check.
+- Documented the sbm_ public hook prefix for WooCommerce access creation hooks.
 
 = 0.8.5 =
 
