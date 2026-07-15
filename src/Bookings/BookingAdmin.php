@@ -160,6 +160,7 @@ final class BookingAdmin extends AbstractAdminPage {
 		$records   = $this->service->all( $filters );
 		$locations = ( new LocationService() )->all();
 		$statuses  = $this->service->statuses();
+		$visibility_options = $this->visibility_options();
 		$new_url   = add_query_arg(
 			array(
 				'page'   => 'sbm-bookings',
@@ -190,6 +191,13 @@ final class BookingAdmin extends AbstractAdminPage {
 							<option value="<?php echo esc_attr( $key ); ?>" <?php selected( (string) ( $filters['status'] ?? '' ), $key ); ?>><?php echo esc_html( $label ); ?></option>
 						<?php endforeach; ?>
 					</select>
+					<label for="sbm-booking-filter-visibility"><?php echo esc_html__( 'Visibility', 'studio-booking-manager' ); ?></label>
+					<select id="sbm-booking-filter-visibility" name="visibility">
+						<option value=""><?php echo esc_html__( 'All visibility', 'studio-booking-manager' ); ?></option>
+						<?php foreach ( $visibility_options as $key => $label ) : ?>
+							<option value="<?php echo esc_attr( $key ); ?>" <?php selected( (string) ( $filters['visibility'] ?? '' ), $key ); ?>><?php echo esc_html( $label ); ?></option>
+						<?php endforeach; ?>
+					</select>
 					<?php submit_button( __( 'Filter', 'studio-booking-manager' ), 'secondary', '', false ); ?>
 				</form>
 			</div>
@@ -204,13 +212,14 @@ final class BookingAdmin extends AbstractAdminPage {
 							<th><?php echo esc_html__( 'Calendar', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'Guests', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'Visibility', 'studio-booking-manager' ); ?></th>
+							<th><?php echo esc_html__( 'Customer Impact', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'Status', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'Actions', 'studio-booking-manager' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
 						<?php if ( empty( $records ) ) : ?>
-							<tr><td colspan="9"><?php echo esc_html__( 'No bookings found.', 'studio-booking-manager' ); ?></td></tr>
+							<tr><td colspan="10"><?php echo esc_html__( 'No bookings found.', 'studio-booking-manager' ); ?></td></tr>
 						<?php endif; ?>
 						<?php foreach ( $records as $record ) : ?>
 							<tr>
@@ -221,6 +230,7 @@ final class BookingAdmin extends AbstractAdminPage {
 								<td><?php $this->render_calendar_status( $record ); ?></td>
 								<td><?php echo esc_html( (string) absint( $record->guest_count ) ); ?></td>
 								<td><?php echo wp_kses_post( Badge::render( $this->visibility_label( (string) ( $record->visibility ?? 'internal' ) ), (string) ( $record->visibility ?? 'internal' ) ) ); ?></td>
+								<td><?php $this->render_customer_impact( $record ); ?></td>
 								<td><?php echo wp_kses_post( Badge::render( $this->status_label( (string) $record->status ), (string) $record->status ) ); ?></td>
 								<td><?php $this->render_row_actions( $record ); ?></td>
 							</tr>
@@ -291,7 +301,15 @@ final class BookingAdmin extends AbstractAdminPage {
 							</td>
 						</tr>
 						<tr><th scope="row"><label for="sbm-booking-status"><?php echo esc_html__( 'Status', 'studio-booking-manager' ); ?></label></th><td><?php $this->render_status_select( $statuses, $is_edit ? (string) $record->status : 'pending' ); ?></td></tr>
-						<tr><th scope="row"><label for="sbm-booking-visibility"><?php echo esc_html__( 'Public schedule visibility', 'studio-booking-manager' ); ?></label></th><td><?php $this->render_select( 'visibility', 'sbm-booking-visibility', $visibility_options, $is_edit ? (string) ( $record->visibility ?? 'internal' ) : 'internal' ); ?><p class="description"><?php echo esc_html__( 'Public shows the public title. Private shows only "Private booking". Unavailable blocks day-pass purchases. Internal is hidden from customers.', 'studio-booking-manager' ); ?></p></td></tr>
+						<tr>
+							<th scope="row"><label for="sbm-booking-visibility"><?php echo esc_html__( 'Public schedule visibility', 'studio-booking-manager' ); ?></label></th>
+							<td>
+								<?php $this->render_select( 'visibility', 'sbm-booking-visibility', $visibility_options, $is_edit ? (string) ( $record->visibility ?? 'internal' ) : 'internal' ); ?>
+								<div class="sbm-availability-impact">
+									<p><?php echo esc_html__( 'Public appears by title. Private blocks purchases as a private booking. Studio unavailable blocks purchases as unavailable. Internal is hidden from customers.', 'studio-booking-manager' ); ?></p>
+								</div>
+							</td>
+						</tr>
 						<tr><th scope="row"><label for="sbm-booking-public-title"><?php echo esc_html__( 'Public title', 'studio-booking-manager' ); ?></label></th><td><input class="regular-text" type="text" id="sbm-booking-public-title" name="public_title" value="<?php echo esc_attr( $is_edit ? (string) ( $record->public_title ?? '' ) : '' ); ?>"><p class="description"><?php echo esc_html__( 'Shown only when visibility is Public, for example "Book Club". Leave private details in internal notes.', 'studio-booking-manager' ); ?></p></td></tr>
 						<tr><th scope="row"><label for="sbm-booking-starts"><?php echo esc_html__( 'Starts At', 'studio-booking-manager' ); ?></label></th><td><input class="regular-text" type="datetime-local" id="sbm-booking-starts" name="starts_at" value="<?php echo esc_attr( $this->datetime_value( $is_edit ? (string) $record->starts_at : '' ) ); ?>" required></td></tr>
 						<tr><th scope="row"><label for="sbm-booking-ends"><?php echo esc_html__( 'Ends At', 'studio-booking-manager' ); ?></label></th><td><input class="regular-text" type="datetime-local" id="sbm-booking-ends" name="ends_at" value="<?php echo esc_attr( $this->datetime_value( $is_edit ? (string) $record->ends_at : '' ) ); ?>" required></td></tr>
@@ -316,6 +334,7 @@ final class BookingAdmin extends AbstractAdminPage {
 			'date'        => isset( $_GET['date'] ) ? sanitize_text_field( wp_unslash( $_GET['date'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			'location_id' => isset( $_GET['location_id'] ) ? absint( wp_unslash( $_GET['location_id'] ) ) : 0, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			'status'      => isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			'visibility'  => isset( $_GET['visibility'] ) ? sanitize_key( wp_unslash( $_GET['visibility'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		);
 	}
 
@@ -368,6 +387,19 @@ final class BookingAdmin extends AbstractAdminPage {
 		if ( 'failed' === $status && ! empty( $record->calendar_sync_error ) ) {
 			echo '<p class="description">' . esc_html( (string) $record->calendar_sync_error ) . '</p>';
 		}
+	}
+
+	/**
+	 * Render customer-facing availability impact.
+	 *
+	 * @param object $record Booking row.
+	 */
+	private function render_customer_impact( object $record ): void {
+		$visibility = isset( $record->visibility ) ? (string) $record->visibility : 'internal';
+		$impact     = $this->customer_impact( $visibility );
+
+		echo wp_kses_post( Badge::render( $impact['label'], $impact['type'] ) );
+		echo '<p class="description sbm-customer-impact-description">' . esc_html( $impact['description'] ) . '</p>';
 	}
 
 	/**
@@ -544,6 +576,44 @@ final class BookingAdmin extends AbstractAdminPage {
 		$options = $this->visibility_options();
 
 		return $options[ $visibility ] ?? ucfirst( $visibility );
+	}
+
+	/**
+	 * Customer-facing impact for a visibility mode.
+	 *
+	 * @param string $visibility Visibility key.
+	 * @return array{label:string,type:string,description:string}
+	 */
+	private function customer_impact( string $visibility ): array {
+		if ( 'public' === $visibility ) {
+			return array(
+				'label'       => __( 'Visible', 'studio-booking-manager' ),
+				'type'        => 'public',
+				'description' => __( 'Customers see the public title; day-pass purchasing remains available unless capacity is full.', 'studio-booking-manager' ),
+			);
+		}
+
+		if ( 'private' === $visibility ) {
+			return array(
+				'label'       => __( 'Private block', 'studio-booking-manager' ),
+				'type'        => 'private',
+				'description' => __( 'Customers see a private booking label and cannot choose this date for day passes.', 'studio-booking-manager' ),
+			);
+		}
+
+		if ( 'blocked' === $visibility ) {
+			return array(
+				'label'       => __( 'Unavailable', 'studio-booking-manager' ),
+				'type'        => 'blocked',
+				'description' => __( 'Customers see the date as unavailable and cannot choose it for day passes.', 'studio-booking-manager' ),
+			);
+		}
+
+		return array(
+			'label'       => __( 'Hidden', 'studio-booking-manager' ),
+			'type'        => 'internal',
+			'description' => __( 'Customers do not see this booking; it still participates in internal conflict checks.', 'studio-booking-manager' ),
+		);
 	}
 
 	/**

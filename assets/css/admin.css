@@ -63,6 +63,19 @@
 	margin: 0 4px 0 0;
 }
 
+.sbm-availability-impact {
+	background: #f6f7f7;
+	border-left: 4px solid #2271b1;
+	margin-top: 8px;
+	max-width: 620px;
+	padding: 10px 12px;
+}
+
+.sbm-availability-impact p,
+.sbm-customer-impact-description {
+	margin: 4px 0 0;
+}
+
 .sbm-form-card {
 	background: #fff;
 	border: 1px solid #dcdcde;
