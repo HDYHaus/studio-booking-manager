@@ -555,39 +555,42 @@ final class BookingDateField {
 		$match_variation = $variation_id > 0 && $config_id === $variation_id;
 
 		if ( $match_variation ) {
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names come from the trusted Tables registry; values are prepared.
-			$query = $wpdb->prepare(
-				"SELECT COUNT(bookings.id)
-				FROM `{$bookings_table}` bookings
-				INNER JOIN `{$access_table}` access ON access.id = bookings.access_id
-				WHERE bookings.status IN ( %s, %s )
-					AND DATE(bookings.starts_at) = %s
-					AND access.variation_id = %d",
-				'pending',
-				'confirmed',
-				$date,
-				$config_id
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom operational table capacity check using prepared values.
+			return (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(bookings.id)
+					FROM %i bookings
+					INNER JOIN %i access ON access.id = bookings.access_id
+					WHERE bookings.status IN ( %s, %s )
+						AND DATE(bookings.starts_at) = %s
+						AND access.variation_id = %d",
+					$bookings_table,
+					$access_table,
+					'pending',
+					'confirmed',
+					$date,
+					$config_id
+				)
 			);
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		} else {
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names come from the trusted Tables registry; values are prepared.
-			$query = $wpdb->prepare(
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom operational table capacity check using prepared values.
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
 				"SELECT COUNT(bookings.id)
-				FROM `{$bookings_table}` bookings
-				INNER JOIN `{$access_table}` access ON access.id = bookings.access_id
+				FROM %i bookings
+				INNER JOIN %i access ON access.id = bookings.access_id
 				WHERE bookings.status IN ( %s, %s )
 					AND DATE(bookings.starts_at) = %s
 					AND access.product_id = %d",
+				$bookings_table,
+				$access_table,
 				'pending',
 				'confirmed',
 				$date,
 				$product_id > 0 ? $product_id : $config_id
-			);
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		}
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom operational table capacity check using prepared values.
-		return (int) $wpdb->get_var( $query );
+			)
+		);
 	}
 
 	/**
