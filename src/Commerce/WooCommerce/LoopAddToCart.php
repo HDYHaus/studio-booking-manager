@@ -55,8 +55,7 @@ final class LoopAddToCart {
 			return $args;
 		}
 
-		$args['class'] = isset( $args['class'] ) ? (string) $args['class'] : '';
-		$args['class'] = trim( str_replace( 'ajax_add_to_cart', '', $args['class'] ) . ' sbm-choose-date-button' );
+		$args['class'] = 'button sbm-choose-date-button';
 
 		return $args;
 	}
@@ -73,13 +72,10 @@ final class LoopAddToCart {
 			return $html;
 		}
 
-		$classes = isset( $args['class'] ) ? (string) $args['class'] : 'button';
-		$classes = trim( str_replace( 'ajax_add_to_cart', '', $classes ) . ' sbm-choose-date-button' );
-
 		return sprintf(
 			'<a href="%1$s" class="%2$s" aria-label="%3$s" rel="nofollow">%4$s</a>',
 			esc_url( $product->get_permalink() ),
-			esc_attr( $classes ),
+			esc_attr( 'button sbm-choose-date-button' ),
 			esc_attr(
 				sprintf(
 					/* translators: %s: product name. */
