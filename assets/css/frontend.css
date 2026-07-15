@@ -2,7 +2,7 @@
 	display: grid;
 	gap: 6px;
 	margin: 1rem 0;
-	max-width: 260px;
+	max-width: 420px;
 }
 
 .sbm-booking-date-field label {
@@ -12,6 +12,52 @@
 .sbm-booking-date-field input[type="date"] {
 	box-sizing: border-box;
 	width: 100%;
+}
+
+.sbm-booking-date-context {
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	display: grid;
+	gap: 6px;
+	margin-top: 8px;
+	padding: 10px 12px;
+	width: min(420px, 100%);
+}
+
+.sbm-booking-date-context[hidden] {
+	display: none;
+}
+
+.sbm-booking-date-context p,
+.sbm-booking-date-context ul {
+	margin: 0;
+}
+
+.sbm-booking-date-context ul {
+	list-style: none;
+	padding: 0;
+}
+
+.sbm-booking-date-context li {
+	border-top: 1px solid #dcdcde;
+	padding: 7px 0;
+}
+
+.sbm-booking-date-context li:first-child {
+	border-top: 0;
+}
+
+.sbm-booking-date-context li span {
+	color: #646970;
+	display: inline-block;
+	min-width: 7.5em;
+}
+
+.sbm-booking-context-blocked,
+.sbm-booking-context-warning {
+	color: #8a2424;
+	font-weight: 600;
 }
 
 .sbm-member-schedule {

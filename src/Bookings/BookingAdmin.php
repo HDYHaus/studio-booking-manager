@@ -78,6 +78,8 @@ final class BookingAdmin extends AbstractAdminPage {
 			'location_id' => isset( $_POST['location_id'] ) ? absint( wp_unslash( $_POST['location_id'] ) ) : 0,
 			'access_id'   => isset( $_POST['access_id'] ) ? wp_unslash( $_POST['access_id'] ) : '',
 			'status'      => isset( $_POST['status'] ) ? sanitize_key( wp_unslash( $_POST['status'] ) ) : 'pending',
+			'visibility'  => isset( $_POST['visibility'] ) ? sanitize_key( wp_unslash( $_POST['visibility'] ) ) : 'internal',
+			'public_title' => isset( $_POST['public_title'] ) ? sanitize_text_field( wp_unslash( $_POST['public_title'] ) ) : '',
 			'starts_at'   => isset( $_POST['starts_at'] ) ? wp_unslash( $_POST['starts_at'] ) : '',
 			'ends_at'     => isset( $_POST['ends_at'] ) ? wp_unslash( $_POST['ends_at'] ) : '',
 			'guest_count' => isset( $_POST['guest_count'] ) ? absint( wp_unslash( $_POST['guest_count'] ) ) : 0,
@@ -201,13 +203,14 @@ final class BookingAdmin extends AbstractAdminPage {
 							<th><?php echo esc_html__( 'Access', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'Calendar', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'Guests', 'studio-booking-manager' ); ?></th>
+							<th><?php echo esc_html__( 'Visibility', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'Status', 'studio-booking-manager' ); ?></th>
 							<th><?php echo esc_html__( 'Actions', 'studio-booking-manager' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
 						<?php if ( empty( $records ) ) : ?>
-							<tr><td colspan="8"><?php echo esc_html__( 'No bookings found.', 'studio-booking-manager' ); ?></td></tr>
+							<tr><td colspan="9"><?php echo esc_html__( 'No bookings found.', 'studio-booking-manager' ); ?></td></tr>
 						<?php endif; ?>
 						<?php foreach ( $records as $record ) : ?>
 							<tr>
@@ -217,6 +220,7 @@ final class BookingAdmin extends AbstractAdminPage {
 								<td><?php echo esc_html( $record->access_type ? (string) $record->access_type : __( 'None', 'studio-booking-manager' ) ); ?></td>
 								<td><?php $this->render_calendar_status( $record ); ?></td>
 								<td><?php echo esc_html( (string) absint( $record->guest_count ) ); ?></td>
+								<td><?php echo wp_kses_post( Badge::render( $this->visibility_label( (string) ( $record->visibility ?? 'internal' ) ), (string) ( $record->visibility ?? 'internal' ) ) ); ?></td>
 								<td><?php echo wp_kses_post( Badge::render( $this->status_label( (string) $record->status ), (string) $record->status ) ); ?></td>
 								<td><?php $this->render_row_actions( $record ); ?></td>
 							</tr>
@@ -266,6 +270,7 @@ final class BookingAdmin extends AbstractAdminPage {
 		$locations = ( new LocationService() )->all();
 		$access    = ( new AccessService() )->all();
 		$statuses  = $this->service->statuses();
+		$visibility_options = $this->visibility_options();
 		?>
 		<div class="wrap sbm-admin-page">
 			<?php PageHeader::render( $is_edit ? __( 'Edit Booking', 'studio-booking-manager' ) : __( 'Add Booking', 'studio-booking-manager' ) ); ?>
@@ -286,6 +291,8 @@ final class BookingAdmin extends AbstractAdminPage {
 							</td>
 						</tr>
 						<tr><th scope="row"><label for="sbm-booking-status"><?php echo esc_html__( 'Status', 'studio-booking-manager' ); ?></label></th><td><?php $this->render_status_select( $statuses, $is_edit ? (string) $record->status : 'pending' ); ?></td></tr>
+						<tr><th scope="row"><label for="sbm-booking-visibility"><?php echo esc_html__( 'Public schedule visibility', 'studio-booking-manager' ); ?></label></th><td><?php $this->render_select( 'visibility', 'sbm-booking-visibility', $visibility_options, $is_edit ? (string) ( $record->visibility ?? 'internal' ) : 'internal' ); ?><p class="description"><?php echo esc_html__( 'Public shows the public title. Private shows only "Private booking". Unavailable blocks day-pass purchases. Internal is hidden from customers.', 'studio-booking-manager' ); ?></p></td></tr>
+						<tr><th scope="row"><label for="sbm-booking-public-title"><?php echo esc_html__( 'Public title', 'studio-booking-manager' ); ?></label></th><td><input class="regular-text" type="text" id="sbm-booking-public-title" name="public_title" value="<?php echo esc_attr( $is_edit ? (string) ( $record->public_title ?? '' ) : '' ); ?>"><p class="description"><?php echo esc_html__( 'Shown only when visibility is Public, for example "Book Club". Leave private details in internal notes.', 'studio-booking-manager' ); ?></p></td></tr>
 						<tr><th scope="row"><label for="sbm-booking-starts"><?php echo esc_html__( 'Starts At', 'studio-booking-manager' ); ?></label></th><td><input class="regular-text" type="datetime-local" id="sbm-booking-starts" name="starts_at" value="<?php echo esc_attr( $this->datetime_value( $is_edit ? (string) $record->starts_at : '' ) ); ?>" required></td></tr>
 						<tr><th scope="row"><label for="sbm-booking-ends"><?php echo esc_html__( 'Ends At', 'studio-booking-manager' ); ?></label></th><td><input class="regular-text" type="datetime-local" id="sbm-booking-ends" name="ends_at" value="<?php echo esc_attr( $this->datetime_value( $is_edit ? (string) $record->ends_at : '' ) ); ?>" required></td></tr>
 						<tr><th scope="row"><label for="sbm-booking-guests"><?php echo esc_html__( 'Guest Count', 'studio-booking-manager' ); ?></label></th><td><input class="small-text" type="number" min="0" id="sbm-booking-guests" name="guest_count" value="<?php echo esc_attr( $is_edit ? (string) absint( $record->guest_count ) : '0' ); ?>"></td></tr>
@@ -459,6 +466,24 @@ final class BookingAdmin extends AbstractAdminPage {
 	}
 
 	/**
+	 * Render a generic select.
+	 *
+	 * @param string               $name Selected name.
+	 * @param string               $id Selected ID.
+	 * @param array<string,string> $options Options.
+	 * @param string               $selected Selected value.
+	 */
+	private function render_select( string $name, string $id, array $options, string $selected ): void {
+		?>
+		<select id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>">
+			<?php foreach ( $options as $key => $label ) : ?>
+				<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $selected, $key ); ?>><?php echo esc_html( $label ); ?></option>
+			<?php endforeach; ?>
+		</select>
+		<?php
+	}
+
+	/**
 	 * Date range label.
 	 *
 	 * @param object $record Booking row.
@@ -494,6 +519,31 @@ final class BookingAdmin extends AbstractAdminPage {
 		$statuses = $this->service->statuses();
 
 		return $statuses[ $status ] ?? ucfirst( $status );
+	}
+
+	/**
+	 * Public visibility options.
+	 *
+	 * @return array<string,string>
+	 */
+	private function visibility_options(): array {
+		return array(
+			'internal' => __( 'Internal only', 'studio-booking-manager' ),
+			'public'   => __( 'Public event', 'studio-booking-manager' ),
+			'private'  => __( 'Private booking', 'studio-booking-manager' ),
+			'blocked'  => __( 'Studio unavailable', 'studio-booking-manager' ),
+		);
+	}
+
+	/**
+	 * Public visibility label.
+	 *
+	 * @param string $visibility Visibility key.
+	 */
+	private function visibility_label( string $visibility ): string {
+		$options = $this->visibility_options();
+
+		return $options[ $visibility ] ?? ucfirst( $visibility );
 	}
 
 	/**

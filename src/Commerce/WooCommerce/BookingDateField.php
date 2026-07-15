@@ -7,6 +7,7 @@
 
 namespace StudioBookingManager\Commerce\WooCommerce;
 
+use StudioBookingManager\Bookings\BookingRepository;
 use StudioBookingManager\Database\Tables;
 
 defined( 'ABSPATH' ) || exit;
@@ -21,6 +22,8 @@ final class BookingDateField {
 	public function register(): void {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ) );
 		add_action( 'woocommerce_before_add_to_cart_button', array( $this, 'render_field' ) );
+		add_action( 'wp_ajax_sbm_booking_date_context', array( $this, 'ajax_booking_date_context' ) );
+		add_action( 'wp_ajax_nopriv_sbm_booking_date_context', array( $this, 'ajax_booking_date_context' ) );
 		add_filter( 'woocommerce_available_variation', array( $this, 'add_variation_data' ), 10, 3 );
 		add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_add_to_cart' ), 10, 4 );
 		add_filter( 'woocommerce_add_cart_item_data', array( $this, 'add_cart_item_data' ), 10, 3 );
@@ -57,6 +60,7 @@ final class BookingDateField {
 
 		$is_required = $this->requires_booking_date_for_product( $product );
 		$is_variable = $product instanceof \WC_Product_Variable;
+		$config_id   = $product->get_id();
 
 		if ( ! $is_required && ! $is_variable ) {
 			return;
@@ -74,26 +78,106 @@ final class BookingDateField {
 					required
 				<?php endif; ?>
 			>
+			<div
+				class="sbm-booking-date-context"
+				data-endpoint="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>"
+				data-nonce="<?php echo esc_attr( wp_create_nonce( 'sbm_booking_date_context' ) ); ?>"
+				data-config-id="<?php echo esc_attr( (string) absint( $config_id ) ); ?>"
+				data-location-id="<?php echo esc_attr( (string) $this->get_configured_location_id( $config_id ) ); ?>"
+				hidden
+			></div>
 		</div>
-		<?php if ( $is_variable ) : ?>
-			<script>
-				(function($) {
-					var field = $('.sbm-booking-date-field');
-					var input = $('#sbm-booking-date');
-					$('form.variations_form').on('show_variation', function(event, variation) {
-						var required = variation && variation.sbm_requires_booking_date;
-						field.toggle(!! required);
-						input.prop('required', !! required);
-						if (! required) {
-							input.val('');
-						}
-					}).on('hide_variation', function() {
-						field.hide();
-						input.prop('required', false).val('');
+		<script>
+			(function($) {
+				var field = $('.sbm-booking-date-field');
+				var input = $('#sbm-booking-date');
+				var context = $('.sbm-booking-date-context');
+				var request = null;
+
+				function escapeHtml(value) {
+					return String(value).replace(/[&<>"']/g, function(char) {
+						return {
+							'&': '&amp;',
+							'<': '&lt;',
+							'>': '&gt;',
+							'"': '&quot;',
+							"'": '&#039;'
+						}[char];
 					});
-				})(jQuery);
-			</script>
-		<?php endif; ?>
+				}
+
+				function renderContext(items, isBlocked) {
+					var html = '<strong><?php echo esc_js( __( 'What\'s happening on this day', 'studio-booking-manager' ) ); ?></strong>';
+
+					if (! items.length) {
+						html += '<p><?php echo esc_js( __( 'Open studio day.', 'studio-booking-manager' ) ); ?></p>';
+					} else {
+						html += '<ul>';
+						items.forEach(function(item) {
+							html += '<li class="sbm-booking-context-' + escapeHtml(item.visibility) + '"><span>' + escapeHtml(item.time) + '</span> ' + escapeHtml(item.label) + '</li>';
+						});
+						html += '</ul>';
+					}
+
+					if (isBlocked) {
+						html += '<p class="sbm-booking-context-warning"><?php echo esc_js( __( 'This date is not available for this day pass.', 'studio-booking-manager' ) ); ?></p>';
+					}
+
+					context.html(html).prop('hidden', false);
+				}
+
+				function loadContext() {
+					var date = input.val();
+					var required = input.prop('required');
+
+					if (! required || ! date) {
+						context.empty().prop('hidden', true);
+						return;
+					}
+
+					if (request && request.abort) {
+						request.abort();
+					}
+
+					context.html('<p><?php echo esc_js( __( 'Checking the studio schedule...', 'studio-booking-manager' ) ); ?></p>').prop('hidden', false);
+
+					request = $.post(context.data('endpoint'), {
+						action: 'sbm_booking_date_context',
+						nonce: context.data('nonce'),
+						date: date,
+						location_id: context.data('location-id') || 0
+					}).done(function(response) {
+						if (! response || ! response.success) {
+							context.empty().prop('hidden', true);
+							return;
+						}
+
+						renderContext(response.data.items || [], !! response.data.blocked);
+					}).fail(function() {
+						context.empty().prop('hidden', true);
+					});
+				}
+
+				input.on('change', loadContext);
+
+				$('form.variations_form').on('show_variation', function(event, variation) {
+					var required = variation && variation.sbm_requires_booking_date;
+					field.toggle(!! required);
+					input.prop('required', !! required);
+					context.data('location-id', variation && variation.sbm_location_id ? variation.sbm_location_id : 0);
+					if (! required) {
+						input.val('');
+						context.empty().prop('hidden', true);
+					} else {
+						loadContext();
+					}
+				}).on('hide_variation', function() {
+					field.hide();
+					input.prop('required', false).val('');
+					context.empty().prop('hidden', true);
+				});
+			})(jQuery);
+		</script>
 		<?php
 	}
 
@@ -108,8 +192,48 @@ final class BookingDateField {
 	public function add_variation_data( array $data, \WC_Product $product, \WC_Product $variation ): array {
 		$config_id                         = $this->get_config_id( $product->get_id(), $variation->get_id() );
 		$data['sbm_requires_booking_date'] = $this->requires_booking_date_for_config_id( $config_id );
+		$data['sbm_location_id']           = $this->get_configured_location_id( $config_id );
 
 		return $data;
+	}
+
+	/**
+	 * Return public-safe schedule context for the selected visit date.
+	 */
+	public function ajax_booking_date_context(): void {
+		check_ajax_referer( 'sbm_booking_date_context', 'nonce' );
+
+		$date        = isset( $_POST['date'] ) ? $this->sanitize_booking_date( sanitize_text_field( wp_unslash( $_POST['date'] ) ) ) : '';
+		$location_id = isset( $_POST['location_id'] ) ? absint( wp_unslash( $_POST['location_id'] ) ) : 0;
+
+		if ( '' === $date ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid date.', 'studio-booking-manager' ) ) );
+		}
+
+		$items   = array();
+		$blocked = false;
+
+		foreach ( ( new BookingRepository() )->public_schedule_for_date( $date, $location_id ) as $booking ) {
+			$visibility = isset( $booking->visibility ) ? sanitize_key( (string) $booking->visibility ) : 'private';
+			$label      = $this->public_booking_label( $booking );
+
+			if ( 'blocked' === $visibility ) {
+				$blocked = true;
+			}
+
+			$items[] = array(
+				'visibility' => $visibility,
+				'label'      => $label,
+				'time'       => $this->format_time_range( (string) $booking->starts_at, (string) $booking->ends_at ),
+			);
+		}
+
+		wp_send_json_success(
+			array(
+				'blocked' => $blocked,
+				'items'   => $items,
+			)
+		);
 	}
 
 	/**
@@ -132,6 +256,11 @@ final class BookingDateField {
 
 		if ( '' === $date ) {
 			wc_add_notice( __( 'Choose a visit date before adding this item to your cart.', 'studio-booking-manager' ), 'error' );
+			return false;
+		}
+
+		if ( $this->date_has_unavailable_booking( $date, $this->get_configured_location_id( $config_id ) ) ) {
+			wc_add_notice( __( 'The selected visit date is unavailable for day passes.', 'studio-booking-manager' ), 'error' );
 			return false;
 		}
 
@@ -204,6 +333,11 @@ final class BookingDateField {
 			$date         = $this->sanitize_booking_date( (string) $cart_item['sbm_booking_date'] );
 
 			if ( $config_id <= 0 || '' === $date || ! $this->requires_booking_date_for_config_id( $config_id ) ) {
+				continue;
+			}
+
+			if ( $this->date_has_unavailable_booking( $date, $this->get_configured_location_id( $config_id ) ) ) {
+				wc_add_notice( __( 'A selected visit date is no longer available for day passes.', 'studio-booking-manager' ), 'error' );
 				continue;
 			}
 
@@ -306,6 +440,22 @@ final class BookingDateField {
 	 */
 	private function get_daily_capacity( int $config_id ): int {
 		return absint( get_post_meta( $config_id, '_sbm_booking_daily_capacity', true ) );
+	}
+
+	/**
+	 * Determine whether a date is blocked from day-pass purchases.
+	 *
+	 * @param string $date Date in Y-m-d format.
+	 * @param int    $location_id Optional location ID.
+	 */
+	private function date_has_unavailable_booking( string $date, int $location_id = 0 ): bool {
+		foreach ( ( new BookingRepository() )->public_schedule_for_date( $date, $location_id ) as $booking ) {
+			if ( isset( $booking->visibility ) && 'blocked' === (string) $booking->visibility ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -423,6 +573,15 @@ final class BookingDateField {
 	}
 
 	/**
+	 * Get configured product location, or 0 for all locations.
+	 *
+	 * @param int $config_id Product or variation config ID.
+	 */
+	private function get_configured_location_id( int $config_id ): int {
+		return absint( get_post_meta( $config_id, '_sbm_location_id', true ) );
+	}
+
+	/**
 	 * Get sanitized posted booking date.
 	 */
 	private function posted_booking_date(): string {
@@ -466,5 +625,43 @@ final class BookingDateField {
 		}
 
 		return date_i18n( get_option( 'date_format' ), $timestamp );
+	}
+
+	/**
+	 * Format a public-safe booking label.
+	 *
+	 * @param object $booking Booking row.
+	 */
+	private function public_booking_label( object $booking ): string {
+		$visibility = isset( $booking->visibility ) ? sanitize_key( (string) $booking->visibility ) : 'private';
+
+		if ( 'public' === $visibility ) {
+			$title = isset( $booking->public_title ) ? trim( (string) $booking->public_title ) : '';
+
+			return '' !== $title ? $title : __( 'Studio activity', 'studio-booking-manager' );
+		}
+
+		if ( 'blocked' === $visibility ) {
+			return __( 'Studio unavailable', 'studio-booking-manager' );
+		}
+
+		return __( 'Private booking', 'studio-booking-manager' );
+	}
+
+	/**
+	 * Format a public time range.
+	 *
+	 * @param string $starts_at Start datetime.
+	 * @param string $ends_at End datetime.
+	 */
+	private function format_time_range( string $starts_at, string $ends_at ): string {
+		$start_ts = strtotime( $starts_at );
+		$end_ts   = strtotime( $ends_at );
+
+		if ( false === $start_ts || false === $end_ts ) {
+			return '';
+		}
+
+		return date_i18n( get_option( 'time_format' ), $start_ts ) . ' - ' . date_i18n( get_option( 'time_format' ), $end_ts );
 	}
 }
