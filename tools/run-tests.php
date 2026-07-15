@@ -11,19 +11,24 @@ $root = dirname( __DIR__ );
 
 require $root . '/tests/bootstrap.php';
 require $root . '/tests/unit/Access/TestCase.php';
+require $root . '/tests/unit/Commerce/TestCase.php';
 
 $tests = array(
 	$root . '/tests/unit/Access/AccessValidationResultTest.php',
 	$root . '/tests/unit/Access/CreditRuleTest.php',
 	$root . '/tests/unit/Access/GuestRuleTest.php',
 	$root . '/tests/unit/Access/ExpiryRuleTest.php',
+	$root . '/tests/unit/Commerce/BookingDateFieldTest.php',
+	$root . '/tests/unit/Commerce/CheckoutFieldsTest.php',
+	$root . '/tests/unit/Commerce/LoopAddToCartTest.php',
 );
 
 $failures = 0;
 
 foreach ( $tests as $test_file ) {
 	require $test_file;
-	$class_name = 'StudioBookingManager\\Tests\\Unit\\Access\\' . basename( $test_file, '.php' );
+	$namespace  = false !== strpos( $test_file, '/Commerce/' ) ? 'Commerce' : 'Access';
+	$class_name = 'StudioBookingManager\\Tests\\Unit\\' . $namespace . '\\' . basename( $test_file, '.php' );
 	$test       = new $class_name();
 
 	foreach ( get_class_methods( $test ) as $method ) {
