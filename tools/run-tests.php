@@ -12,6 +12,7 @@ $root = dirname( __DIR__ );
 require $root . '/tests/bootstrap.php';
 require $root . '/tests/unit/Access/TestCase.php';
 require $root . '/tests/unit/Commerce/TestCase.php';
+require $root . '/tests/unit/Integrations/TestCase.php';
 
 $tests = array(
 	$root . '/tests/unit/Access/AccessValidationResultTest.php',
@@ -21,13 +22,14 @@ $tests = array(
 	$root . '/tests/unit/Commerce/BookingDateFieldTest.php',
 	$root . '/tests/unit/Commerce/CheckoutFieldsTest.php',
 	$root . '/tests/unit/Commerce/LoopAddToCartTest.php',
+	$root . '/tests/unit/Integrations/IntegrationSettingsTest.php',
 );
 
 $failures = 0;
 
 foreach ( $tests as $test_file ) {
 	require $test_file;
-	$namespace  = false !== strpos( $test_file, '/Commerce/' ) ? 'Commerce' : 'Access';
+	$namespace  = sbm_test_namespace( $test_file );
 	$class_name = 'StudioBookingManager\\Tests\\Unit\\' . $namespace . '\\' . basename( $test_file, '.php' );
 	$test       = new $class_name();
 
@@ -44,6 +46,24 @@ foreach ( $tests as $test_file ) {
 			fwrite( STDOUT, "F\n" . $class_name . '::' . $method . "\n" . $throwable->getMessage() . "\n" );
 		}
 	}
+}
+
+/**
+ * Resolve the namespace segment for a test file.
+ *
+ * @param string $test_file Test file path.
+ * @return string
+ */
+function sbm_test_namespace( string $test_file ): string {
+	if ( false !== strpos( $test_file, '/Commerce/' ) ) {
+		return 'Commerce';
+	}
+
+	if ( false !== strpos( $test_file, '/Integrations/' ) ) {
+		return 'Integrations';
+	}
+
+	return 'Access';
 }
 
 fwrite( STDOUT, "\n" );

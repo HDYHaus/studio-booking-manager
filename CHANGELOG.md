@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.12.0 - 2026-07-16
+
+### Added
+- Added an Integrations admin screen with provider detection and saved settings for form plugins.
+- Added integration provider foundations for Gravity Forms, Contact Form 7, WPForms, Fluent Forms, and Ninja Forms.
+
 ## 0.11.3 - 2026-07-16
 
 ### Added

@@ -44,6 +44,22 @@ if ( ! function_exists( 'sanitize_key' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_parse_args' ) ) {
+	/**
+	 * Minimal wp_parse_args replacement for isolated tests.
+	 *
+	 * @param mixed $args     Provided arguments.
+	 * @param mixed $defaults Default arguments.
+	 * @return array<string, mixed>
+	 */
+	function wp_parse_args( $args, $defaults = array() ) {
+		$parsed_args = is_array( $args ) ? $args : array();
+		$defaults    = is_array( $defaults ) ? $defaults : array();
+
+		return array_merge( $defaults, $parsed_args );
+	}
+}
+
 if ( ! function_exists( 'absint' ) ) {
 	/**
 	 * Minimal absint replacement for isolated tests.

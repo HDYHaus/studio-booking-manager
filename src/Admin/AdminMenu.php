@@ -12,6 +12,7 @@ use StudioBookingManager\Bookings\BookingAdmin;
 use StudioBookingManager\Commerce\WooCommerce\CommerceAdmin;
 use StudioBookingManager\Database\Tables;
 use StudioBookingManager\ImportExport\ImportExportAdmin;
+use StudioBookingManager\Integrations\IntegrationAdmin;
 use StudioBookingManager\Locations\LocationAdmin;
 use StudioBookingManager\Notifications\NotificationAdmin;
 use StudioBookingManager\Operations\OperationsAdmin;
@@ -151,6 +152,15 @@ final class AdminMenu {
 			'sbm_manage_settings',
 			'sbm-notifications',
 			array( new NotificationAdmin(), 'render' )
+		);
+
+		add_submenu_page(
+			'sbm-dashboard',
+			__( 'Integrations', 'studio-booking-manager' ),
+			__( 'Integrations', 'studio-booking-manager' ),
+			'sbm_manage_settings',
+			'sbm-integrations',
+			array( new IntegrationAdmin(), 'render' )
 		);
 
 		add_submenu_page(

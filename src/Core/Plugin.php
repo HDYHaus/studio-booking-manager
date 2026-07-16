@@ -20,6 +20,7 @@ use StudioBookingManager\Database\DBManager;
 use StudioBookingManager\Frontend\MemberAccount;
 use StudioBookingManager\Frontend\MemberScheduleShortcode;
 use StudioBookingManager\ImportExport\ImportExportAdmin;
+use StudioBookingManager\Integrations\IntegrationAdmin;
 use StudioBookingManager\Locations\LocationAdmin;
 use StudioBookingManager\Notifications\NotificationAdmin;
 use StudioBookingManager\Notifications\NotificationService;
@@ -76,6 +77,7 @@ final class Plugin {
 		( new QRAdmin() )->register();
 		( new ReportsAdmin() )->register();
 		( new ImportExportAdmin() )->register();
+		( new IntegrationAdmin() )->register();
 		( new AdminMenu() )->register();
 		( new SettingsPage() )->register();
 		( new MemberAccount() )->register();
