@@ -37,7 +37,22 @@ final class IntegrationSettingsTest extends TestCase {
 							'first_name'   => '1.3',
 							'email'        => '2',
 							'booking_date' => '3',
+							'duration_hours' => '5',
 							'unknown'      => 'nope',
+						),
+						'custom_fields'      => array(
+							array(
+								'label' => 'Experience Type',
+								'field' => '4',
+							),
+							array(
+								'label' => '<b>Special notes</b>',
+								'field' => '7',
+							),
+							array(
+								'label' => 'Ignored',
+								'field' => '8',
+							),
 						),
 					),
 					'contact_form_7' => array(
@@ -61,7 +76,13 @@ final class IntegrationSettingsTest extends TestCase {
 		$this->assert_same( 'private', $clean['providers']['gravity_forms']['booking_visibility'] );
 		$this->assert_same( '1.3', $clean['providers']['gravity_forms']['fields']['first_name'] );
 		$this->assert_same( '2', $clean['providers']['gravity_forms']['fields']['email'] );
+		$this->assert_same( '5', $clean['providers']['gravity_forms']['fields']['duration_hours'] );
 		$this->assert_same( false, isset( $clean['providers']['gravity_forms']['fields']['unknown'] ) );
+		$this->assert_same( 'Experience Type', $clean['providers']['gravity_forms']['custom_fields'][0]['label'] );
+		$this->assert_same( '4', $clean['providers']['gravity_forms']['custom_fields'][0]['field'] );
+		$this->assert_same( 'Special notes', $clean['providers']['gravity_forms']['custom_fields'][1]['label'] );
+		$this->assert_same( '7', $clean['providers']['gravity_forms']['custom_fields'][1]['field'] );
+		$this->assert_same( false, isset( $clean['providers']['gravity_forms']['custom_fields'][2] ) );
 		$this->assert_same( 0, $clean['providers']['contact_form_7']['enabled'] );
 		$this->assert_same( 'create_pending_booking', $clean['providers']['contact_form_7']['action'] );
 		$this->assert_same( 'update_existing', $clean['providers']['contact_form_7']['duplicate_strategy'] );
@@ -83,6 +104,9 @@ final class IntegrationSettingsTest extends TestCase {
 		$this->assert_same( '09:00', $clean['providers']['gravity_forms']['default_start_time'] );
 		$this->assert_same( 60, $clean['providers']['gravity_forms']['default_duration_minutes'] );
 		$this->assert_same( '', $clean['providers']['gravity_forms']['fields']['email'] );
+		$this->assert_same( '', $clean['providers']['gravity_forms']['fields']['duration_hours'] );
+		$this->assert_same( '', $clean['providers']['gravity_forms']['custom_fields'][0]['label'] );
+		$this->assert_same( '', $clean['providers']['gravity_forms']['custom_fields'][0]['field'] );
 	}
 
 	/**
@@ -101,6 +125,12 @@ final class IntegrationSettingsTest extends TestCase {
 					'fields'             => array(
 						'email' => '2',
 					),
+					'custom_fields'      => array(
+						array(
+							'label' => 'Experience Type',
+							'field' => '4',
+						),
+					),
 				),
 			),
 		);
@@ -113,5 +143,9 @@ final class IntegrationSettingsTest extends TestCase {
 		$this->assert_same( 42, $config['form_id'] );
 		$this->assert_same( '2', $config['fields']['email'] );
 		$this->assert_same( '', $config['fields']['phone'] );
+		$this->assert_same( '', $config['fields']['duration_hours'] );
+		$this->assert_same( 'Experience Type', $config['custom_fields'][0]['label'] );
+		$this->assert_same( '4', $config['custom_fields'][0]['field'] );
+		$this->assert_same( '', $config['custom_fields'][1]['label'] );
 	}
 }

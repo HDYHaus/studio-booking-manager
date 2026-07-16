@@ -151,6 +151,7 @@ final class IntegrationAdmin {
 		$form_id      = isset( $config['form_id'] ) ? absint( $config['form_id'] ) : 0;
 		$field_map    = isset( $config['fields'] ) && is_array( $config['fields'] ) ? $config['fields'] : array();
 		$field_map    = wp_parse_args( $field_map, ( new IntegrationSettings() )->gravity_forms_field_defaults() );
+		$custom_fields = isset( $config['custom_fields'] ) && is_array( $config['custom_fields'] ) ? $config['custom_fields'] : ( new IntegrationSettings() )->gravity_forms_custom_field_defaults();
 		$form_options = $this->gravity_forms_options();
 		$field_options = $this->gravity_forms_field_options( $form_id );
 		$locations    = ( new LocationService() )->all();
@@ -231,6 +232,40 @@ final class IntegrationAdmin {
 							</td>
 						</tr>
 					<?php endforeach; ?>
+				</tbody>
+			</table>
+
+			<h4><?php echo esc_html__( 'Custom Field Notes', 'studio-booking-manager' ); ?></h4>
+			<p class="description"><?php echo esc_html__( 'Add up to two extra mapped fields to include in the person and booking notes.', 'studio-booking-manager' ); ?></p>
+			<table class="widefat striped">
+				<thead>
+					<tr>
+						<th><?php echo esc_html__( 'Label', 'studio-booking-manager' ); ?></th>
+						<th><?php echo esc_html__( 'Gravity Forms field', 'studio-booking-manager' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php for ( $index = 0; $index < 2; ++$index ) : ?>
+						<?php
+						$custom_field = isset( $custom_fields[ $index ] ) && is_array( $custom_fields[ $index ] ) ? $custom_fields[ $index ] : array(
+							'label' => '',
+							'field' => '',
+						);
+						?>
+						<tr>
+							<td>
+								<input type="text" class="regular-text" name="<?php echo esc_attr( $option ); ?>[custom_fields][<?php echo esc_attr( (string) $index ); ?>][label]" value="<?php echo esc_attr( isset( $custom_field['label'] ) ? (string) $custom_field['label'] : '' ); ?>">
+							</td>
+							<td>
+								<select name="<?php echo esc_attr( $option ); ?>[custom_fields][<?php echo esc_attr( (string) $index ); ?>][field]">
+									<option value=""><?php echo esc_html__( 'Not mapped', 'studio-booking-manager' ); ?></option>
+									<?php foreach ( $field_options as $id => $field_label ) : ?>
+										<option value="<?php echo esc_attr( (string) $id ); ?>" <?php selected( isset( $custom_field['field'] ) ? (string) $custom_field['field'] : '', (string) $id ); ?>><?php echo esc_html( $field_label ); ?></option>
+									<?php endforeach; ?>
+								</select>
+							</td>
+						</tr>
+					<?php endfor; ?>
 				</tbody>
 			</table>
 		</div>
@@ -335,6 +370,7 @@ final class IntegrationAdmin {
 			'location_id'  => __( 'Location ID', 'studio-booking-manager' ),
 			'guest_count'  => __( 'Guest count', 'studio-booking-manager' ),
 			'guest_names'  => __( 'Guest names', 'studio-booking-manager' ),
+			'duration_hours' => __( 'Duration in hours', 'studio-booking-manager' ),
 			'notes'        => __( 'Notes', 'studio-booking-manager' ),
 		);
 	}

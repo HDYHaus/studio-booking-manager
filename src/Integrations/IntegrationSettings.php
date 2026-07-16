@@ -56,10 +56,12 @@ final class IntegrationSettings {
 					'default_duration_minutes' => 60,
 					'booking_visibility'       => 'internal',
 					'fields'                   => array(),
+					'custom_fields'            => $this->gravity_forms_custom_field_defaults(),
 				)
 			);
 
 			$config['fields'] = wp_parse_args( is_array( $config['fields'] ) ? $config['fields'] : array(), $this->gravity_forms_field_defaults() );
+			$config['custom_fields'] = $this->normalize_custom_fields( is_array( $config['custom_fields'] ) ? $config['custom_fields'] : array() );
 		}
 
 		return $config;
@@ -132,7 +134,26 @@ final class IntegrationSettings {
 			'location_id'  => '',
 			'guest_count'  => '',
 			'guest_names'  => '',
+			'duration_hours' => '',
 			'notes'        => '',
+		);
+	}
+
+	/**
+	 * Gravity Forms custom field defaults.
+	 *
+	 * @return array<int,array{label:string,field:string}>
+	 */
+	public function gravity_forms_custom_field_defaults(): array {
+		return array(
+			array(
+				'label' => '',
+				'field' => '',
+			),
+			array(
+				'label' => '',
+				'field' => '',
+			),
 		);
 	}
 
@@ -152,6 +173,7 @@ final class IntegrationSettings {
 			'default_duration_minutes' => isset( $raw['default_duration_minutes'] ) ? max( 15, min( 1440, absint( $raw['default_duration_minutes'] ) ) ) : 60,
 			'booking_visibility'       => in_array( $visibility, array( 'internal', 'private', 'public', 'blocked' ), true ) ? $visibility : 'internal',
 			'fields'                   => array(),
+			'custom_fields'            => $this->sanitize_custom_fields( isset( $raw['custom_fields'] ) && is_array( $raw['custom_fields'] ) ? $raw['custom_fields'] : array() ),
 		);
 
 		$fields = isset( $raw['fields'] ) && is_array( $raw['fields'] ) ? $raw['fields'] : array();
@@ -162,6 +184,37 @@ final class IntegrationSettings {
 		}
 
 		return $clean;
+	}
+
+	/**
+	 * Sanitize custom field mappings.
+	 *
+	 * @param array<mixed> $custom_fields Raw custom fields.
+	 * @return array<int,array{label:string,field:string}>
+	 */
+	private function sanitize_custom_fields( array $custom_fields ): array {
+		$clean = array();
+
+		for ( $index = 0; $index < 2; ++$index ) {
+			$row = isset( $custom_fields[ $index ] ) && is_array( $custom_fields[ $index ] ) ? $custom_fields[ $index ] : array();
+
+			$clean[] = array(
+				'label' => isset( $row['label'] ) ? sanitize_text_field( (string) $row['label'] ) : '',
+				'field' => isset( $row['field'] ) ? sanitize_text_field( (string) $row['field'] ) : '',
+			);
+		}
+
+		return $clean;
+	}
+
+	/**
+	 * Normalize saved custom field mappings.
+	 *
+	 * @param array<mixed> $custom_fields Saved custom fields.
+	 * @return array<int,array{label:string,field:string}>
+	 */
+	private function normalize_custom_fields( array $custom_fields ): array {
+		return $this->sanitize_custom_fields( $custom_fields );
 	}
 
 	/**

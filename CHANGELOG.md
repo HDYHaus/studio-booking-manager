@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.13.2 - 2026-07-16
+
+### Added
+- Added Gravity Forms duration-hours mapping for pending booking end times.
+- Added two custom Gravity Forms note mappings with editable labels.
+
 ## 0.13.1 - 2026-07-16
 
 ### Fixed

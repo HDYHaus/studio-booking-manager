@@ -72,9 +72,14 @@ final class GravityFormsIntegration {
 		$email  = sanitize_email( $this->entry_value( $entry, (string) $fields['email'] ) );
 		$notes  = $this->source_note( $entry, $form );
 		$mapped_notes = $this->entry_value( $entry, (string) $fields['notes'] );
+		$custom_notes = $this->custom_field_notes( $entry, $config );
 
 		if ( '' !== $mapped_notes ) {
 			$notes .= "\n\n" . $mapped_notes;
+		}
+
+		if ( '' !== $custom_notes ) {
+			$notes .= "\n\n" . $custom_notes;
 		}
 
 		$data = array(
@@ -136,7 +141,7 @@ final class GravityFormsIntegration {
 			'guest_count'          => absint( $this->entry_value( $entry, (string) $fields['guest_count'] ) ),
 			'guest_names'          => $this->entry_value( $entry, (string) $fields['guest_names'] ),
 			'calendar_sync_status' => 'not_synced',
-			'notes'                => $this->source_note( $entry, $form ),
+			'notes'                => $this->booking_notes( $entry, $form, $config ),
 		);
 
 		$booking_service = new BookingService();
@@ -196,7 +201,26 @@ final class GravityFormsIntegration {
 			return $end;
 		}
 
-		return gmdate( 'Y-m-d H:i:s', strtotime( '+' . max( 15, $default_duration_minutes ) . ' minutes', strtotime( $starts_at ) ) );
+		$duration_minutes = $this->duration_minutes( $entry, $fields, $default_duration_minutes );
+
+		return gmdate( 'Y-m-d H:i:s', strtotime( '+' . $duration_minutes . ' minutes', strtotime( $starts_at ) ) );
+	}
+
+	/**
+	 * Determine booking duration.
+	 *
+	 * @param array<string,mixed>  $entry Entry data.
+	 * @param array<string,string> $fields Field mapping.
+	 * @param int                  $default_duration_minutes Default duration.
+	 */
+	private function duration_minutes( array $entry, array $fields, int $default_duration_minutes ): int {
+		$hours = $this->entry_value( $entry, $fields['duration_hours'] );
+
+		if ( '' !== $hours && is_numeric( $hours ) ) {
+			return max( 15, min( 1440, (int) round( (float) $hours * 60 ) ) );
+		}
+
+		return max( 15, min( 1440, $default_duration_minutes ) );
 	}
 
 	/**
@@ -234,6 +258,59 @@ final class GravityFormsIntegration {
 		$normalized = (string) (float) $field_id;
 
 		return array_key_exists( $normalized, $entry ) ? sanitize_text_field( (string) $entry[ $normalized ] ) : '';
+	}
+
+	/**
+	 * Build booking notes with source, custom fields, and mapped notes.
+	 *
+	 * @param array<string,mixed> $entry Entry data.
+	 * @param array<string,mixed> $form Form data.
+	 * @param array<string,mixed> $config Provider config.
+	 */
+	private function booking_notes( array $entry, array $form, array $config ): string {
+		$fields = $this->fields( $config );
+		$notes  = $this->source_note( $entry, $form );
+		$custom = $this->custom_field_notes( $entry, $config );
+		$mapped = $this->entry_value( $entry, (string) $fields['notes'] );
+
+		if ( '' !== $custom ) {
+			$notes .= "\n\n" . $custom;
+		}
+
+		if ( '' !== $mapped ) {
+			$notes .= "\n\n" . $mapped;
+		}
+
+		return $notes;
+	}
+
+	/**
+	 * Build notes from configured custom fields.
+	 *
+	 * @param array<string,mixed> $entry Entry data.
+	 * @param array<string,mixed> $config Provider config.
+	 */
+	private function custom_field_notes( array $entry, array $config ): string {
+		$custom_fields = isset( $config['custom_fields'] ) && is_array( $config['custom_fields'] ) ? $config['custom_fields'] : array();
+		$lines         = array();
+
+		foreach ( $custom_fields as $custom_field ) {
+			if ( ! is_array( $custom_field ) ) {
+				continue;
+			}
+
+			$label = isset( $custom_field['label'] ) ? sanitize_text_field( (string) $custom_field['label'] ) : '';
+			$field = isset( $custom_field['field'] ) ? (string) $custom_field['field'] : '';
+			$value = $this->entry_value( $entry, $field );
+
+			if ( '' === $label || '' === $value ) {
+				continue;
+			}
+
+			$lines[] = $label . ': ' . $value;
+		}
+
+		return implode( "\n", $lines );
 	}
 
 	/**
