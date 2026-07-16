@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.11.3 - 2026-07-16
+
+### Added
+- Documented the member schedule shortcode and attributes on the Studio Booking dashboard.
+
 ## 0.11.2 - 2026-07-15
 
 ### Fixed

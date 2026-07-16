@@ -231,6 +231,47 @@ final class AdminMenu {
 					<p><a class="button" href="<?php echo esc_url( $pending_orders['url'] ); ?>"><?php echo esc_html__( 'View All Pending Orders', 'studio-booking-manager' ); ?></a></p>
 				<?php endif; ?>
 			</div>
+			<div class="sbm-card sbm-card-wide">
+				<h2><?php echo esc_html__( 'Member Schedule Shortcode', 'studio-booking-manager' ); ?></h2>
+				<p><?php echo esc_html__( 'Add this shortcode to a page to show a privacy-safe list of upcoming bookings for members.', 'studio-booking-manager' ); ?></p>
+				<p><code>[sbm_member_schedule]</code></p>
+				<table class="widefat striped sbm-table">
+					<thead>
+						<tr>
+							<th><?php echo esc_html__( 'Attribute', 'studio-booking-manager' ); ?></th>
+							<th><?php echo esc_html__( 'Default', 'studio-booking-manager' ); ?></th>
+							<th><?php echo esc_html__( 'Description', 'studio-booking-manager' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td><code>days</code></td>
+							<td><code>14</code></td>
+							<td><?php echo esc_html__( 'How many days ahead to show, from 1 to 120.', 'studio-booking-manager' ); ?></td>
+						</tr>
+						<tr>
+							<td><code>limit</code></td>
+							<td><code>30</code></td>
+							<td><?php echo esc_html__( 'Maximum bookings to show, from 1 to 100.', 'studio-booking-manager' ); ?></td>
+						</tr>
+						<tr>
+							<td><code>location_id</code></td>
+							<td><code>0</code></td>
+							<td><?php echo esc_html__( 'Optional location filter. Use 0 for all locations.', 'studio-booking-manager' ); ?></td>
+						</tr>
+						<tr>
+							<td><code>require_login</code></td>
+							<td><code>yes</code></td>
+							<td><?php echo esc_html__( 'Use no, false, or 0 to show the schedule publicly.', 'studio-booking-manager' ); ?></td>
+						</tr>
+					</tbody>
+				</table>
+				<p>
+					<?php echo esc_html__( 'Examples:', 'studio-booking-manager' ); ?>
+					<code>[sbm_member_schedule days="30" limit="50"]</code>
+					<code>[sbm_member_schedule days="14" require_login="no"]</code>
+				</p>
+			</div>
 		</div>
 		<?php
 	}
