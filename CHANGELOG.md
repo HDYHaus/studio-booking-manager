@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.13.1 - 2026-07-16
+
+### Fixed
+- Allowed Gravity Forms date-only booking requests to create pending bookings by using a configurable default start time.
+
 ## 0.13.0 - 2026-07-16
 
 ### Added

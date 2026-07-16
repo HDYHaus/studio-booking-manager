@@ -118,7 +118,7 @@ final class GravityFormsIntegration {
 			$location_id = isset( $config['default_location_id'] ) ? absint( $config['default_location_id'] ) : 0;
 		}
 
-		$starts_at = $this->booking_start( $entry, $fields );
+		$starts_at = $this->booking_start( $entry, $fields, isset( $config['default_start_time'] ) ? (string) $config['default_start_time'] : '09:00' );
 		$ends_at   = $this->booking_end( $entry, $fields, $starts_at, isset( $config['default_duration_minutes'] ) ? absint( $config['default_duration_minutes'] ) : 60 );
 
 		if ( $location_id <= 0 || '' === $starts_at || '' === $ends_at ) {
@@ -139,7 +139,14 @@ final class GravityFormsIntegration {
 			'notes'                => $this->source_note( $entry, $form ),
 		);
 
-		return ( new BookingService() )->save( $booking );
+		$booking_service = new BookingService();
+		$booking_id      = $booking_service->save( $booking );
+
+		if ( $booking_id <= 0 ) {
+			Logger::log( 'Gravity Forms submission could not create a pending booking. Error: ' . $booking_service->last_error(), 'warning' );
+		}
+
+		return $booking_id;
 	}
 
 	/**
@@ -161,9 +168,13 @@ final class GravityFormsIntegration {
 	 * @param array<string,mixed> $entry Entry data.
 	 * @param array<string,string> $fields Field mapping.
 	 */
-	private function booking_start( array $entry, array $fields ): string {
+	private function booking_start( array $entry, array $fields, string $default_start_time ): string {
 		$date = $this->entry_value( $entry, $fields['booking_date'] );
 		$time = $this->entry_value( $entry, $fields['start_time'] );
+
+		if ( '' === $time ) {
+			$time = $default_start_time;
+		}
 
 		return $this->normalize_datetime( trim( $date . ' ' . $time ) );
 	}

@@ -30,6 +30,7 @@ final class IntegrationSettingsTest extends TestCase {
 						'duplicate_strategy' => 'skip_existing',
 						'form_id'            => '42',
 						'default_location_id' => '7',
+						'default_start_time' => '2:30 pm',
 						'default_duration_minutes' => '9999',
 						'booking_visibility' => 'private',
 						'fields'             => array(
@@ -55,6 +56,7 @@ final class IntegrationSettingsTest extends TestCase {
 		$this->assert_same( 'skip_existing', $clean['providers']['gravity_forms']['duplicate_strategy'] );
 		$this->assert_same( 42, $clean['providers']['gravity_forms']['form_id'] );
 		$this->assert_same( 7, $clean['providers']['gravity_forms']['default_location_id'] );
+		$this->assert_same( '14:30', $clean['providers']['gravity_forms']['default_start_time'] );
 		$this->assert_same( 1440, $clean['providers']['gravity_forms']['default_duration_minutes'] );
 		$this->assert_same( 'private', $clean['providers']['gravity_forms']['booking_visibility'] );
 		$this->assert_same( '1.3', $clean['providers']['gravity_forms']['fields']['first_name'] );
@@ -78,6 +80,7 @@ final class IntegrationSettingsTest extends TestCase {
 		$this->assert_same( 'create_pending_booking', $clean['providers']['gravity_forms']['action'] );
 		$this->assert_same( 'update_existing', $clean['providers']['gravity_forms']['duplicate_strategy'] );
 		$this->assert_same( 0, $clean['providers']['gravity_forms']['form_id'] );
+		$this->assert_same( '09:00', $clean['providers']['gravity_forms']['default_start_time'] );
 		$this->assert_same( 60, $clean['providers']['gravity_forms']['default_duration_minutes'] );
 		$this->assert_same( '', $clean['providers']['gravity_forms']['fields']['email'] );
 	}

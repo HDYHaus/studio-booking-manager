@@ -183,6 +183,13 @@ final class IntegrationAdmin {
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><label for="sbm-gravity-forms-start-time"><?php echo esc_html__( 'Default start time', 'studio-booking-manager' ); ?></label></th>
+						<td>
+							<input id="sbm-gravity-forms-start-time" name="<?php echo esc_attr( $option ); ?>[default_start_time]" type="time" value="<?php echo esc_attr( isset( $config['default_start_time'] ) ? (string) $config['default_start_time'] : '09:00' ); ?>">
+							<span class="description"><?php echo esc_html__( 'Used when no start time field is mapped.', 'studio-booking-manager' ); ?></span>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><label for="sbm-gravity-forms-duration"><?php echo esc_html__( 'Default duration', 'studio-booking-manager' ); ?></label></th>
 						<td>
 							<input id="sbm-gravity-forms-duration" name="<?php echo esc_attr( $option ); ?>[default_duration_minutes]" type="number" min="15" max="1440" step="15" value="<?php echo esc_attr( (string) ( isset( $config['default_duration_minutes'] ) ? absint( $config['default_duration_minutes'] ) : 60 ) ); ?>">

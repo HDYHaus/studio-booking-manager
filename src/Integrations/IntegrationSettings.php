@@ -52,6 +52,7 @@ final class IntegrationSettings {
 				array(
 					'form_id'                  => 0,
 					'default_location_id'      => 0,
+					'default_start_time'       => '09:00',
 					'default_duration_minutes' => 60,
 					'booking_visibility'       => 'internal',
 					'fields'                   => array(),
@@ -147,6 +148,7 @@ final class IntegrationSettings {
 		$clean = array(
 			'form_id'                  => isset( $raw['form_id'] ) ? absint( $raw['form_id'] ) : 0,
 			'default_location_id'      => isset( $raw['default_location_id'] ) ? absint( $raw['default_location_id'] ) : 0,
+			'default_start_time'       => $this->sanitize_time( isset( $raw['default_start_time'] ) ? (string) $raw['default_start_time'] : '09:00' ),
 			'default_duration_minutes' => isset( $raw['default_duration_minutes'] ) ? max( 15, min( 1440, absint( $raw['default_duration_minutes'] ) ) ) : 60,
 			'booking_visibility'       => in_array( $visibility, array( 'internal', 'private', 'public', 'blocked' ), true ) ? $visibility : 'internal',
 			'fields'                   => array(),
@@ -160,5 +162,20 @@ final class IntegrationSettings {
 		}
 
 		return $clean;
+	}
+
+	/**
+	 * Sanitize a time value.
+	 */
+	private function sanitize_time( string $time ): string {
+		$time = trim( $time );
+
+		if ( preg_match( '/^([01]\d|2[0-3]):([0-5]\d)$/', $time ) ) {
+			return $time;
+		}
+
+		$timestamp = strtotime( $time );
+
+		return false === $timestamp ? '09:00' : gmdate( 'H:i', $timestamp );
 	}
 }
