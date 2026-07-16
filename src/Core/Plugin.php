@@ -20,6 +20,7 @@ use StudioBookingManager\Database\DBManager;
 use StudioBookingManager\Frontend\MemberAccount;
 use StudioBookingManager\Frontend\MemberScheduleShortcode;
 use StudioBookingManager\ImportExport\ImportExportAdmin;
+use StudioBookingManager\Integrations\GravityFormsIntegration;
 use StudioBookingManager\Integrations\IntegrationAdmin;
 use StudioBookingManager\Locations\LocationAdmin;
 use StudioBookingManager\Notifications\NotificationAdmin;
@@ -78,6 +79,7 @@ final class Plugin {
 		( new ReportsAdmin() )->register();
 		( new ImportExportAdmin() )->register();
 		( new IntegrationAdmin() )->register();
+		( new GravityFormsIntegration() )->register();
 		( new AdminMenu() )->register();
 		( new SettingsPage() )->register();
 		( new MemberAccount() )->register();

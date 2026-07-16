@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.13.0 - 2026-07-16
+
+### Added
+- Added Gravity Forms form selection, field mapping, and submission handling for people and pending bookings.
+- Added default Gravity Forms booking location, duration, and visibility settings.
+
 ## 0.12.0 - 2026-07-16
 
 ### Added

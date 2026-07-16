@@ -28,6 +28,16 @@ final class IntegrationSettingsTest extends TestCase {
 						'enabled'            => '1',
 						'action'             => 'create_person',
 						'duplicate_strategy' => 'skip_existing',
+						'form_id'            => '42',
+						'default_location_id' => '7',
+						'default_duration_minutes' => '9999',
+						'booking_visibility' => 'private',
+						'fields'             => array(
+							'first_name'   => '1.3',
+							'email'        => '2',
+							'booking_date' => '3',
+							'unknown'      => 'nope',
+						),
 					),
 					'contact_form_7' => array(
 						'action'             => '<bad>',
@@ -43,6 +53,13 @@ final class IntegrationSettingsTest extends TestCase {
 		$this->assert_same( 1, $clean['providers']['gravity_forms']['enabled'] );
 		$this->assert_same( 'create_person', $clean['providers']['gravity_forms']['action'] );
 		$this->assert_same( 'skip_existing', $clean['providers']['gravity_forms']['duplicate_strategy'] );
+		$this->assert_same( 42, $clean['providers']['gravity_forms']['form_id'] );
+		$this->assert_same( 7, $clean['providers']['gravity_forms']['default_location_id'] );
+		$this->assert_same( 1440, $clean['providers']['gravity_forms']['default_duration_minutes'] );
+		$this->assert_same( 'private', $clean['providers']['gravity_forms']['booking_visibility'] );
+		$this->assert_same( '1.3', $clean['providers']['gravity_forms']['fields']['first_name'] );
+		$this->assert_same( '2', $clean['providers']['gravity_forms']['fields']['email'] );
+		$this->assert_same( false, isset( $clean['providers']['gravity_forms']['fields']['unknown'] ) );
 		$this->assert_same( 0, $clean['providers']['contact_form_7']['enabled'] );
 		$this->assert_same( 'create_pending_booking', $clean['providers']['contact_form_7']['action'] );
 		$this->assert_same( 'update_existing', $clean['providers']['contact_form_7']['duplicate_strategy'] );
@@ -60,6 +77,9 @@ final class IntegrationSettingsTest extends TestCase {
 		$this->assert_same( 0, $clean['providers']['gravity_forms']['enabled'] );
 		$this->assert_same( 'create_pending_booking', $clean['providers']['gravity_forms']['action'] );
 		$this->assert_same( 'update_existing', $clean['providers']['gravity_forms']['duplicate_strategy'] );
+		$this->assert_same( 0, $clean['providers']['gravity_forms']['form_id'] );
+		$this->assert_same( 60, $clean['providers']['gravity_forms']['default_duration_minutes'] );
+		$this->assert_same( '', $clean['providers']['gravity_forms']['fields']['email'] );
 	}
 
 	/**
@@ -74,6 +94,10 @@ final class IntegrationSettingsTest extends TestCase {
 					'enabled'            => 1,
 					'action'             => 'create_person',
 					'duplicate_strategy' => 'skip_existing',
+					'form_id'            => 42,
+					'fields'             => array(
+						'email' => '2',
+					),
 				),
 			),
 		);
@@ -83,5 +107,8 @@ final class IntegrationSettingsTest extends TestCase {
 		$this->assert_same( 1, $config['enabled'] );
 		$this->assert_same( 'create_person', $config['action'] );
 		$this->assert_same( 'skip_existing', $config['duplicate_strategy'] );
+		$this->assert_same( 42, $config['form_id'] );
+		$this->assert_same( '2', $config['fields']['email'] );
+		$this->assert_same( '', $config['fields']['phone'] );
 	}
 }

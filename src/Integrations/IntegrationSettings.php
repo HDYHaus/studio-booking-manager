@@ -37,7 +37,7 @@ final class IntegrationSettings {
 		$providers = isset( $settings['providers'] ) && is_array( $settings['providers'] ) ? $settings['providers'] : array();
 		$config    = isset( $providers[ $provider ] ) && is_array( $providers[ $provider ] ) ? $providers[ $provider ] : array();
 
-		return wp_parse_args(
+		$config = wp_parse_args(
 			$config,
 			array(
 				'enabled'            => 0,
@@ -45,6 +45,23 @@ final class IntegrationSettings {
 				'duplicate_strategy' => 'update_existing',
 			)
 		);
+
+		if ( 'gravity_forms' === $provider ) {
+			$config = wp_parse_args(
+				$config,
+				array(
+					'form_id'                  => 0,
+					'default_location_id'      => 0,
+					'default_duration_minutes' => 60,
+					'booking_visibility'       => 'internal',
+					'fields'                   => array(),
+				)
+			);
+
+			$config['fields'] = wp_parse_args( is_array( $config['fields'] ) ? $config['fields'] : array(), $this->gravity_forms_field_defaults() );
+		}
+
+		return $config;
 	}
 
 	/**
@@ -84,6 +101,62 @@ final class IntegrationSettings {
 				'action'             => in_array( $action, $allowed_actions, true ) ? $action : 'create_pending_booking',
 				'duplicate_strategy' => in_array( $duplicate, $allowed_duplicates, true ) ? $duplicate : 'update_existing',
 			);
+
+			if ( 'gravity_forms' === $slug ) {
+				$clean['providers'][ $slug ] = array_merge(
+					$clean['providers'][ $slug ],
+					$this->sanitize_gravity_forms_settings( $raw )
+				);
+			}
+		}
+
+		return $clean;
+	}
+
+	/**
+	 * Gravity Forms field mapping defaults.
+	 *
+	 * @return array<string,string>
+	 */
+	public function gravity_forms_field_defaults(): array {
+		return array(
+			'first_name'   => '',
+			'last_name'    => '',
+			'display_name' => '',
+			'email'        => '',
+			'phone'        => '',
+			'booking_date' => '',
+			'start_time'   => '',
+			'end_time'     => '',
+			'location_id'  => '',
+			'guest_count'  => '',
+			'guest_names'  => '',
+			'notes'        => '',
+		);
+	}
+
+	/**
+	 * Sanitize Gravity Forms provider settings.
+	 *
+	 * @param array<string,mixed> $raw Raw provider config.
+	 * @return array<string,mixed>
+	 */
+	private function sanitize_gravity_forms_settings( array $raw ): array {
+		$visibility = isset( $raw['booking_visibility'] ) ? sanitize_key( (string) $raw['booking_visibility'] ) : 'internal';
+
+		$clean = array(
+			'form_id'                  => isset( $raw['form_id'] ) ? absint( $raw['form_id'] ) : 0,
+			'default_location_id'      => isset( $raw['default_location_id'] ) ? absint( $raw['default_location_id'] ) : 0,
+			'default_duration_minutes' => isset( $raw['default_duration_minutes'] ) ? max( 15, min( 1440, absint( $raw['default_duration_minutes'] ) ) ) : 60,
+			'booking_visibility'       => in_array( $visibility, array( 'internal', 'private', 'public', 'blocked' ), true ) ? $visibility : 'internal',
+			'fields'                   => array(),
+		);
+
+		$fields = isset( $raw['fields'] ) && is_array( $raw['fields'] ) ? $raw['fields'] : array();
+
+		foreach ( $this->gravity_forms_field_defaults() as $field => $default ) {
+			$value                       = isset( $fields[ $field ] ) ? sanitize_text_field( (string) $fields[ $field ] ) : $default;
+			$clean['fields'][ $field ] = $value;
 		}
 
 		return $clean;
