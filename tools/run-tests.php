@@ -22,6 +22,7 @@ $tests = array(
 	$root . '/tests/unit/Commerce/BookingDateFieldTest.php',
 	$root . '/tests/unit/Commerce/CheckoutFieldsTest.php',
 	$root . '/tests/unit/Commerce/LoopAddToCartTest.php',
+	$root . '/tests/unit/Integrations/GravityFormsIntegrationTest.php',
 	$root . '/tests/unit/Integrations/IntegrationSettingsTest.php',
 );
 

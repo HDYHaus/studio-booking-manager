@@ -195,10 +195,13 @@ final class GravityFormsIntegration {
 	private function booking_end( array $entry, array $fields, string $starts_at, int $default_duration_minutes ): string {
 		$date = $this->entry_value( $entry, $fields['booking_date'] );
 		$time = $this->entry_value( $entry, $fields['end_time'] );
-		$end  = $this->normalize_datetime( trim( $date . ' ' . $time ) );
 
-		if ( '' !== $end || '' === $starts_at ) {
-			return $end;
+		if ( '' !== $time ) {
+			return $this->normalize_datetime( trim( $date . ' ' . $time ) );
+		}
+
+		if ( '' === $starts_at ) {
+			return '';
 		}
 
 		$duration_minutes = $this->duration_minutes( $entry, $fields, $default_duration_minutes );

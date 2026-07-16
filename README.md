@@ -4,7 +4,7 @@ Tags: bookings, coworking, studio, memberships, operations
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.13.2
+Stable tag: 0.13.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,9 +14,13 @@ Open source booking and operations management for studios, coworking spaces, cre
 
 Studio Booking Manager helps shared spaces manage people, access, visits, locations, memberships, and operations from WordPress.
 
-This release adds Gravity Forms duration and custom note field mappings.
+This release fixes Gravity Forms date-only booking creation with duration fallback.
 
 == Changelog ==
+
+= 0.13.3 =
+
+- Fixed Gravity Forms booking creation when no explicit end time is mapped by using the duration fallback instead of midnight.
 
 = 0.13.2 =
 

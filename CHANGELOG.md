@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.13.3 - 2026-07-16
+
+### Fixed
+- Fixed Gravity Forms booking creation when no explicit end time is mapped by using the duration fallback instead of midnight.
+
 ## 0.13.2 - 2026-07-16
 
 ### Added
