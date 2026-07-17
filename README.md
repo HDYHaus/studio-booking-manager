@@ -4,7 +4,7 @@ Tags: bookings, coworking, studio, memberships, operations
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.13.4
+Stable tag: 0.13.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,9 +14,14 @@ Open source booking and operations management for studios, coworking spaces, cre
 
 Studio Booking Manager helps shared spaces manage people, access, visits, locations, memberships, and operations from WordPress.
 
-This release improves member calendar labels for public, private, unavailable, and pending bookings.
+This release links staff-visible calendar titles to booking edit pages using Studio Booking Manager roles.
 
 == Changelog ==
+
+= 0.13.5 =
+
+- Linked member calendar event titles to booking edit pages for users with booking-management access.
+- Kept staff calendar links scoped to Studio Booking Manager roles and capabilities.
 
 = 0.13.4 =
 

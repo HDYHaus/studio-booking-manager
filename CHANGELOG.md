@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.13.5 - 2026-07-17
+
+### Improved
+- Linked member calendar event titles to booking edit pages for users with booking-management access.
+- Kept staff calendar links scoped to Studio Booking Manager roles and capabilities.
+
 ## 0.13.4 - 2026-07-17
 
 ### Improved

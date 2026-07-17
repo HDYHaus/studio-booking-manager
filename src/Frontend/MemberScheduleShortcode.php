@@ -74,7 +74,7 @@ final class MemberScheduleShortcode {
 						<li class="sbm-member-schedule-item">
 							<div class="sbm-member-schedule-date"><?php echo esc_html( $this->date_label( $record ) ); ?></div>
 							<div class="sbm-member-schedule-main">
-								<strong><?php echo esc_html( $this->event_title( $record ) ); ?></strong>
+								<strong><?php echo wp_kses_post( $this->event_title_markup( $record ) ); ?></strong>
 								<span><?php echo esc_html( $this->time_range_label( $record ) ); ?></span>
 								<span><?php echo esc_html( $this->location_label( $record ) ); ?></span>
 							</div>
@@ -176,6 +176,46 @@ final class MemberScheduleShortcode {
 		}
 
 		return __( 'Studio booking', 'studio-booking-manager' );
+	}
+
+	/**
+	 * Event title markup.
+	 *
+	 * @param object $record Booking record.
+	 */
+	private function event_title_markup( object $record ): string {
+		$title = esc_html( $this->event_title( $record ) );
+		$url   = $this->staff_booking_url( $record );
+
+		if ( '' === $url ) {
+			return $title;
+		}
+
+		return sprintf(
+			'<a class="sbm-member-schedule-title-link" href="%1$s">%2$s</a>',
+			esc_url( $url ),
+			$title
+		);
+	}
+
+	/**
+	 * Staff booking edit URL.
+	 *
+	 * @param object $record Booking record.
+	 */
+	private function staff_booking_url( object $record ): string {
+		if ( empty( $record->id ) || ! current_user_can( 'sbm_manage_bookings' ) ) {
+			return '';
+		}
+
+		return add_query_arg(
+			array(
+				'page'       => 'sbm-bookings',
+				'action'     => 'edit',
+				'booking_id' => absint( $record->id ),
+			),
+			admin_url( 'admin.php' )
+		);
 	}
 
 	/**

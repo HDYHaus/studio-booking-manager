@@ -183,6 +183,18 @@
 	color: #646970;
 }
 
+.sbm-member-schedule-title-link {
+	color: inherit;
+	text-decoration: underline;
+	text-decoration-thickness: 1px;
+	text-underline-offset: 3px;
+}
+
+.sbm-member-schedule-title-link:focus,
+.sbm-member-schedule-title-link:hover {
+	color: #1d4ed8;
+}
+
 .sbm-member-schedule-labels {
 	display: flex;
 	flex-wrap: wrap;
