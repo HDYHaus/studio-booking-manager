@@ -192,7 +192,7 @@ final class BookingRepository {
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names and WHERE fragments are internal trusted values.
 		$query = $this->wpdb->prepare(
-			"SELECT bookings.id, bookings.location_id, bookings.status, bookings.starts_at, bookings.ends_at, locations.name AS location_name, locations.timezone AS location_timezone
+			"SELECT bookings.id, bookings.location_id, bookings.status, bookings.visibility, bookings.public_title, bookings.starts_at, bookings.ends_at, locations.name AS location_name, locations.timezone AS location_timezone
 			FROM `{$this->table}` bookings
 			LEFT JOIN `{$locations_table}` locations ON locations.id = bookings.location_id
 			WHERE {$where_sql}

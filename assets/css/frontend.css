@@ -183,6 +183,13 @@
 	color: #646970;
 }
 
+.sbm-member-schedule-labels {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	justify-content: flex-end;
+}
+
 .sbm-member-schedule-status {
 	background: #f6f7f7;
 	border: 1px solid #dcdcde;
@@ -191,6 +198,26 @@
 	line-height: 1;
 	padding: 7px 10px;
 	white-space: nowrap;
+}
+
+.sbm-member-schedule-visibility-public {
+	background: #eef7ff;
+	border-color: #8ec5ff;
+}
+
+.sbm-member-schedule-visibility-private {
+	background: #f6f0ff;
+	border-color: #c5a3ff;
+}
+
+.sbm-member-schedule-visibility-blocked {
+	background: #fff1f1;
+	border-color: #f3a6a6;
+}
+
+.sbm-member-schedule-status-pending {
+	background: #fff8e5;
+	border-color: #f0c36d;
 }
 
 .sbm-member-schedule-empty,

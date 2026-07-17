@@ -74,10 +74,16 @@ final class MemberScheduleShortcode {
 						<li class="sbm-member-schedule-item">
 							<div class="sbm-member-schedule-date"><?php echo esc_html( $this->date_label( $record ) ); ?></div>
 							<div class="sbm-member-schedule-main">
-								<strong><?php echo esc_html( $this->time_range_label( $record ) ); ?></strong>
+								<strong><?php echo esc_html( $this->event_title( $record ) ); ?></strong>
+								<span><?php echo esc_html( $this->time_range_label( $record ) ); ?></span>
 								<span><?php echo esc_html( $this->location_label( $record ) ); ?></span>
 							</div>
-							<span class="sbm-member-schedule-status"><?php echo esc_html( $this->status_label( (string) $record->status ) ); ?></span>
+							<div class="sbm-member-schedule-labels">
+								<span class="sbm-member-schedule-status sbm-member-schedule-visibility-<?php echo esc_attr( $this->visibility_key( $record ) ); ?>"><?php echo esc_html( $this->visibility_label( $record ) ); ?></span>
+								<?php if ( 'pending' === (string) $record->status ) : ?>
+									<span class="sbm-member-schedule-status sbm-member-schedule-status-pending"><?php echo esc_html__( 'Pending hold', 'studio-booking-manager' ); ?></span>
+								<?php endif; ?>
+							</div>
 						</li>
 					<?php endforeach; ?>
 				</ul>
@@ -146,12 +152,64 @@ final class MemberScheduleShortcode {
 	}
 
 	/**
-	 * Status label.
+	 * Event title.
 	 *
-	 * @param string $status Booking status.
+	 * @param object $record Booking record.
 	 */
-	private function status_label( string $status ): string {
-		return 'pending' === $status ? __( 'Pending hold', 'studio-booking-manager' ) : __( 'Booked', 'studio-booking-manager' );
+	private function event_title( object $record ): string {
+		$visibility = $this->visibility_key( $record );
+
+		if ( 'public' === $visibility && ! empty( $record->public_title ) ) {
+			return (string) $record->public_title;
+		}
+
+		if ( 'public' === $visibility ) {
+			return __( 'Public event', 'studio-booking-manager' );
+		}
+
+		if ( 'blocked' === $visibility ) {
+			return __( 'Studio unavailable', 'studio-booking-manager' );
+		}
+
+		if ( 'private' === $visibility ) {
+			return __( 'Private booking', 'studio-booking-manager' );
+		}
+
+		return __( 'Studio booking', 'studio-booking-manager' );
+	}
+
+	/**
+	 * Visibility label.
+	 *
+	 * @param object $record Booking record.
+	 */
+	private function visibility_label( object $record ): string {
+		$visibility = $this->visibility_key( $record );
+
+		if ( 'public' === $visibility ) {
+			return __( 'Public event', 'studio-booking-manager' );
+		}
+
+		if ( 'private' === $visibility ) {
+			return __( 'Private booking', 'studio-booking-manager' );
+		}
+
+		if ( 'blocked' === $visibility ) {
+			return __( 'Studio unavailable', 'studio-booking-manager' );
+		}
+
+		return __( 'Booked', 'studio-booking-manager' );
+	}
+
+	/**
+	 * Visibility key.
+	 *
+	 * @param object $record Booking record.
+	 */
+	private function visibility_key( object $record ): string {
+		$visibility = isset( $record->visibility ) ? sanitize_key( (string) $record->visibility ) : 'internal';
+
+		return in_array( $visibility, array( 'public', 'private', 'blocked', 'internal' ), true ) ? $visibility : 'internal';
 	}
 
 	/**

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.13.4 - 2026-07-17
+
+### Improved
+- Improved member calendar labels to show public event, private booking, studio unavailable, and pending hold context.
+- Displayed public booking titles on the member calendar when available.
+
 ## 0.13.3 - 2026-07-16
 
 ### Fixed
