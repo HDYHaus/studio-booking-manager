@@ -115,6 +115,35 @@ if ( ! function_exists( 'get_post_meta' ) ) {
 	}
 }
 
+if ( ! function_exists( 'update_post_meta' ) ) {
+	/**
+	 * Minimal update_post_meta replacement for isolated tests.
+	 *
+	 * @param int    $post_id Post ID.
+	 * @param string $key     Meta key.
+	 * @param mixed  $value   Meta value.
+	 * @return bool
+	 */
+	function update_post_meta( $post_id, $key, $value ) {
+		$GLOBALS['sbm_test_post_meta'][ (int) $post_id ][ (string) $key ] = $value;
+
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_verify_nonce' ) ) {
+	/**
+	 * Minimal wp_verify_nonce replacement for isolated tests.
+	 *
+	 * @param string $nonce  Nonce value.
+	 * @param string $action Nonce action.
+	 * @return bool
+	 */
+	function wp_verify_nonce( $nonce, $action ) {
+		return 'valid' === $nonce && 'sbm_save_product_panel' === $action;
+	}
+}
+
 if ( ! function_exists( 'sanitize_text_field' ) ) {
 	/**
 	 * Minimal sanitize_text_field replacement for isolated tests.
