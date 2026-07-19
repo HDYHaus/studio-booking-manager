@@ -396,7 +396,8 @@ final class BookingAdmin extends AbstractAdminPage {
 	 */
 	private function render_customer_impact( object $record ): void {
 		$visibility = isset( $record->visibility ) ? (string) $record->visibility : 'internal';
-		$impact     = $this->customer_impact( $visibility );
+		$status     = isset( $record->status ) ? (string) $record->status : 'pending';
+		$impact     = $this->customer_impact( $visibility, $status );
 
 		echo wp_kses_post( Badge::render( $impact['label'], $impact['type'] ) );
 		echo '<p class="description sbm-customer-impact-description">' . esc_html( $impact['description'] ) . '</p>';
@@ -584,7 +585,15 @@ final class BookingAdmin extends AbstractAdminPage {
 	 * @param string $visibility Visibility key.
 	 * @return array{label:string,type:string,description:string}
 	 */
-	private function customer_impact( string $visibility ): array {
+	private function customer_impact( string $visibility, string $status = 'confirmed' ): array {
+		if ( 'confirmed' !== $status ) {
+			return array(
+				'label'       => __( 'Awaiting approval', 'studio-booking-manager' ),
+				'type'        => 'internal',
+				'description' => __( 'Customers do not see this booking until staff confirms it.', 'studio-booking-manager' ),
+			);
+		}
+
 		if ( 'public' === $visibility ) {
 			return array(
 				'label'       => __( 'Visible', 'studio-booking-manager' ),

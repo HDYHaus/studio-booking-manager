@@ -69,4 +69,23 @@ final class GravityFormsIntegrationTest extends TestCase {
 
 		$this->assert_same( '2026-08-08 11:30:00', $end );
 	}
+
+	/**
+	 * Pending community submissions stay staff-only until approved.
+	 */
+	public function test_pending_bookings_are_internal_until_approved(): void {
+		$integration = new GravityFormsIntegration();
+		$reflection  = new ReflectionClass( $integration );
+		$method      = $reflection->getMethod( 'pending_booking_visibility' );
+		$method->setAccessible( true );
+
+		$visibility = $method->invoke(
+			$integration,
+			array(
+				'booking_visibility' => 'public',
+			)
+		);
+
+		$this->assert_same( 'internal', $visibility );
+	}
 }

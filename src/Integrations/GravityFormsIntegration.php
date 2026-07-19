@@ -163,7 +163,7 @@ final class GravityFormsIntegration {
 			'person_id'            => $person_id,
 			'location_id'          => $location_id,
 			'status'               => 'pending',
-			'visibility'           => isset( $config['booking_visibility'] ) ? sanitize_key( (string) $config['booking_visibility'] ) : 'internal',
+			'visibility'           => $this->pending_booking_visibility( $config ),
 			'starts_at'            => $starts_at,
 			'ends_at'              => $ends_at,
 			'guest_count'          => absint( $this->entry_value( $entry, (string) $fields['guest_count'] ) ),
@@ -216,6 +216,19 @@ final class GravityFormsIntegration {
 		$fields   = isset( $config['fields'] ) && is_array( $config['fields'] ) ? $config['fields'] : array();
 
 		return wp_parse_args( $fields, $settings->gravity_forms_field_defaults() );
+	}
+
+	/**
+	 * Visibility for form-created pending bookings.
+	 *
+	 * Pending community submissions must remain staff-only until approved.
+	 *
+	 * @param array<string,mixed> $config Provider config.
+	 */
+	private function pending_booking_visibility( array $config ): string {
+		unset( $config );
+
+		return 'internal';
 	}
 
 	/**

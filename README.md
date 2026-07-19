@@ -4,7 +4,7 @@ Tags: bookings, coworking, studio, memberships, operations
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.13.10
+Stable tag: 0.13.11
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,9 +14,15 @@ Open source booking and operations management for studios, coworking spaces, cre
 
 Studio Booking Manager helps shared spaces manage people, access, visits, locations, memberships, and operations from WordPress.
 
-This release adds compatibility for legacy booking-table primary keys.
+This release keeps pending community submissions hidden from public calendars until staff approval.
 
 == Changelog ==
+
+= 0.13.11 =
+
+- Kept pending community submissions off public/member calendars until staff approval.
+- Saved Gravity Forms-created pending bookings as internal holds regardless of requested public visibility.
+- Updated booking admin customer-impact messaging for pending bookings awaiting approval.
 
 = 0.13.10 =
 

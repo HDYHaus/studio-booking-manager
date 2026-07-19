@@ -3,7 +3,7 @@
  * Plugin Name:       Studio Booking Manager
  * Plugin URI:        https://hdyhaus.com/wp-plugins/studio-booking-manager
  * Description:       Open source booking and operations management for studios, coworking spaces, creative hubs, libraries, and shared spaces.
- * Version:           0.13.10
+ * Version:           0.13.11
  * Requires at least: 6.8
  * Requires PHP:      8.1
  * Author:            HDY Haus
@@ -19,11 +19,11 @@
 defined( 'ABSPATH' ) || exit;
 
 if ( ! defined( 'SBM_VERSION' ) ) {
-	define( 'SBM_VERSION', '0.13.10' );
+	define( 'SBM_VERSION', '0.13.11' );
 }
 
 if ( ! defined( 'SBM_DB_VERSION' ) ) {
-	define( 'SBM_DB_VERSION', '0.13.10' );
+	define( 'SBM_DB_VERSION', '0.13.11' );
 }
 
 if ( ! defined( 'SBM_PLUGIN_FILE' ) ) {

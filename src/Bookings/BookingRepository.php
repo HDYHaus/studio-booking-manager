@@ -195,11 +195,11 @@ final class BookingRepository {
 		$end             = gmdate( 'Y-m-d H:i:s', strtotime( '+' . $days . ' days', strtotime( $now ) ) );
 
 		$where = array(
-			'bookings.status IN ( %s, %s )',
+			'bookings.status = %s',
 			'bookings.ends_at >= %s',
 			'bookings.starts_at <= %s',
 		);
-		$args  = array( 'pending', 'confirmed', $now, $end );
+		$args  = array( 'confirmed', $now, $end );
 
 		if ( $location_id > 0 ) {
 			$where[] = 'bookings.location_id = %d';
@@ -241,11 +241,11 @@ final class BookingRepository {
 		}
 
 		$where = array(
-			'bookings.status IN ( %s, %s )',
+			'bookings.status = %s',
 			'bookings.visibility IN ( %s, %s, %s )',
 			'DATE(bookings.starts_at) = %s',
 		);
-		$args  = array( 'pending', 'confirmed', 'public', 'private', 'blocked', $date );
+		$args  = array( 'confirmed', 'public', 'private', 'blocked', $date );
 
 		if ( $location_id > 0 ) {
 			$where[] = 'bookings.location_id = %d';
