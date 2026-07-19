@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.13.6 - 2026-07-19
+
+### Fixed
+- Fixed the Studio Booking product panel for variable WooCommerce products.
+
 ## 0.13.5 - 2026-07-17
 
 ### Improved
