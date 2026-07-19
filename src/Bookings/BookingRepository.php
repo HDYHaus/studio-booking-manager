@@ -31,6 +31,13 @@ final class BookingRepository {
 	private string $table;
 
 	/**
+	 * Current or legacy primary key column.
+	 *
+	 * @var string
+	 */
+	private string $id_column = 'id';
+
+	/**
 	 * Last database error.
 	 *
 	 * @var string
@@ -45,6 +52,7 @@ final class BookingRepository {
 
 		$this->wpdb  = $wpdb;
 		$this->table = Tables::get( 'bookings' );
+		$this->id_column = $this->detect_id_column();
 	}
 
 	/**
@@ -92,16 +100,17 @@ final class BookingRepository {
 		}
 
 		$where_sql = implode( ' AND ', $where );
+		$id_column = $this->id_column;
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Table names and WHERE fragments are internal trusted values with prepared placeholder args.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Table names, column names, and WHERE fragments are internal trusted values with prepared placeholder args.
 		$query = $this->wpdb->prepare(
-			"SELECT bookings.*, people.display_name AS person_name, locations.name AS location_name, access.access_type AS access_type
+			"SELECT bookings.*, bookings.`{$id_column}` AS id, people.display_name AS person_name, locations.name AS location_name, access.access_type AS access_type
 			FROM `{$this->table}` bookings
 			LEFT JOIN `{$people_table}` people ON people.id = bookings.person_id
 			LEFT JOIN `{$locations_table}` locations ON locations.id = bookings.location_id
 			LEFT JOIN `{$access_table}` access ON access.id = bookings.access_id
 			WHERE {$where_sql}
-			ORDER BY bookings.starts_at ASC, bookings.id ASC",
+			ORDER BY bookings.starts_at ASC, bookings.`{$id_column}` ASC",
 			$args
 		);
 		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
@@ -123,8 +132,10 @@ final class BookingRepository {
 			return null;
 		}
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name comes from trusted Tables registry; ID is prepared.
-		$query = $this->wpdb->prepare( "SELECT * FROM `{$this->table}` WHERE id = %d LIMIT 1", $id );
+		$id_column = $this->id_column;
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table and column names come from trusted registry/detection; ID is prepared.
+		$query = $this->wpdb->prepare( "SELECT *, `{$id_column}` AS id FROM `{$this->table}` WHERE `{$id_column}` = %d LIMIT 1", $id );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom operational table query using trusted table name and prepared ID.
 		$record = $this->wpdb->get_row( $query );
@@ -144,16 +155,17 @@ final class BookingRepository {
 		}
 
 		$locations_table = Tables::get( 'locations' );
+		$id_column       = $this->id_column;
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names come from trusted Tables registry; values are prepared.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table and column names come from trusted Tables registry/detection; values are prepared.
 		$query = $this->wpdb->prepare(
-			"SELECT bookings.*, locations.name AS location_name, locations.timezone AS location_timezone
+			"SELECT bookings.*, bookings.`{$id_column}` AS id, locations.name AS location_name, locations.timezone AS location_timezone
 			FROM `{$this->table}` bookings
 			LEFT JOIN `{$locations_table}` locations ON locations.id = bookings.location_id
 			WHERE bookings.person_id = %d
 			AND bookings.status IN ( %s, %s )
 			AND bookings.ends_at >= %s
-			ORDER BY bookings.starts_at ASC, bookings.id ASC",
+			ORDER BY bookings.starts_at ASC, bookings.`{$id_column}` ASC",
 			$person_id,
 			'pending',
 			'confirmed',
@@ -196,14 +208,15 @@ final class BookingRepository {
 
 		$where_sql = implode( ' AND ', $where );
 		$args[]    = $limit;
+		$id_column = $this->id_column;
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names and WHERE fragments are internal trusted values.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names, column names, and WHERE fragments are internal trusted values.
 		$query = $this->wpdb->prepare(
-			"SELECT bookings.id, bookings.location_id, bookings.status, bookings.visibility, bookings.public_title, bookings.starts_at, bookings.ends_at, locations.name AS location_name, locations.timezone AS location_timezone
+			"SELECT bookings.`{$id_column}` AS id, bookings.location_id, bookings.status, bookings.visibility, bookings.public_title, bookings.starts_at, bookings.ends_at, locations.name AS location_name, locations.timezone AS location_timezone
 			FROM `{$this->table}` bookings
 			LEFT JOIN `{$locations_table}` locations ON locations.id = bookings.location_id
 			WHERE {$where_sql}
-			ORDER BY bookings.starts_at ASC, bookings.id ASC
+			ORDER BY bookings.starts_at ASC, bookings.`{$id_column}` ASC
 			LIMIT %d",
 			$args
 		);
@@ -240,13 +253,14 @@ final class BookingRepository {
 		}
 
 		$where_sql = implode( ' AND ', $where );
+		$id_column = $this->id_column;
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Table name and WHERE fragments are internal trusted values with prepared args.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Table name, column name, and WHERE fragments are internal trusted values with prepared args.
 		$query = $this->wpdb->prepare(
-			"SELECT bookings.id, bookings.location_id, bookings.visibility, bookings.public_title, bookings.starts_at, bookings.ends_at
+			"SELECT bookings.`{$id_column}` AS id, bookings.location_id, bookings.visibility, bookings.public_title, bookings.starts_at, bookings.ends_at
 			FROM `{$this->table}` bookings
 			WHERE {$where_sql}
-			ORDER BY bookings.starts_at ASC, bookings.id ASC",
+			ORDER BY bookings.starts_at ASC, bookings.`{$id_column}` ASC",
 			$args
 		);
 		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
@@ -314,7 +328,7 @@ final class BookingRepository {
 		$data['updated_at'] = current_time( 'mysql' );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom operational table update.
-		$updated = $this->wpdb->update( $this->table, $data, array( 'id' => $id ), $this->formats( $data ), array( '%d' ) );
+		$updated = $this->wpdb->update( $this->table, $data, array( $this->id_column => $id ), $this->formats( $data ), array( '%d' ) );
 
 		return false !== $updated;
 	}
@@ -337,7 +351,7 @@ final class BookingRepository {
 				'status'     => 'archived',
 				'updated_at' => current_time( 'mysql' ),
 			),
-			array( 'id' => $id ),
+			array( $this->id_column => $id ),
 			array( '%s', '%s' ),
 			array( '%d' )
 		);
@@ -369,7 +383,7 @@ final class BookingRepository {
 				'status'     => $status,
 				'updated_at' => current_time( 'mysql' ),
 			),
-			array( 'id' => $id ),
+			array( $this->id_column => $id ),
 			array( '%s', '%s' ),
 			array( '%d' )
 		);
@@ -414,7 +428,7 @@ final class BookingRepository {
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom operational table update.
-		$updated = $this->wpdb->update( $this->table, $data, array( 'id' => $id ), $formats, array( '%d' ) );
+		$updated = $this->wpdb->update( $this->table, $data, array( $this->id_column => $id ), $formats, array( '%d' ) );
 
 		return false !== $updated;
 	}
@@ -437,7 +451,7 @@ final class BookingRepository {
 		$query = $this->wpdb->prepare(
 			"SELECT COUNT(*) FROM `{$this->table}`
 			WHERE location_id = %d
-				AND id <> %d
+				AND `{$this->id_column}` <> %d
 				AND status IN ( %s, %s )
 				AND starts_at < %s
 				AND ends_at > %s",
@@ -510,5 +524,26 @@ final class BookingRepository {
 		$visibility = isset( $data['visibility'] ) ? sanitize_key( (string) $data['visibility'] ) : 'internal';
 
 		return in_array( $visibility, array( 'public', 'private', 'blocked', 'internal' ), true ) ? $visibility : 'internal';
+	}
+
+	/**
+	 * Detect current or legacy booking primary key column.
+	 */
+	private function detect_id_column(): string {
+		if ( '' === $this->table ) {
+			return 'id';
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema compatibility detection for known plugin table.
+		$has_id = $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $this->table, 'id' ) );
+
+		if ( null !== $has_id && false !== $has_id ) {
+			return 'id';
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema compatibility detection for known plugin table.
+		$has_legacy_id = $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $this->table, 'booking_id' ) );
+
+		return null !== $has_legacy_id && false !== $has_legacy_id ? 'booking_id' : 'id';
 	}
 }

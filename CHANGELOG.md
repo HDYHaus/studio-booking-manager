@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.13.10 - 2026-07-19
+
+### Fixed
+- Added compatibility for legacy bookings tables that use `booking_id` instead of `id`.
+
 ## 0.13.9 - 2026-07-19
 
 ### Fixed

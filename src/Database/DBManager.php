@@ -63,7 +63,6 @@ final class DBManager {
 	private function missing_required_columns(): bool {
 		$required_columns = array(
 			Tables::get( 'bookings' ) => array(
-				'id',
 				'person_id',
 				'location_id',
 				'access_id',

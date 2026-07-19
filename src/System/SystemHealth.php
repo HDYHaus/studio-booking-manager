@@ -80,10 +80,12 @@ final class SystemHealth {
 			return;
 		}
 
+		$id_column = $this->booking_id_column( $table );
+
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Diagnostic reads against known plugin table.
 		$count = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $table ) );
 		$count_error = $wpdb->last_error;
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id, person_id, location_id, status, visibility, starts_at, ends_at, guest_count FROM %i ORDER BY id DESC LIMIT 5', $table ) );
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT `{$id_column}` AS id, person_id, location_id, status, visibility, starts_at, ends_at, guest_count FROM %i ORDER BY `{$id_column}` DESC LIMIT 5", $table ) );
 		$rows_error = $wpdb->last_error;
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
@@ -131,5 +133,17 @@ final class SystemHealth {
 			</table>
 		<?php endif; ?>
 		<?php
+	}
+
+	/**
+	 * Detect current or legacy booking ID column.
+	 */
+	private function booking_id_column( string $table ): string {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema diagnostics against known plugin table.
+		$has_id = $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'id' ) );
+
+		return null !== $has_id && false !== $has_id ? 'id' : 'booking_id';
 	}
 }
