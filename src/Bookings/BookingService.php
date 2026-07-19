@@ -104,6 +104,8 @@ final class BookingService {
 
 		if ( $booking_id > 0 ) {
 			$this->fire_booking_action( 'sbm_booking_created', $booking_id );
+		} else {
+			$this->last_error = '' !== $this->repository->last_error() ? 'database: ' . $this->repository->last_error() : 'database';
 		}
 
 		return $booking_id;

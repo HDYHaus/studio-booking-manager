@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.13.8 - 2026-07-19
+
+### Fixed
+- Expanded production schema repair checks to cover every column used by booking, visit, and access writes.
+- Added Gravity Forms entry notes and an admin reprocess action for booking creation results.
+
 ## 0.13.7 - 2026-07-19
 
 ### Fixed

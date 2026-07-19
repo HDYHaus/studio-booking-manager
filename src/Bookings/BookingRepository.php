@@ -31,6 +31,13 @@ final class BookingRepository {
 	private string $table;
 
 	/**
+	 * Last database error.
+	 *
+	 * @var string
+	 */
+	private string $last_error = '';
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -257,6 +264,7 @@ final class BookingRepository {
 	 * @return int
 	 */
 	public function create( array $data ): int {
+		$this->last_error = '';
 		$now  = current_time( 'mysql' );
 		$data = $this->prepare_for_storage( $data );
 
@@ -267,10 +275,18 @@ final class BookingRepository {
 		$inserted = $this->wpdb->insert( $this->table, $data, $this->formats( $data ) );
 
 		if ( false === $inserted ) {
+			$this->last_error = (string) $this->wpdb->last_error;
 			return 0;
 		}
 
 		return (int) $this->wpdb->insert_id;
+	}
+
+	/**
+	 * Get the last database error.
+	 */
+	public function last_error(): string {
+		return $this->last_error;
 	}
 
 	/**

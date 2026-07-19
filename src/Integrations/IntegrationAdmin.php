@@ -22,6 +22,7 @@ final class IntegrationAdmin {
 	 */
 	public function register(): void {
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_post_sbm_reprocess_gravity_forms_entry', array( $this, 'handle_reprocess_gravity_forms_entry' ) );
 		add_filter( 'option_page_capability_sbm_integrations_group', array( $this, 'settings_capability' ) );
 	}
 
@@ -48,6 +49,34 @@ final class IntegrationAdmin {
 	}
 
 	/**
+	 * Reprocess a Gravity Forms entry on demand.
+	 */
+	public function handle_reprocess_gravity_forms_entry(): void {
+		if ( ! current_user_can( 'sbm_manage_settings' ) ) {
+			wp_die( esc_html__( 'You do not have permission to manage integrations.', 'studio-booking-manager' ) );
+		}
+
+		check_admin_referer( 'sbm_reprocess_gravity_forms_entry' );
+
+		$entry_id   = isset( $_POST['entry_id'] ) ? absint( wp_unslash( $_POST['entry_id'] ) ) : 0;
+		$booking_id = ( new GravityFormsIntegration() )->reprocess_entry( $entry_id );
+		$status     = $booking_id > 0 ? 'reprocessed' : 'reprocess_failed';
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'                   => 'sbm-integrations',
+					'sbm_gravity_reprocess'  => $status,
+					'sbm_gravity_entry_id'   => $entry_id,
+					'sbm_gravity_booking_id' => $booking_id,
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
 	 * Render screen.
 	 */
 	public function render(): void {
@@ -63,6 +92,7 @@ final class IntegrationAdmin {
 		?>
 		<div class="wrap sbm-admin-page">
 			<?php PageHeader::render( __( 'Integrations', 'studio-booking-manager' ) ); ?>
+			<?php $this->render_reprocess_notice(); ?>
 			<div class="sbm-card sbm-card-wide">
 				<h2><?php echo esc_html__( 'Form Integrations', 'studio-booking-manager' ); ?></h2>
 				<p><?php echo esc_html__( 'Connect form plugins to Studio Booking Manager workflows. The integration foundation stores provider settings now; provider-specific field mapping and submission handling will be added starting with Gravity Forms.', 'studio-booking-manager' ); ?></p>
@@ -134,11 +164,57 @@ final class IntegrationAdmin {
 			</div>
 
 			<div class="sbm-card sbm-card-wide">
-				<h2><?php echo esc_html__( 'Next Build Step', 'studio-booking-manager' ); ?></h2>
-				<p><?php echo esc_html__( 'Gravity Forms will be the first active provider. It will add form selection, field mapping, and submission handling for people and pending bookings.', 'studio-booking-manager' ); ?></p>
+				<h2><?php echo esc_html__( 'Gravity Forms Maintenance', 'studio-booking-manager' ); ?></h2>
+				<p><?php echo esc_html__( 'Reprocess a saved Gravity Forms entry after changing mappings or repairing plugin data.', 'studio-booking-manager' ); ?></p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<?php wp_nonce_field( 'sbm_reprocess_gravity_forms_entry' ); ?>
+					<input type="hidden" name="action" value="sbm_reprocess_gravity_forms_entry">
+					<label for="sbm-gravity-entry-id"><?php echo esc_html__( 'Entry ID', 'studio-booking-manager' ); ?></label>
+					<input id="sbm-gravity-entry-id" name="entry_id" type="number" min="1" class="small-text">
+					<?php submit_button( __( 'Reprocess Entry', 'studio-booking-manager' ), 'secondary', '', false ); ?>
+				</form>
 			</div>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Render reprocess result notice.
+	 */
+	private function render_reprocess_notice(): void {
+		if ( empty( $_GET['sbm_gravity_reprocess'] ) ) {
+			return;
+		}
+
+		$status     = sanitize_key( wp_unslash( $_GET['sbm_gravity_reprocess'] ) );
+		$entry_id   = isset( $_GET['sbm_gravity_entry_id'] ) ? absint( wp_unslash( $_GET['sbm_gravity_entry_id'] ) ) : 0;
+		$booking_id = isset( $_GET['sbm_gravity_booking_id'] ) ? absint( wp_unslash( $_GET['sbm_gravity_booking_id'] ) ) : 0;
+
+		if ( 'reprocessed' === $status ) {
+			printf(
+				'<div class="notice notice-success"><p>%s</p></div>',
+				esc_html(
+					sprintf(
+						/* translators: 1: entry ID, 2: booking ID. */
+						__( 'Gravity Forms entry #%1$d reprocessed and created booking #%2$d.', 'studio-booking-manager' ),
+						$entry_id,
+						$booking_id
+					)
+				)
+			);
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-error"><p>%s</p></div>',
+			esc_html(
+				sprintf(
+					/* translators: %d: entry ID. */
+					__( 'Gravity Forms entry #%d could not create a booking. Check the entry notes for the Studio Booking Manager error.', 'studio-booking-manager' ),
+					$entry_id
+				)
+			)
+		);
 	}
 
 	/**

@@ -43,21 +43,47 @@ final class GravityFormsIntegration {
 	 * @param array<string,mixed> $entry Entry data.
 	 * @param array<string,mixed> $form Form data.
 	 */
-	public function handle_submission( array $entry, array $form ): void {
+	public function handle_submission( array $entry, array $form ): int {
 		$config  = ( new IntegrationSettings() )->provider( self::PROVIDER );
 		$form_id = isset( $form['id'] ) ? absint( $form['id'] ) : 0;
 
 		if ( empty( $config['enabled'] ) || (int) $config['form_id'] <= 0 || $form_id !== (int) $config['form_id'] ) {
-			return;
+			return 0;
 		}
 
 		$person_id = $this->upsert_person( $entry, $form, $config );
 
 		if ( $person_id <= 0 || 'create_pending_booking' !== (string) $config['action'] ) {
-			return;
+			$this->add_entry_note( $entry, __( 'Studio Booking Manager processed this entry but could not create or update a person.', 'studio-booking-manager' ), 'error' );
+			return 0;
 		}
 
-		$this->create_pending_booking( $person_id, $entry, $form, $config );
+		return $this->create_pending_booking( $person_id, $entry, $form, $config );
+	}
+
+	/**
+	 * Reprocess an existing Gravity Forms entry.
+	 *
+	 * @param int $entry_id Entry ID.
+	 */
+	public function reprocess_entry( int $entry_id ): int {
+		if ( $entry_id <= 0 || ! class_exists( 'GFAPI' ) || ! method_exists( 'GFAPI', 'get_entry' ) || ! method_exists( 'GFAPI', 'get_form' ) ) {
+			return 0;
+		}
+
+		$entry = \GFAPI::get_entry( $entry_id );
+
+		if ( ! is_array( $entry ) || empty( $entry['form_id'] ) ) {
+			return 0;
+		}
+
+		$form = \GFAPI::get_form( absint( $entry['form_id'] ) );
+
+		if ( ! is_array( $form ) ) {
+			return 0;
+		}
+
+		return $this->handle_submission( $entry, $form );
 	}
 
 	/**
@@ -127,7 +153,9 @@ final class GravityFormsIntegration {
 		$ends_at   = $this->booking_end( $entry, $fields, $starts_at, isset( $config['default_duration_minutes'] ) ? absint( $config['default_duration_minutes'] ) : 60 );
 
 		if ( $location_id <= 0 || '' === $starts_at || '' === $ends_at ) {
-			Logger::log( 'Gravity Forms submission created a person but did not contain enough booking data for a pending booking.', 'warning' );
+			$message = __( 'Studio Booking Manager created or updated the person, but the entry did not contain enough booking data for a pending booking.', 'studio-booking-manager' );
+			Logger::log( $message, 'warning' );
+			$this->add_entry_note( $entry, $message, 'error' );
 			return 0;
 		}
 
@@ -148,7 +176,23 @@ final class GravityFormsIntegration {
 		$booking_id      = $booking_service->save( $booking );
 
 		if ( $booking_id <= 0 ) {
-			Logger::log( 'Gravity Forms submission could not create a pending booking. Error: ' . $booking_service->last_error(), 'warning' );
+			$message = sprintf(
+				/* translators: %s: booking error code. */
+				__( 'Studio Booking Manager could not create a pending booking. Error: %s', 'studio-booking-manager' ),
+				$booking_service->last_error()
+			);
+			Logger::log( $message, 'warning' );
+			$this->add_entry_note( $entry, $message, 'error' );
+		} else {
+			$this->add_entry_note(
+				$entry,
+				sprintf(
+					/* translators: %d: booking ID. */
+					__( 'Studio Booking Manager created pending booking #%d from this entry.', 'studio-booking-manager' ),
+					$booking_id
+				),
+				'success'
+			);
 		}
 
 		return $booking_id;
@@ -357,5 +401,20 @@ final class GravityFormsIntegration {
 			$form_title,
 			$entry_id
 		);
+	}
+
+	/**
+	 * Add a processing note to the Gravity Forms entry when supported.
+	 *
+	 * @param array<string,mixed> $entry Entry data.
+	 * @param string              $message Note message.
+	 * @param string              $type Note type.
+	 */
+	private function add_entry_note( array $entry, string $message, string $type = 'success' ): void {
+		if ( empty( $entry['id'] ) || ! class_exists( 'GFAPI' ) || ! method_exists( 'GFAPI', 'add_note' ) ) {
+			return;
+		}
+
+		\GFAPI::add_note( absint( $entry['id'] ), 0, 'Studio Booking Manager', $message, $type );
 	}
 }
