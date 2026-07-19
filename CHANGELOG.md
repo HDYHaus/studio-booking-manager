@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.13.12 - 2026-07-19
+
+### Added
+- Linked booking list person names to their person records and displayed email addresses for easier booking review.
+
 ## 0.13.11 - 2026-07-19
 
 ### Fixed

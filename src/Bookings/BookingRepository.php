@@ -104,7 +104,7 @@ final class BookingRepository {
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Table names, column names, and WHERE fragments are internal trusted values with prepared placeholder args.
 		$query = $this->wpdb->prepare(
-			"SELECT bookings.*, bookings.`{$id_column}` AS id, people.display_name AS person_name, locations.name AS location_name, access.access_type AS access_type
+			"SELECT bookings.*, bookings.`{$id_column}` AS id, people.display_name AS person_name, people.email AS person_email, locations.name AS location_name, access.access_type AS access_type
 			FROM `{$this->table}` bookings
 			LEFT JOIN `{$people_table}` people ON people.id = bookings.person_id
 			LEFT JOIN `{$locations_table}` locations ON locations.id = bookings.location_id

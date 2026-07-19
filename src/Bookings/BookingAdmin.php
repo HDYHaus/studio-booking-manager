@@ -223,7 +223,7 @@ final class BookingAdmin extends AbstractAdminPage {
 						<?php endif; ?>
 						<?php foreach ( $records as $record ) : ?>
 							<tr>
-								<td><strong><?php echo esc_html( $record->person_name ? (string) $record->person_name : __( 'Unknown person', 'studio-booking-manager' ) ); ?></strong></td>
+								<td><?php $this->render_person_identity( $record ); ?></td>
 								<td><?php echo esc_html( $record->location_name ? (string) $record->location_name : __( 'Unknown location', 'studio-booking-manager' ) ); ?></td>
 								<td><?php echo esc_html( $this->date_range_label( $record ) ); ?></td>
 								<td><?php echo esc_html( $record->access_type ? (string) $record->access_type : __( 'None', 'studio-booking-manager' ) ); ?></td>
@@ -265,6 +265,35 @@ final class BookingAdmin extends AbstractAdminPage {
 			<button type="submit" class="button button-small button-link-delete" onclick="return confirm('<?php echo esc_js( __( 'Archive this booking?', 'studio-booking-manager' ) ); ?>');"><?php echo esc_html__( 'Archive', 'studio-booking-manager' ); ?></button>
 		</form>
 		<?php
+	}
+
+	/**
+	 * Render linked person identity for a booking row.
+	 *
+	 * @param object $record Booking row.
+	 */
+	private function render_person_identity( object $record ): void {
+		$person_id = isset( $record->person_id ) ? absint( $record->person_id ) : 0;
+		$name      = ! empty( $record->person_name ) ? (string) $record->person_name : __( 'Unknown person', 'studio-booking-manager' );
+		$email     = isset( $record->person_email ) ? sanitize_email( (string) $record->person_email ) : '';
+
+		if ( $person_id > 0 ) {
+			printf(
+				'<strong><a href="%1$s">%2$s</a></strong>',
+				esc_url( $this->person_edit_url( $person_id ) ),
+				esc_html( $name )
+			);
+		} else {
+			echo '<strong>' . esc_html( $name ) . '</strong>';
+		}
+
+		if ( '' !== $email ) {
+			printf(
+				'<br><a class="sbm-row-email" href="mailto:%1$s">%2$s</a>',
+				esc_attr( $email ),
+				esc_html( $email )
+			);
+		}
 	}
 
 	/**
@@ -637,6 +666,23 @@ final class BookingAdmin extends AbstractAdminPage {
 				'page'       => 'sbm-bookings',
 				'action'     => 'edit',
 				'booking_id' => $id,
+			),
+			admin_url( 'admin.php' )
+		);
+	}
+
+	/**
+	 * Build person edit URL.
+	 *
+	 * @param int $id Person ID.
+	 * @return string
+	 */
+	private function person_edit_url( int $id ): string {
+		return add_query_arg(
+			array(
+				'page'      => 'sbm-people',
+				'action'    => 'edit',
+				'person_id' => $id,
 			),
 			admin_url( 'admin.php' )
 		);
