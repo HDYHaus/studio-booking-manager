@@ -175,11 +175,18 @@ final class GravityFormsIntegration {
 		$booking_service = new BookingService();
 		$booking_id      = $booking_service->save( $booking );
 
+		if ( $booking_id > 0 && null === $booking_service->find( $booking_id ) ) {
+			$booking_id = 0;
+			$booking_service_error = __( 'created booking could not be read back from the bookings table', 'studio-booking-manager' );
+		} else {
+			$booking_service_error = $booking_service->last_error();
+		}
+
 		if ( $booking_id <= 0 ) {
 			$message = sprintf(
 				/* translators: %s: booking error code. */
 				__( 'Studio Booking Manager could not create a pending booking. Error: %s', 'studio-booking-manager' ),
-				$booking_service->last_error()
+				$booking_service_error
 			);
 			Logger::log( $message, 'warning' );
 			$this->add_entry_note( $entry, $message, 'error' );

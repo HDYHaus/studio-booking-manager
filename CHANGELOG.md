@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.13.9 - 2026-07-19
+
+### Fixed
+- Added booking read-back verification for Gravity Forms reprocessing.
+- Added raw booking table diagnostics to System Health.
+
 ## 0.13.8 - 2026-07-19
 
 ### Fixed

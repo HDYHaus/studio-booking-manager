@@ -59,7 +59,77 @@ final class SystemHealth {
 					</tbody>
 				</table>
 			</div>
+			<div class="sbm-card sbm-card-wide">
+				<h2><?php echo esc_html__( 'Booking Diagnostics', 'studio-booking-manager' ); ?></h2>
+				<?php $this->render_booking_diagnostics(); ?>
+			</div>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Render raw booking table diagnostics for production troubleshooting.
+	 */
+	private function render_booking_diagnostics(): void {
+		global $wpdb;
+
+		$table = Tables::get( 'bookings' );
+
+		if ( '' === $table ) {
+			echo '<p>' . esc_html__( 'Bookings table name could not be resolved.', 'studio-booking-manager' ) . '</p>';
+			return;
+		}
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Diagnostic reads against known plugin table.
+		$count = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $table ) );
+		$count_error = $wpdb->last_error;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id, person_id, location_id, status, visibility, starts_at, ends_at, guest_count FROM %i ORDER BY id DESC LIMIT 5', $table ) );
+		$rows_error = $wpdb->last_error;
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		?>
+		<table class="widefat striped">
+			<tbody>
+				<tr><th><?php echo esc_html__( 'Bookings table', 'studio-booking-manager' ); ?></th><td><?php echo esc_html( $table ); ?></td></tr>
+				<tr><th><?php echo esc_html__( 'Raw booking count', 'studio-booking-manager' ); ?></th><td><?php echo esc_html( null === $count ? 'unknown' : (string) absint( $count ) ); ?></td></tr>
+				<?php if ( '' !== $count_error ) : ?>
+					<tr><th><?php echo esc_html__( 'Count error', 'studio-booking-manager' ); ?></th><td><?php echo esc_html( $count_error ); ?></td></tr>
+				<?php endif; ?>
+				<?php if ( '' !== $rows_error ) : ?>
+					<tr><th><?php echo esc_html__( 'Row query error', 'studio-booking-manager' ); ?></th><td><?php echo esc_html( $rows_error ); ?></td></tr>
+				<?php endif; ?>
+			</tbody>
+		</table>
+		<?php if ( is_array( $rows ) && ! empty( $rows ) ) : ?>
+			<table class="widefat striped">
+				<thead>
+					<tr>
+						<th><?php echo esc_html__( 'ID', 'studio-booking-manager' ); ?></th>
+						<th><?php echo esc_html__( 'Person', 'studio-booking-manager' ); ?></th>
+						<th><?php echo esc_html__( 'Location', 'studio-booking-manager' ); ?></th>
+						<th><?php echo esc_html__( 'Status', 'studio-booking-manager' ); ?></th>
+						<th><?php echo esc_html__( 'Visibility', 'studio-booking-manager' ); ?></th>
+						<th><?php echo esc_html__( 'Starts', 'studio-booking-manager' ); ?></th>
+						<th><?php echo esc_html__( 'Ends', 'studio-booking-manager' ); ?></th>
+						<th><?php echo esc_html__( 'Guests', 'studio-booking-manager' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $rows as $row ) : ?>
+						<tr>
+							<td><?php echo esc_html( (string) absint( $row->id ) ); ?></td>
+							<td><?php echo esc_html( (string) absint( $row->person_id ) ); ?></td>
+							<td><?php echo esc_html( (string) absint( $row->location_id ) ); ?></td>
+							<td><?php echo esc_html( (string) $row->status ); ?></td>
+							<td><?php echo esc_html( (string) $row->visibility ); ?></td>
+							<td><?php echo esc_html( (string) $row->starts_at ); ?></td>
+							<td><?php echo esc_html( (string) $row->ends_at ); ?></td>
+							<td><?php echo esc_html( (string) absint( $row->guest_count ) ); ?></td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+		<?php endif; ?>
 		<?php
 	}
 }
