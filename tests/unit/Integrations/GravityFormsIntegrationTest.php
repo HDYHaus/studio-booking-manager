@@ -42,4 +42,31 @@ final class GravityFormsIntegrationTest extends TestCase {
 
 		$this->assert_same( '2026-09-08 12:00:00', $end );
 	}
+
+	/**
+	 * Duration choice labels are parsed as hour counts.
+	 */
+	public function test_duration_hour_labels_are_parsed(): void {
+		$integration = new GravityFormsIntegration();
+		$reflection  = new ReflectionClass( $integration );
+		$method      = $reflection->getMethod( 'booking_end' );
+		$method->setAccessible( true );
+
+		$end = $method->invoke(
+			$integration,
+			array(
+				'3' => '08/08/2026',
+				'5' => '2 Hours',
+			),
+			array(
+				'booking_date'   => '3',
+				'end_time'       => '',
+				'duration_hours' => '5',
+			),
+			'2026-08-08 09:30:00',
+			60
+		);
+
+		$this->assert_same( '2026-08-08 11:30:00', $end );
+	}
 }

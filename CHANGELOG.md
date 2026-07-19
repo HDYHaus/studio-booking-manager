@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.13.7 - 2026-07-19
+
+### Fixed
+- Fixed database upgrade detection for existing booking tables missing newer booking columns.
+- Improved Gravity Forms duration parsing for labels such as "2 Hours".
+
 ## 0.13.6 - 2026-07-19
 
 ### Fixed

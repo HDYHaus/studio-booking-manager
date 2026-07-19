@@ -219,11 +219,36 @@ final class GravityFormsIntegration {
 	private function duration_minutes( array $entry, array $fields, int $default_duration_minutes ): int {
 		$hours = $this->entry_value( $entry, $fields['duration_hours'] );
 
-		if ( '' !== $hours && is_numeric( $hours ) ) {
-			return max( 15, min( 1440, (int) round( (float) $hours * 60 ) ) );
+		if ( '' !== $hours ) {
+			$normalized_hours = $this->numeric_value( $hours );
+
+			if ( null !== $normalized_hours ) {
+				return max( 15, min( 1440, (int) round( $normalized_hours * 60 ) ) );
+			}
 		}
 
 		return max( 15, min( 1440, $default_duration_minutes ) );
+	}
+
+	/**
+	 * Extract a numeric value from form labels such as "2 Hours".
+	 */
+	private function numeric_value( string $value ): ?float {
+		$value = trim( $value );
+
+		if ( '' === $value ) {
+			return null;
+		}
+
+		if ( is_numeric( $value ) ) {
+			return (float) $value;
+		}
+
+		if ( preg_match( '/\d+(?:\.\d+)?/', $value, $matches ) ) {
+			return (float) $matches[0];
+		}
+
+		return null;
 	}
 
 	/**
