@@ -9,6 +9,7 @@ namespace StudioBookingManager\Commerce\WooCommerce;
 
 use StudioBookingManager\Bookings\BookingRepository;
 use StudioBookingManager\Database\Tables;
+use StudioBookingManager\Support\LocalDateTime;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -703,13 +704,14 @@ final class BookingDateField {
 	 * @param string $ends_at End datetime.
 	 */
 	private function format_time_range( string $starts_at, string $ends_at ): string {
-		$start_ts = strtotime( $starts_at );
-		$end_ts   = strtotime( $ends_at );
+		$timezone = wp_timezone();
+		$start_ts = LocalDateTime::timestamp( $starts_at, $timezone );
+		$end_ts   = LocalDateTime::timestamp( $ends_at, $timezone );
 
-		if ( false === $start_ts || false === $end_ts ) {
+		if ( $start_ts <= 0 || $end_ts <= 0 ) {
 			return '';
 		}
 
-		return date_i18n( get_option( 'time_format' ), $start_ts ) . ' - ' . date_i18n( get_option( 'time_format' ), $end_ts );
+		return wp_date( get_option( 'time_format' ), $start_ts, $timezone ) . ' - ' . wp_date( get_option( 'time_format' ), $end_ts, $timezone );
 	}
 }

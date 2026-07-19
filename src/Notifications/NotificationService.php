@@ -9,6 +9,7 @@ namespace StudioBookingManager\Notifications;
 
 use StudioBookingManager\Locations\LocationService;
 use StudioBookingManager\People\PersonService;
+use StudioBookingManager\Support\LocalDateTime;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -233,22 +234,11 @@ final class NotificationService {
 			'person_name'   => $person instanceof \stdClass ? (string) $person->display_name : '',
 			'person_email'  => $person instanceof \stdClass ? (string) $person->email : '',
 			'location_name' => $location instanceof \stdClass ? (string) $location->name : '',
-			'starts_at'     => wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $this->timestamp( (string) $booking->starts_at ), $timezone ),
-			'ends_at'       => wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $this->timestamp( (string) $booking->ends_at ), $timezone ),
+			'starts_at'     => LocalDateTime::format( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (string) $booking->starts_at, $timezone ),
+			'ends_at'       => LocalDateTime::format( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (string) $booking->ends_at, $timezone ),
 			'status'        => (string) $booking->status,
 			'business_name' => $this->business_name(),
 		);
-	}
-
-	/**
-	 * Timestamp.
-	 *
-	 * @param string $value Date time.
-	 */
-	private function timestamp( string $value ): int {
-		$timestamp = strtotime( $value );
-
-		return false === $timestamp ? time() : $timestamp;
 	}
 
 	/**

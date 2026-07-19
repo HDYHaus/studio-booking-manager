@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.13.13 - 2026-07-19
+
+### Fixed
+- Fixed frontend, member account, WooCommerce context, and notification booking time displays so stored studio-local booking times are not shifted by timezone conversion.
+
 ## 0.13.12 - 2026-07-19
 
 ### Added

@@ -10,6 +10,7 @@ namespace StudioBookingManager\Frontend;
 use StudioBookingManager\Access\AccessService;
 use StudioBookingManager\Bookings\BookingRepository;
 use StudioBookingManager\People\PersonService;
+use StudioBookingManager\Support\LocalDateTime;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -342,7 +343,7 @@ final class MemberAccount {
 	 * @param object $record Booking record.
 	 */
 	private function date_label( object $record ): string {
-		return wp_date( get_option( 'date_format' ), $this->timestamp( (string) $record->starts_at ), $this->timezone( $record ) );
+		return LocalDateTime::format( get_option( 'date_format' ), (string) $record->starts_at, $this->timezone( $record ) );
 	}
 
 	/**
@@ -357,8 +358,8 @@ final class MemberAccount {
 		return sprintf(
 			/* translators: 1: start time, 2: end time. */
 			__( '%1$s to %2$s', 'studio-booking-manager' ),
-			wp_date( $format, $this->timestamp( (string) $record->starts_at ), $timezone ),
-			wp_date( $format, $this->timestamp( (string) $record->ends_at ), $timezone )
+			LocalDateTime::format( $format, (string) $record->starts_at, $timezone ),
+			LocalDateTime::format( $format, (string) $record->ends_at, $timezone )
 		);
 	}
 

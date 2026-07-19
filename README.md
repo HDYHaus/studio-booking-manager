@@ -4,7 +4,7 @@ Tags: bookings, coworking, studio, memberships, operations
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.13.12
+Stable tag: 0.13.13
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,9 +14,13 @@ Open source booking and operations management for studios, coworking spaces, cre
 
 Studio Booking Manager helps shared spaces manage people, access, visits, locations, memberships, and operations from WordPress.
 
-This release adds booking list person links and email addresses for easier customer review.
+This release fixes frontend booking time displays so studio-local times are not shifted by timezone conversion.
 
 == Changelog ==
+
+= 0.13.13 =
+
+- Fixed frontend, member account, WooCommerce context, and notification booking time displays so stored studio-local booking times are not shifted by timezone conversion.
 
 = 0.13.12 =
 

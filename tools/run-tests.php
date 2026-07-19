@@ -13,6 +13,7 @@ require $root . '/tests/bootstrap.php';
 require $root . '/tests/unit/Access/TestCase.php';
 require $root . '/tests/unit/Commerce/TestCase.php';
 require $root . '/tests/unit/Integrations/TestCase.php';
+require $root . '/tests/unit/Support/TestCase.php';
 
 $tests = array(
 	$root . '/tests/unit/Access/AccessValidationResultTest.php',
@@ -25,6 +26,7 @@ $tests = array(
 	$root . '/tests/unit/Commerce/ProductPanelTest.php',
 	$root . '/tests/unit/Integrations/GravityFormsIntegrationTest.php',
 	$root . '/tests/unit/Integrations/IntegrationSettingsTest.php',
+	$root . '/tests/unit/Support/LocalDateTimeTest.php',
 );
 
 $failures = 0;
@@ -63,6 +65,10 @@ function sbm_test_namespace( string $test_file ): string {
 
 	if ( false !== strpos( $test_file, '/Integrations/' ) ) {
 		return 'Integrations';
+	}
+
+	if ( false !== strpos( $test_file, '/Support/' ) ) {
+		return 'Support';
 	}
 
 	return 'Access';
