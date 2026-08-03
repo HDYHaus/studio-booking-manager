@@ -51,14 +51,17 @@ final class RsvpRepository {
 	 * Save an RSVP, updating an existing email for the same post.
 	 *
 	 * @param array<string,mixed> $data RSVP data.
-	 * @return int
+	 * @return array{id:int,operation:string}
 	 */
-	public function save( array $data ): int {
+	public function save( array $data ): array {
 		$this->last_error = '';
 		$data             = $this->prepare_for_storage( $data );
 
 		if ( (int) $data['post_id'] <= 0 || '' === $data['attendee_name'] || '' === $data['attendee_email'] ) {
-			return 0;
+			return array(
+				'id'        => 0,
+				'operation' => '',
+			);
 		}
 
 		$existing = $this->find_by_post_email( (int) $data['post_id'], (string) $data['attendee_email'] );
@@ -72,10 +75,16 @@ final class RsvpRepository {
 
 			if ( false === $updated ) {
 				$this->last_error = (string) $this->wpdb->last_error;
-				return 0;
+				return array(
+					'id'        => 0,
+					'operation' => '',
+				);
 			}
 
-			return (int) $existing->id;
+			return array(
+				'id'        => (int) $existing->id,
+				'operation' => 'updated',
+			);
 		}
 
 		$data['created_at'] = $now;
@@ -86,10 +95,36 @@ final class RsvpRepository {
 
 		if ( false === $inserted ) {
 			$this->last_error = (string) $this->wpdb->last_error;
-			return 0;
+			return array(
+				'id'        => 0,
+				'operation' => '',
+			);
 		}
 
-		return (int) $this->wpdb->insert_id;
+		return array(
+			'id'        => (int) $this->wpdb->insert_id,
+			'operation' => 'created',
+		);
+	}
+
+	/**
+	 * Find an RSVP by ID.
+	 *
+	 * @param int $id RSVP ID.
+	 * @return object|null
+	 */
+	public function find( int $id ): ?object {
+		if ( $id <= 0 ) {
+			return null;
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name comes from the trusted Tables registry.
+		$query = $this->wpdb->prepare( "SELECT * FROM `{$this->table}` WHERE id = %d LIMIT 1", $id );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom operational table query with prepared values.
+		$record = $this->wpdb->get_row( $query );
+
+		return $record instanceof \stdClass ? $record : null;
 	}
 
 	/**
@@ -229,7 +264,7 @@ final class RsvpRepository {
 			'post_id'          => isset( $data['post_id'] ) ? absint( $data['post_id'] ) : 0,
 			'attendee_name'    => isset( $data['attendee_name'] ) ? sanitize_text_field( (string) $data['attendee_name'] ) : '',
 			'attendee_email'   => isset( $data['attendee_email'] ) ? sanitize_email( (string) $data['attendee_email'] ) : '',
-			'guest_count'      => isset( $data['guest_count'] ) ? min( 20, absint( $data['guest_count'] ) ) : 0,
+			'guest_count'      => isset( $data['guest_count'] ) ? min( 6, absint( $data['guest_count'] ) ) : 0,
 			'guest_names'      => isset( $data['guest_names'] ) ? sanitize_textarea_field( (string) $data['guest_names'] ) : '',
 			'status'           => $status,
 			'notes'            => isset( $data['notes'] ) ? sanitize_textarea_field( (string) $data['notes'] ) : '',

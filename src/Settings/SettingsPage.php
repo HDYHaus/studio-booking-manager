@@ -392,7 +392,7 @@ final class SettingsPage {
 
 					<?php foreach ( $this->notification_types() as $type => $label ) : ?>
 						<?php
-						$enabled = ! empty( $options[ $type . '_enabled' ] );
+						$enabled = array_key_exists( $type . '_enabled', $options ) ? ! empty( $options[ $type . '_enabled' ] ) : $this->notification_enabled_by_default( $type );
 						$subject = isset( $options[ $type . '_subject' ] ) ? (string) $options[ $type . '_subject' ] : $this->default_notification_subjects()[ $type ];
 						$message = isset( $options[ $type . '_message' ] ) ? (string) $options[ $type . '_message' ] : $this->default_notification_messages()[ $type ];
 						?>
@@ -412,7 +412,7 @@ final class SettingsPage {
 							</p>
 						</div>
 					<?php endforeach; ?>
-					<p class="description"><?php echo esc_html__( 'Available placeholders: {business_name}, {person_name}, {person_email}, {location_name}, {starts_at}, {ends_at}, {booking_id}, {status}, {pass_name}, {access_id}, {error}.', 'studio-booking-manager' ); ?></p>
+					<p class="description"><?php echo esc_html__( 'Available placeholders: {business_name}, {person_name}, {person_email}, {location_name}, {starts_at}, {ends_at}, {booking_id}, {status}, {pass_name}, {access_id}, {error}, {event_title}, {event_url}, {guest_count}, {rsvp_id}, {calendar_url}, {calendar_line}.', 'studio-booking-manager' ); ?></p>
 				</section>
 
 				<section id="advanced" class="sbm-card">
@@ -438,7 +438,17 @@ final class SettingsPage {
 			'booking_cancellation' => __( 'Booking cancellation', 'studio-booking-manager' ),
 			'pass_issued'          => __( 'Pass issued', 'studio-booking-manager' ),
 			'calendar_sync_failed' => __( 'Calendar sync failed', 'studio-booking-manager' ),
+			'rsvp_confirmation'    => __( 'RSVP confirmation', 'studio-booking-manager' ),
 		);
+	}
+
+	/**
+	 * Determine whether a notification type is enabled before settings are saved.
+	 *
+	 * @param string $type Notification type.
+	 */
+	private function notification_enabled_by_default( string $type ): bool {
+		return 'rsvp_confirmation' === $type;
 	}
 
 	/**
@@ -453,6 +463,7 @@ final class SettingsPage {
 			'booking_cancellation' => __( 'Your booking was cancelled', 'studio-booking-manager' ),
 			'pass_issued'          => __( 'Your {pass_name} is ready', 'studio-booking-manager' ),
 			'calendar_sync_failed' => __( 'Calendar sync failed for booking #{booking_id}', 'studio-booking-manager' ),
+			'rsvp_confirmation'    => __( 'Your RSVP for {event_title}', 'studio-booking-manager' ),
 		);
 	}
 
@@ -468,6 +479,7 @@ final class SettingsPage {
 			'booking_cancellation' => __( "Hi {person_name},\n\nYour booking at {location_name} for {starts_at} has been cancelled.\n\nThank you,\n{business_name}", 'studio-booking-manager' ),
 			'pass_issued'          => __( "Hi {person_name},\n\nYour {pass_name} for {location_name} is ready.\n\nThank you,\n{business_name}", 'studio-booking-manager' ),
 			'calendar_sync_failed' => __( "Calendar sync failed for booking #{booking_id} at {location_name}.\n\nError: {error}", 'studio-booking-manager' ),
+			'rsvp_confirmation'    => __( "Hi {person_name},\n\nYour RSVP for {event_title} is {status}.\n\nGuests: {guest_count}\nEvent page: {event_url}\n{calendar_line}\nThank you,\n{business_name}", 'studio-booking-manager' ),
 		);
 	}
 }

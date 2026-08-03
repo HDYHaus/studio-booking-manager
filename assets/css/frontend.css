@@ -357,6 +357,21 @@
 	color: #646970;
 }
 
+.sbm-rsvp-follow-up,
+.sbm-rsvp-help {
+	color: #646970;
+}
+
+.sbm-rsvp-follow-up {
+	margin: 0;
+}
+
+.sbm-rsvp-help {
+	display: block;
+	font-size: 0.925rem;
+	margin-top: 6px;
+}
+
 .sbm-rsvp-form {
 	display: grid;
 	gap: 14px;
@@ -374,6 +389,28 @@
 	display: block;
 	font-weight: 600;
 	margin-bottom: 6px;
+}
+
+.sbm-rsvp-optional,
+.sbm-rsvp-required {
+	border-radius: 999px;
+	display: inline-block;
+	font-size: 0.75rem;
+	font-weight: 600;
+	line-height: 1;
+	margin-left: 6px;
+	padding: 4px 7px;
+	vertical-align: middle;
+}
+
+.sbm-rsvp-required {
+	background: #fff8e5;
+	color: #704b00;
+}
+
+.sbm-rsvp-optional {
+	background: #f6f7f7;
+	color: #646970;
 }
 
 .sbm-rsvp-form fieldset label {
@@ -431,6 +468,38 @@
 	border-radius: 6px;
 	margin: 0;
 	padding: 10px 12px;
+}
+
+.sbm-rsvp-confirmation-details {
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	display: grid;
+	gap: 6px;
+	padding: 12px;
+}
+
+.sbm-rsvp-confirmation-details p {
+	margin: 0;
+}
+
+.sbm-rsvp-calendar-link {
+	align-items: center;
+	background: #10243b;
+	border-radius: 999px;
+	color: #fff;
+	display: inline-flex;
+	font-weight: 600;
+	line-height: 1.2;
+	padding: 0.75em 1.1em;
+	text-decoration: none;
+}
+
+.sbm-rsvp-calendar-link:focus,
+.sbm-rsvp-calendar-link:hover {
+	background: #18314f;
+	color: #fff;
+	text-decoration: none;
 }
 
 .sbm-rsvp-message-success {
