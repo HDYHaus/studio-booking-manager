@@ -70,7 +70,7 @@ final class NotificationRepository {
 			'recipient_email'   => isset( $data['recipient_email'] ) ? sanitize_email( (string) $data['recipient_email'] ) : '',
 			'recipient_name'    => isset( $data['recipient_name'] ) ? sanitize_text_field( (string) $data['recipient_name'] ) : '',
 			'subject'           => isset( $data['subject'] ) ? sanitize_text_field( (string) $data['subject'] ) : '',
-			'message'           => isset( $data['message'] ) ? sanitize_textarea_field( (string) $data['message'] ) : '',
+			'message'           => isset( $data['message'] ) ? $this->sanitize_message( (string) $data['message'] ) : '',
 			'status'            => isset( $data['status'] ) ? sanitize_key( (string) $data['status'] ) : 'pending',
 			'error_message'     => isset( $data['error_message'] ) ? sanitize_textarea_field( (string) $data['error_message'] ) : '',
 			'context'           => isset( $data['context'] ) ? wp_json_encode( $data['context'] ) : '',
@@ -86,5 +86,12 @@ final class NotificationRepository {
 		);
 
 		return false === $inserted ? 0 : (int) $this->wpdb->insert_id;
+	}
+
+	/**
+	 * Sanitize a plain text email body without stripping percent-encoded URLs.
+	 */
+	private function sanitize_message( string $message ): string {
+		return str_replace( "\0", '', wp_check_invalid_utf8( $message ) );
 	}
 }

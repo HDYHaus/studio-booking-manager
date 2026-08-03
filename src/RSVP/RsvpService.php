@@ -28,6 +28,13 @@ final class RsvpService {
 	private string $last_error = '';
 
 	/**
+	 * Last successful save operation.
+	 *
+	 * @var string
+	 */
+	private string $last_operation = '';
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -41,17 +48,28 @@ final class RsvpService {
 	 * @return int
 	 */
 	public function save( array $data ): int {
-		$this->last_error = '';
-		$data             = $this->normalize_payload( $data );
+		$this->last_error     = '';
+		$this->last_operation = '';
+		$data                 = $this->normalize_payload( $data );
 
 		if ( ! $this->is_valid_payload( $data ) ) {
 			return 0;
 		}
 
-		$id = $this->repository->save( $data );
+		$result = $this->repository->save( $data );
+		$id     = absint( $result['id'] );
 
 		if ( $id <= 0 ) {
 			$this->last_error = '' !== $this->repository->last_error() ? 'database: ' . $this->repository->last_error() : 'database';
+			return 0;
+		}
+
+		$this->last_operation = in_array( $result['operation'], array( 'created', 'updated' ), true ) ? $result['operation'] : 'created';
+		$rsvp                 = $this->repository->find( $id );
+
+		if ( $rsvp instanceof \stdClass ) {
+			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- `sbm_` is the documented public API prefix for Studio Booking Manager.
+			do_action( 'sbm_rsvp_saved', $rsvp, $this->last_operation, $data );
 		}
 
 		return $id;
@@ -94,25 +112,26 @@ final class RsvpService {
 	}
 
 	/**
+	 * Get the last successful save operation.
+	 */
+	public function last_operation(): string {
+		return $this->last_operation;
+	}
+
+	/**
 	 * Normalize RSVP payload.
 	 *
 	 * @param array<string,mixed> $data Raw data.
 	 * @return array<string,mixed>
 	 */
 	private function normalize_payload( array $data ): array {
-		$bringing_guest = ! empty( $data['bringing_guest'] );
 		$guest_count    = isset( $data['guest_count'] ) ? absint( $data['guest_count'] ) : 0;
 
-		if ( $bringing_guest && $guest_count <= 0 ) {
-			$guest_count = 1;
-		}
-
-		if ( ! $bringing_guest ) {
-			$guest_count          = 0;
+		if ( $guest_count <= 0 ) {
 			$data['guest_names'] = '';
 		}
 
-		$data['guest_count'] = min( 20, $guest_count );
+		$data['guest_count'] = min( 6, $guest_count );
 		$data['status']      = 'attending';
 
 		return $data;

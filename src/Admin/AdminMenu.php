@@ -292,6 +292,61 @@ final class AdminMenu {
 					<code>[sbm_member_schedule days="14" require_login="no"]</code>
 				</p>
 			</div>
+			<div class="sbm-card sbm-card-wide">
+				<h2><?php echo esc_html__( 'RSVP Shortcode', 'studio-booking-manager' ); ?></h2>
+				<p><?php echo esc_html__( 'Add this shortcode to a public event post to collect RSVPs for that post URL.', 'studio-booking-manager' ); ?></p>
+				<p><code>[sbm_rsvp]</code></p>
+				<table class="widefat striped sbm-table">
+					<thead>
+						<tr>
+							<th><?php echo esc_html__( 'Attribute', 'studio-booking-manager' ); ?></th>
+							<th><?php echo esc_html__( 'Default', 'studio-booking-manager' ); ?></th>
+							<th><?php echo esc_html__( 'Description', 'studio-booking-manager' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td><code>post_id</code></td>
+							<td><code>0</code></td>
+							<td><?php echo esc_html__( 'Optional event post ID. Use 0 to collect RSVPs for the current post.', 'studio-booking-manager' ); ?></td>
+						</tr>
+						<tr>
+							<td><code>starts_at</code></td>
+							<td><?php echo esc_html__( 'Blank', 'studio-booking-manager' ); ?></td>
+							<td><?php echo esc_html__( 'Optional event start date/time for the Google Calendar link, such as 2026-08-08 18:00.', 'studio-booking-manager' ); ?></td>
+						</tr>
+						<tr>
+							<td><code>ends_at</code></td>
+							<td><?php echo esc_html__( '+2 hours', 'studio-booking-manager' ); ?></td>
+							<td><?php echo esc_html__( 'Optional event end date/time. If omitted, the calendar link ends two hours after the start.', 'studio-booking-manager' ); ?></td>
+						</tr>
+						<tr>
+							<td><code>location</code></td>
+							<td><?php echo esc_html__( 'Blank', 'studio-booking-manager' ); ?></td>
+							<td><?php echo esc_html__( 'Optional event place or address included in the Google Calendar location field. Use the studio name plus city or full street address.', 'studio-booking-manager' ); ?></td>
+						</tr>
+						<tr>
+							<td><code>calendar_title</code></td>
+							<td><?php echo esc_html__( 'Post title', 'studio-booking-manager' ); ?></td>
+							<td><?php echo esc_html__( 'Optional calendar event title. Leave blank to use the post title.', 'studio-booking-manager' ); ?></td>
+						</tr>
+						<tr>
+							<td><code>calendar_details</code></td>
+							<td><?php echo esc_html__( 'Post URL', 'studio-booking-manager' ); ?></td>
+							<td><?php echo esc_html__( 'Optional URL to include in the Google Calendar details. Use this for a Google Maps link, or leave blank to use the event post URL.', 'studio-booking-manager' ); ?></td>
+						</tr>
+					</tbody>
+				</table>
+				<p>
+					<?php echo esc_html__( 'Examples:', 'studio-booking-manager' ); ?>
+					<code>[sbm_rsvp]</code>
+					<code>[sbm_rsvp post_id="681"]</code>
+					<code>[sbm_rsvp starts_at="2026-08-08 18:00" ends_at="2026-08-08 21:00" location="HDY Haus Studio, Durres"]</code>
+					<code>[sbm_rsvp starts_at="2026-08-08 18:00" location="HDY Haus Studio, Durres, Albania" calendar_details="https://maps.google.com/?q=HDY+Haus+Studio+Durres+Albania"]</code>
+				</p>
+				<p class="description"><?php echo esc_html__( 'Tip: put the human-readable studio name or address in location, and put the Google Maps link in calendar_details when you want the calendar event to include map directions.', 'studio-booking-manager' ); ?></p>
+				<p><?php echo esc_html__( 'RSVP responses appear under Studio Booking > RSVPs, where staff can view totals, attendee details, and CSV exports.', 'studio-booking-manager' ); ?></p>
+			</div>
 		</div>
 		<?php
 	}

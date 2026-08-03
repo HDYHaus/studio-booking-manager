@@ -40,6 +40,7 @@ final class NotificationService {
 		add_action( 'sbm_booking_archived', array( $this, 'booking_cancelled' ) );
 		add_action( 'sbm_calendar_sync_failed', array( $this, 'calendar_failed' ), 10, 2 );
 		add_action( 'sbm_pass_issued', array( $this, 'pass_issued' ), 10, 4 );
+		add_action( 'sbm_rsvp_saved', array( $this, 'rsvp_saved' ), 10, 3 );
 	}
 
 	/**
@@ -122,6 +123,35 @@ final class NotificationService {
 			$this->render_template( $this->subject_template( 'pass_issued' ), $context ),
 			$this->render_template( $this->message_template( 'pass_issued' ), $context ),
 			array( 'access_id' => $access_id )
+		);
+	}
+
+	/**
+	 * RSVP saved.
+	 *
+	 * @param object $rsvp RSVP row.
+	 * @param string $operation Save operation.
+	 * @param array<string,mixed> $extra Extra RSVP context.
+	 */
+	public function rsvp_saved( object $rsvp, string $operation, array $extra = array() ): void {
+		if ( empty( $rsvp->attendee_email ) || ! $this->is_enabled( 'rsvp_confirmation' ) ) {
+			return;
+		}
+
+		$context = $this->rsvp_context( $rsvp, $operation, $extra );
+
+		$this->send(
+			'rsvp_confirmation',
+			(string) $rsvp->attendee_email,
+			(string) $rsvp->attendee_name,
+			$this->render_template( $this->subject_template( 'rsvp_confirmation' ), $context ),
+			$this->render_template( $this->message_template( 'rsvp_confirmation' ), $context ),
+			array(
+				'rsvp_id'      => (int) $rsvp->id,
+				'post_id'      => (int) $rsvp->post_id,
+				'operation'    => $operation,
+				'calendar_url' => $context['calendar_url'],
+			)
 		);
 	}
 
@@ -242,6 +272,32 @@ final class NotificationService {
 	}
 
 	/**
+	 * RSVP context.
+	 *
+	 * @param object $rsvp RSVP row.
+	 * @param string $operation Save operation.
+	 * @param array<string,mixed> $extra Extra RSVP context.
+	 * @return array<string,string>
+	 */
+	private function rsvp_context( object $rsvp, string $operation, array $extra = array() ): array {
+		$post_id      = isset( $rsvp->post_id ) ? absint( $rsvp->post_id ) : 0;
+		$calendar_url = isset( $extra['calendar_url'] ) ? esc_url_raw( (string) $extra['calendar_url'] ) : '';
+
+		return array(
+			'rsvp_id'       => isset( $rsvp->id ) ? (string) absint( $rsvp->id ) : '',
+			'person_name'   => isset( $rsvp->attendee_name ) ? (string) $rsvp->attendee_name : '',
+			'person_email'  => isset( $rsvp->attendee_email ) ? (string) $rsvp->attendee_email : '',
+			'event_title'   => $post_id > 0 ? get_the_title( $post_id ) : '',
+			'event_url'     => $post_id > 0 ? get_permalink( $post_id ) : '',
+			'guest_count'   => isset( $rsvp->guest_count ) ? (string) absint( $rsvp->guest_count ) : '0',
+			'status'        => 'updated' === $operation ? __( 'updated', 'studio-booking-manager' ) : __( 'confirmed', 'studio-booking-manager' ),
+			'calendar_url'  => $calendar_url,
+			'calendar_line' => '' !== $calendar_url ? sprintf( __( "Add to Google Calendar: %s\n", 'studio-booking-manager' ), $calendar_url ) : '',
+			'business_name' => $this->business_name(),
+		);
+	}
+
+	/**
 	 * Render template.
 	 *
 	 * @param string              $template Template.
@@ -262,6 +318,10 @@ final class NotificationService {
 	 */
 	private function is_enabled( string $type ): bool {
 		$settings = $this->settings();
+
+		if ( ! array_key_exists( $type . '_enabled', $settings ) && 'rsvp_confirmation' === $type ) {
+			return true;
+		}
 
 		return ! empty( $settings[ $type . '_enabled' ] );
 	}
@@ -335,6 +395,7 @@ final class NotificationService {
 			'booking_cancellation' => __( 'Your booking was cancelled', 'studio-booking-manager' ),
 			'calendar_sync_failed' => __( 'Calendar sync failed for booking #{booking_id}', 'studio-booking-manager' ),
 			'pass_issued'          => __( 'Your {pass_name} is ready', 'studio-booking-manager' ),
+			'rsvp_confirmation'    => __( 'Your RSVP for {event_title}', 'studio-booking-manager' ),
 		);
 	}
 
@@ -350,6 +411,7 @@ final class NotificationService {
 			'booking_cancellation' => __( "Hi {person_name},\n\nYour booking at {location_name} for {starts_at} has been cancelled.\n\nThank you,\n{business_name}", 'studio-booking-manager' ),
 			'calendar_sync_failed' => __( "Calendar sync failed for booking #{booking_id} at {location_name}.\n\nError: {error}", 'studio-booking-manager' ),
 			'pass_issued'          => __( "Hi {person_name},\n\nYour {pass_name} for {location_name} is ready.\n\nThank you,\n{business_name}", 'studio-booking-manager' ),
+			'rsvp_confirmation'    => __( "Hi {person_name},\n\nYour RSVP for {event_title} is {status}.\n\nGuests: {guest_count}\nEvent page: {event_url}\n{calendar_line}\nThank you,\n{business_name}", 'studio-booking-manager' ),
 		);
 	}
 }
