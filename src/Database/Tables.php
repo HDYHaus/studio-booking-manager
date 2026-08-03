@@ -24,6 +24,7 @@ final class Tables {
 		'access'    => true,
 		'bookings'  => true,
 		'visits'    => true,
+		'rsvps'     => true,
 		'pass_types' => true,
 		'notifications' => true,
 	);

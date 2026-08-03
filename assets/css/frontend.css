@@ -336,6 +336,113 @@
 	margin-bottom: 0;
 }
 
+.sbm-rsvp {
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	display: grid;
+	gap: 16px;
+	margin: 1.5rem 0;
+	padding: 18px;
+}
+
+.sbm-rsvp-summary {
+	align-items: baseline;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 12px;
+	justify-content: space-between;
+}
+
+.sbm-rsvp-summary span {
+	color: #646970;
+}
+
+.sbm-rsvp-form {
+	display: grid;
+	gap: 14px;
+}
+
+.sbm-rsvp-form p,
+.sbm-rsvp-form fieldset {
+	border: 0;
+	margin: 0;
+	padding: 0;
+}
+
+.sbm-rsvp-form label,
+.sbm-rsvp-form legend {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 6px;
+}
+
+.sbm-rsvp-form fieldset label {
+	display: inline-flex;
+	font-weight: 400;
+	gap: 6px;
+	margin: 0 14px 0 0;
+}
+
+.sbm-rsvp-form input[type="email"],
+.sbm-rsvp-form input[type="number"],
+.sbm-rsvp-form input[type="text"],
+.sbm-rsvp-form textarea {
+	background: #fff;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	box-sizing: border-box;
+	color: #1d2327;
+	font: inherit;
+	line-height: 1.4;
+	padding: 10px 12px;
+	width: 100%;
+}
+
+.sbm-rsvp-form input[type="number"] {
+	max-width: 140px;
+}
+
+.sbm-rsvp-form input:focus,
+.sbm-rsvp-form textarea:focus {
+	border-color: #111;
+	box-shadow: 0 0 0 2px rgba(17, 17, 17, 0.14);
+	outline: none;
+}
+
+.sbm-rsvp-submit {
+	background: #10243b;
+	border: 0;
+	border-radius: 999px;
+	color: #fff;
+	cursor: pointer;
+	font: inherit;
+	font-weight: 600;
+	line-height: 1.2;
+	padding: 0.9em 1.4em;
+}
+
+.sbm-rsvp-submit:focus,
+.sbm-rsvp-submit:hover {
+	background: #18314f;
+	color: #fff;
+}
+
+.sbm-rsvp-message {
+	border-radius: 6px;
+	margin: 0;
+	padding: 10px 12px;
+}
+
+.sbm-rsvp-message-success {
+	background: #edfaef;
+	border: 1px solid #8bd49b;
+}
+
+.sbm-rsvp-message-error {
+	background: #fff1f1;
+	border: 1px solid #f3a6a6;
+}
+
 @media (max-width: 640px) {
 	.sbm-member-schedule-item {
 		align-items: start;

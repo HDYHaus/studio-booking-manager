@@ -187,6 +187,27 @@ final class Installer {
 			KEY created_at (created_at)
 		) $charset_collate;";
 
+		$sql[] = "CREATE TABLE " . Tables::get( 'rsvps' ) . " (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			post_id bigint(20) unsigned NOT NULL,
+			attendee_name varchar(190) NOT NULL DEFAULT '',
+			attendee_email varchar(190) NOT NULL DEFAULT '',
+			guest_count int(11) unsigned NOT NULL DEFAULT 0,
+			guest_names longtext NULL,
+			status varchar(20) NOT NULL DEFAULT 'attending',
+			notes longtext NULL,
+			ip_hash varchar(64) NOT NULL DEFAULT '',
+			user_agent_hash varchar(64) NOT NULL DEFAULT '',
+			created_at datetime NOT NULL,
+			updated_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY post_email (post_id, attendee_email),
+			KEY post_id (post_id),
+			KEY attendee_email (attendee_email),
+			KEY status (status),
+			KEY created_at (created_at)
+		) $charset_collate;";
+
 		foreach ( $sql as $statement ) {
 			dbDelta( $statement );
 		}

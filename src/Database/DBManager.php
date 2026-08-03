@@ -39,6 +39,7 @@ final class DBManager {
 			Tables::get( 'pass_types' ),
 			Tables::get( 'bookings' ),
 			Tables::get( 'notifications' ),
+			Tables::get( 'rsvps' ),
 		);
 
 		foreach ( $required as $table ) {
@@ -119,6 +120,20 @@ final class DBManager {
 				'starts_at',
 				'expires_at',
 				'metadata',
+				'created_at',
+				'updated_at',
+			),
+			Tables::get( 'rsvps' ) => array(
+				'id',
+				'post_id',
+				'attendee_name',
+				'attendee_email',
+				'guest_count',
+				'guest_names',
+				'status',
+				'notes',
+				'ip_hash',
+				'user_agent_hash',
 				'created_at',
 				'updated_at',
 			),

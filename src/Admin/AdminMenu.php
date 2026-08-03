@@ -20,6 +20,7 @@ use StudioBookingManager\PassTypes\PassTypeAdmin;
 use StudioBookingManager\QR\QRAdmin;
 use StudioBookingManager\People\PersonAdmin;
 use StudioBookingManager\Reports\ReportsAdmin;
+use StudioBookingManager\RSVP\RsvpAdmin;
 use StudioBookingManager\Visits\VisitAdmin;
 use StudioBookingManager\Admin\PageHeader;
 use StudioBookingManager\Settings\SettingsPage;
@@ -97,6 +98,15 @@ final class AdminMenu {
 			'sbm_manage_bookings',
 			'sbm-bookings',
 			array( new BookingAdmin(), 'render' )
+		);
+
+		add_submenu_page(
+			'sbm-dashboard',
+			__( 'RSVPs', 'studio-booking-manager' ),
+			__( 'RSVPs', 'studio-booking-manager' ),
+			'sbm_manage_bookings',
+			'sbm-rsvps',
+			array( new RsvpAdmin(), 'render' )
 		);
 
 		add_submenu_page(

@@ -31,6 +31,8 @@ use StudioBookingManager\People\PersonAdmin;
 use StudioBookingManager\QR\QRAdmin;
 use StudioBookingManager\Reports\ReportsAdmin;
 use StudioBookingManager\Roles\RoleInstaller;
+use StudioBookingManager\RSVP\RsvpAdmin;
+use StudioBookingManager\RSVP\RsvpShortcode;
 use StudioBookingManager\Settings\SettingsPage;
 use StudioBookingManager\Visits\VisitAdmin;
 use StudioBookingManager\WooCommerce\ProductPanel;
@@ -77,6 +79,7 @@ final class Plugin {
 		( new OperationsAdmin() )->register();
 		( new QRAdmin() )->register();
 		( new ReportsAdmin() )->register();
+		( new RsvpAdmin() )->register();
 		( new ImportExportAdmin() )->register();
 		( new IntegrationAdmin() )->register();
 		( new GravityFormsIntegration() )->register();
@@ -85,6 +88,7 @@ final class Plugin {
 		( new MemberAccount() )->register();
 		( new NotificationAdmin() )->register();
 		( new MemberScheduleShortcode() )->register();
+		( new RsvpShortcode() )->register();
 
 		if ( class_exists( 'WooCommerce' ) ) {
 			( new BookingDateField() )->register();
