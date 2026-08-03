@@ -4,8 +4,8 @@ Tags: bookings, coworking, studio, memberships, operations
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.13.13
-License: GPLv2 or later
+Stable tag: 0.13.14
+License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Open source booking and operations management for studios, coworking spaces, creative hubs, libraries, and shared spaces.
@@ -14,9 +14,21 @@ Open source booking and operations management for studios, coworking spaces, cre
 
 Studio Booking Manager helps shared spaces manage people, access, visits, locations, memberships, and operations from WordPress.
 
-This release fixes frontend booking time displays so studio-local times are not shifted by timezone conversion.
+This release tightens release packaging so development files are excluded from installable plugin ZIPs.
+
+== External Services ==
+
+Studio Booking Manager can optionally sync bookings to Google Calendar when a site administrator enables Google Calendar sync and saves service account credentials in the plugin settings.
+
+When enabled, the plugin sends booking event details such as title, start time, end time, status, and related notes to the configured Google Calendar through Google's Calendar API. No Google Calendar requests are made unless sync is enabled and configured.
+
+Google service terms and privacy information are available at https://policies.google.com/terms and https://policies.google.com/privacy.
 
 == Changelog ==
+
+= 0.13.14 =
+
+- Tightened release packaging so development files are excluded from installable plugin ZIPs.
 
 = 0.13.13 =
 

@@ -8,7 +8,7 @@
  * Requires PHP:      8.1
  * Author:            HDY Haus
  * Author URI:        https://hdyhaus.com
- * License:           GPL v2 or later
+ * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       studio-booking-manager
  * Domain Path:       /languages

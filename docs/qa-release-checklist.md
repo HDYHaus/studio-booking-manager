@@ -18,12 +18,17 @@ git diff --check
 
 ## Release Package
 
-- Build the installable zip from the tagged source using `.distignore`.
+- Build the installable zip from the tagged source using `.distignore`:
+
+```bash
+php tools/package-release.php
+```
+
 - Inspect the zip contents and confirm these are absent:
-  - `.git`, `.github`, `.gitignore`, `.distignore`
-  - `tests`, `tools`, `vendor`, `node_modules`
-  - `phpcs.xml.dist`, `phpunit.xml.dist`
-  - local planning files such as `AI.md` and `reports-plan.md`
+	- `.git`, `.github`, `.gitignore`, `.distignore`
+	- `.agents`, `.codex`, `build`, `docs`, `tests`, `tools`, `vendor`, `node_modules`
+	- `phpcs.xml.dist`, `phpunit.xml.dist`
+	- local planning files such as `AI.md`, `reports-plan.md`, and `skills-lock.json`
   - `.DS_Store` and `.gitkeep`
 - Confirm the plugin header inside the zip reports the intended version.
 

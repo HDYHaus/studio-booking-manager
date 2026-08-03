@@ -69,6 +69,7 @@ $php_files = array_merge(
 	array(
 		$root . '/studio-booking-manager.php',
 		$root . '/uninstall.php',
+		$root . '/tools/package-release.php',
 		$root . '/tools/run-tests.php',
 	),
 	sbm_quality_files( $root . '/src', 'php' ),
@@ -92,7 +93,30 @@ if ( ! $lint_only ) {
 
 	sbm_quality_section( 'Release packaging' );
 
-	$required_ignores = array( '.git', '.github', 'tests', 'tools', 'vendor', 'node_modules', 'phpunit.xml.dist', 'phpcs.xml.dist' );
+	$required_ignores = array(
+		'.agents',
+		'.codex',
+		'.git',
+		'.github',
+		'.gitignore',
+		'.distignore',
+		'AI.md',
+		'build',
+		'CONTRIBUTING.md',
+		'ROADMAP.md',
+		'SECURITY.md',
+		'composer.json',
+		'composer.lock',
+		'docs',
+		'node_modules',
+		'vendor',
+		'tests',
+		'tools',
+		'phpunit.xml.dist',
+		'phpcs.xml.dist',
+		'reports-plan.md',
+		'skills-lock.json',
+	);
 	$distignore       = file_exists( $root . '/.distignore' ) ? file( $root . '/.distignore', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES ) : array();
 	$distignore       = is_array( $distignore ) ? $distignore : array();
 

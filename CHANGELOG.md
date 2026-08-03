@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.13.14 - 2026-08-03
+
+### Fixed
+- Tightened release packaging so development files are excluded from installable plugin ZIPs.
 
 ## 0.13.13 - 2026-07-19
 

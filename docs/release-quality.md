@@ -31,7 +31,13 @@ WordPress Plugin Check should also be run before release from a WordPress admin 
 
 ## Packaging
 
-`.distignore` excludes development-only files such as tests, tools, VCS metadata, dependency directories, and local planning files. Confirm the release zip contains the plugin runtime files, assets, docs, license, readme files, and uninstall file.
+Build the installable plugin ZIP with:
+
+```bash
+php tools/package-release.php
+```
+
+`.distignore` excludes development-only files such as tests, tools, VCS metadata, dependency directories, local docs, and planning files. Confirm the release zip contains only runtime plugin files, assets, language files, license, changelog, readme files, and uninstall file.
 
 ## Security Pass
 

@@ -137,7 +137,7 @@ final class BookingRepository {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table and column names come from trusted registry/detection; ID is prepared.
 		$query = $this->wpdb->prepare( "SELECT *, `{$id_column}` AS id FROM `{$this->table}` WHERE `{$id_column}` = %d LIMIT 1", $id );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom operational table query using trusted table name and prepared ID.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Custom operational table query using trusted table name and prepared ID.
 		$record = $this->wpdb->get_row( $query );
 
 		return $record instanceof \stdClass ? $record : null;
@@ -534,14 +534,14 @@ final class BookingRepository {
 			return 'id';
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema compatibility detection for known plugin table.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Schema compatibility detection for known plugin table.
 		$has_id = $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $this->table, 'id' ) );
 
 		if ( null !== $has_id && false !== $has_id ) {
 			return 'id';
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema compatibility detection for known plugin table.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Schema compatibility detection for known plugin table.
 		$has_legacy_id = $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $this->table, 'booking_id' ) );
 
 		return null !== $has_legacy_id && false !== $has_legacy_id ? 'booking_id' : 'id';

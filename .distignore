@@ -9,7 +9,13 @@
 .agents
 .codex
 AI.md
+build
+CONTRIBUTING.md
+ROADMAP.md
+SECURITY.md
 composer.lock
+composer.json
+docs
 node_modules
 vendor
 tests

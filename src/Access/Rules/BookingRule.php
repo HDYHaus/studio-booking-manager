@@ -31,8 +31,8 @@ final class BookingRule {
 		 * @param object              $access           Access row.
 		 * @param array<string,mixed> $context          Validation context.
 		 */
-		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- `sbm_` is the documented public API prefix for Studio Booking Manager.
 		$requires_booking = $this->access_requires_booking( $access );
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- `sbm_` is the documented public API prefix for Studio Booking Manager.
 		$requires_booking = (bool) apply_filters( 'sbm_access_requires_booking', $requires_booking, $access, $context );
 
 		$booking_id = isset( $context['booking_id'] ) ? absint( $context['booking_id'] ) : 0;

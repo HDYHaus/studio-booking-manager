@@ -250,7 +250,7 @@ final class BookingService {
 			return;
 		}
 
-		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- `sbm_` is the documented public API prefix for Studio Booking Manager.
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Booking lifecycle actions are internal plugin-owned `sbm_` action names chosen by callers in this service.
 		do_action( $action, $booking );
 	}
 }

@@ -182,13 +182,16 @@ final class IntegrationAdmin {
 	 * Render reprocess result notice.
 	 */
 	private function render_reprocess_notice(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin notice state from a nonce-verified admin-post redirect; values are sanitized and escaped before output.
 		if ( empty( $_GET['sbm_gravity_reprocess'] ) ) {
 			return;
 		}
 
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only admin notice state from a nonce-verified admin-post redirect; values are sanitized and escaped before output.
 		$status     = sanitize_key( wp_unslash( $_GET['sbm_gravity_reprocess'] ) );
 		$entry_id   = isset( $_GET['sbm_gravity_entry_id'] ) ? absint( wp_unslash( $_GET['sbm_gravity_entry_id'] ) ) : 0;
 		$booking_id = isset( $_GET['sbm_gravity_booking_id'] ) ? absint( wp_unslash( $_GET['sbm_gravity_booking_id'] ) ) : 0;
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		if ( 'reprocessed' === $status ) {
 			printf(

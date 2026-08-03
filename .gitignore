@@ -7,6 +7,9 @@ Thumbs.db
 # Logs
 *.log
 
+# Release artifacts
+/build/
+
 # PHPUnit
 .phpunit.result.cache
 

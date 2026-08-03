@@ -217,8 +217,8 @@ final class Installer {
 	 * Create default options.
 	 */
 	private function create_default_options(): void {
-		add_option( 'sbm_settings', array() );
-		add_option( 'sbm_db_version', SBM_DB_VERSION );
+		add_option( 'sbm_settings', array(), '', false );
+		add_option( 'sbm_db_version', SBM_DB_VERSION, '', false );
 	}
 
 	/**
