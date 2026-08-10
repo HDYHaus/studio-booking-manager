@@ -295,6 +295,7 @@ final class AdminMenu {
 			<div class="sbm-card sbm-card-wide">
 				<h2><?php echo esc_html__( 'RSVP Shortcode', 'studio-booking-manager' ); ?></h2>
 				<p><?php echo esc_html__( 'Add this shortcode to a public event post to collect RSVPs for that post URL.', 'studio-booking-manager' ); ?></p>
+				<p class="description"><?php echo esc_html__( 'Use YYYY-MM-DD HH:MM for starts_at and ends_at, for example 2026-08-08 17:30. Times are read in the WordPress site timezone.', 'studio-booking-manager' ); ?></p>
 				<p><code>[sbm_rsvp]</code></p>
 				<table class="widefat striped sbm-table">
 					<thead>
@@ -313,12 +314,12 @@ final class AdminMenu {
 						<tr>
 							<td><code>starts_at</code></td>
 							<td><?php echo esc_html__( 'Blank', 'studio-booking-manager' ); ?></td>
-							<td><?php echo esc_html__( 'Optional event start date/time for the Google Calendar link, such as 2026-08-08 18:00.', 'studio-booking-manager' ); ?></td>
+							<td><?php echo esc_html__( 'Optional event start date/time for the Google Calendar link. Use YYYY-MM-DD HH:MM, such as 2026-08-08 17:30.', 'studio-booking-manager' ); ?></td>
 						</tr>
 						<tr>
 							<td><code>ends_at</code></td>
 							<td><?php echo esc_html__( '+2 hours', 'studio-booking-manager' ); ?></td>
-							<td><?php echo esc_html__( 'Optional event end date/time. If omitted, the calendar link ends two hours after the start.', 'studio-booking-manager' ); ?></td>
+							<td><?php echo esc_html__( 'Optional event end date/time in YYYY-MM-DD HH:MM format. If omitted, the calendar link ends two hours after the start.', 'studio-booking-manager' ); ?></td>
 						</tr>
 						<tr>
 							<td><code>location</code></td>
