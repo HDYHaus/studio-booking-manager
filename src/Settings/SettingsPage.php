@@ -127,6 +127,18 @@ final class SettingsPage {
 			$clean['notification_staff_email'] = sanitize_email( (string) $settings['notification_staff_email'] );
 		}
 
+		if ( isset( $settings['notification_from_name'] ) ) {
+			$clean['notification_from_name'] = sanitize_text_field( (string) $settings['notification_from_name'] );
+		}
+
+		if ( isset( $settings['notification_from_email'] ) ) {
+			$clean['notification_from_email'] = sanitize_email( (string) $settings['notification_from_email'] );
+		}
+
+		if ( isset( $settings['notification_reply_to_email'] ) ) {
+			$clean['notification_reply_to_email'] = sanitize_email( (string) $settings['notification_reply_to_email'] );
+		}
+
 		foreach ( $this->notification_types() as $type => $label ) {
 			$clean[ $type . '_enabled' ] = ! empty( $settings[ $type . '_enabled' ] ) ? 1 : 0;
 
@@ -205,6 +217,9 @@ final class SettingsPage {
 		$qr_show_name     = ! isset( $options['qr_show_person_name'] ) || ! empty( $options['qr_show_person_name'] );
 		$qr_show_email    = ! empty( $options['qr_show_person_email'] );
 		$staff_email      = isset( $options['notification_staff_email'] ) ? (string) $options['notification_staff_email'] : get_option( 'admin_email' );
+		$from_name        = isset( $options['notification_from_name'] ) && '' !== (string) $options['notification_from_name'] ? (string) $options['notification_from_name'] : $business_name;
+		$from_email       = isset( $options['notification_from_email'] ) && '' !== (string) $options['notification_from_email'] ? (string) $options['notification_from_email'] : get_option( 'admin_email' );
+		$reply_to_email   = isset( $options['notification_reply_to_email'] ) ? (string) $options['notification_reply_to_email'] : '';
 		$simplify_checkout = ! empty( $options['woocommerce_simplify_booking_checkout'] );
 		?>
 		<div class="wrap sbm-admin-page">
@@ -388,7 +403,35 @@ final class SettingsPage {
 								<p class="description"><?php echo esc_html__( 'Used for internal alerts such as calendar sync failures.', 'studio-booking-manager' ); ?></p>
 							</td>
 						</tr>
+						<tr>
+							<th scope="row">
+								<label for="sbm-notification-from-name"><?php echo esc_html__( 'From name', 'studio-booking-manager' ); ?></label>
+							</th>
+							<td>
+								<input id="sbm-notification-from-name" type="text" class="regular-text" name="sbm_settings[notification_from_name]" value="<?php echo esc_attr( $from_name ); ?>" />
+								<p class="description"><?php echo esc_html__( 'Shown as the sender name for Studio Booking Manager emails.', 'studio-booking-manager' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row">
+								<label for="sbm-notification-from-email"><?php echo esc_html__( 'From email', 'studio-booking-manager' ); ?></label>
+							</th>
+							<td>
+								<input id="sbm-notification-from-email" type="email" class="regular-text" name="sbm_settings[notification_from_email]" value="<?php echo esc_attr( $from_email ); ?>" />
+								<p class="description"><?php echo esc_html__( 'Use a domain email for this site, such as an @hdyhaus.com address. Reliable delivery may require SPF, DKIM, or SMTP setup with your mail provider.', 'studio-booking-manager' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row">
+								<label for="sbm-notification-reply-to-email"><?php echo esc_html__( 'Reply-to email', 'studio-booking-manager' ); ?></label>
+							</th>
+							<td>
+								<input id="sbm-notification-reply-to-email" type="email" class="regular-text" name="sbm_settings[notification_reply_to_email]" value="<?php echo esc_attr( $reply_to_email ); ?>" />
+								<p class="description"><?php echo esc_html__( 'Optional. Leave blank when replies should go to the From email.', 'studio-booking-manager' ); ?></p>
+							</td>
+						</tr>
 					</table>
+					<p class="description"><?php echo esc_html__( 'Recipients are still chosen by each workflow: RSVPs go to the attendee, booking and pass emails go to the member, and staff alerts go to the staff alert email.', 'studio-booking-manager' ); ?></p>
 
 					<?php foreach ( $this->notification_types() as $type => $label ) : ?>
 						<?php

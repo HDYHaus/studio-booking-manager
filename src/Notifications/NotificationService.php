@@ -201,7 +201,9 @@ final class NotificationService {
 			return;
 		}
 
-		$sent = wp_mail( $email, $subject, $message );
+		$headers = $this->mail_headers();
+		$context = $context + $this->sender_context();
+		$sent    = wp_mail( $email, $subject, $message, $headers );
 
 		$this->repository->create(
 			array(
@@ -361,6 +363,69 @@ final class NotificationService {
 		return isset( $settings['notification_staff_email'] ) && '' !== (string) $settings['notification_staff_email']
 			? sanitize_email( (string) $settings['notification_staff_email'] )
 			: sanitize_email( get_option( 'admin_email' ) );
+	}
+
+	/**
+	 * Build Studio Booking Manager notification email headers.
+	 *
+	 * @return array<int,string>
+	 */
+	private function mail_headers(): array {
+		$headers    = array();
+		$from_email = $this->notification_from_email();
+
+		if ( '' !== $from_email ) {
+			$headers[] = sprintf( 'From: %1$s <%2$s>', $this->notification_from_name(), $from_email );
+		}
+
+		$reply_to_email = $this->notification_reply_to_email();
+		if ( '' !== $reply_to_email ) {
+			$headers[] = sprintf( 'Reply-To: %s', $reply_to_email );
+		}
+
+		return $headers;
+	}
+
+	/**
+	 * Sender context for notification logs.
+	 *
+	 * @return array<string,string>
+	 */
+	private function sender_context(): array {
+		return array(
+			'sender_from_name'      => $this->notification_from_name(),
+			'sender_from_email'     => $this->notification_from_email(),
+			'sender_reply_to_email' => $this->notification_reply_to_email(),
+		);
+	}
+
+	/**
+	 * Notification from name.
+	 */
+	private function notification_from_name(): string {
+		$settings = $this->settings();
+		$name     = isset( $settings['notification_from_name'] ) ? sanitize_text_field( (string) $settings['notification_from_name'] ) : '';
+
+		return '' !== $name ? $name : $this->business_name();
+	}
+
+	/**
+	 * Notification from email.
+	 */
+	private function notification_from_email(): string {
+		$settings = $this->settings();
+		$email    = isset( $settings['notification_from_email'] ) ? sanitize_email( (string) $settings['notification_from_email'] ) : '';
+
+		return '' !== $email ? $email : sanitize_email( get_option( 'admin_email' ) );
+	}
+
+	/**
+	 * Notification reply-to email.
+	 */
+	private function notification_reply_to_email(): string {
+		$settings = $this->settings();
+
+		return isset( $settings['notification_reply_to_email'] ) ? sanitize_email( (string) $settings['notification_reply_to_email'] ) : '';
 	}
 
 	/**
